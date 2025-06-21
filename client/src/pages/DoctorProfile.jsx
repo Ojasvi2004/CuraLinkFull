@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom"; // To get doctorId from URL
 import { motion } from "framer-motion";
+import axios from "axios";
 
 // --- Example Icons (Replace with actual icons) ---
 const StarIcon = ({ filled }) => (
@@ -91,106 +92,125 @@ const VideoCameraIcon = () => (
   </svg>
 );
 
-
-// const [ mockDoctorDetails, setmockDoctorDetails]=useState([]);
-
-
-
-const mockDoctorDetails = {
-  id: 1,
-  name: "Dr. Ananya Sharma",
-  specialty: "Cardiology",
-  profilePic: "https://via.placeholder.com/150/A78BFA/FFFFFF?text=AS", 
-  bio: "Dr. Ananya Sharma is a renowned cardiologist with over 12 years of experience specializing in interventional cardiology and preventative heart care. She is committed to providing patient-centered care with the latest medical advancements.",
-  qualifications: [
-    "MBBS, King's College London",
-    "MD, Cardiology, AIIMS Delhi",
-    "Fellowship in Interventional Cardiology, USA",
-  ],
-  experienceYears: 12,
-  languages: ["English", "Hindi", "Marathi"],
-  rating: 4.8,
-  totalReviews: 185,
-  clinics: [
-    {
-      id: "clinic1",
-      name: "MedHeart Clinic, Andheri West",
-      address: "123 Cardiac Road, Andheri (W), Mumbai",
-      timings: "Mon-Fri: 10 AM - 1 PM, Sat: 10 AM - 12 PM",
-      type: "PHYSICAL",
-    },
-    {
-      id: "clinic2",
-      name: "CuraLink Telehealth Platform",
-      address: "Online Video Consultation",
-      timings: "Mon, Wed, Fri: 3 PM - 5 PM",
-      type: "DIGITAL",
-    },
-  ],
-  services: [
-    "ECG",
-    "Echocardiogram",
-    "Angioplasty Consultation",
-    "Preventive Cardiology",
-    "Hypertension Management",
-  ],
-};
+// const DoctorDetails = {
+//   id: 1,
+//   name: "Dr. Ananya Sharma",
+//   specialty: "Cardiology",
+//   profilePic: "https://via.placeholder.com/150/A78BFA/FFFFFF?text=AS",
+//   bio: "Dr. Ananya Sharma is a renowned cardiologist with over 12 years of experience specializing in interventional cardiology and preventative heart care. She is committed to providing patient-centered care with the latest medical advancements.",
+//   qualifications: [
+//     "MBBS, King's College London",
+//     "MD, Cardiology, AIIMS Delhi",
+//     "Fellowship in Interventional Cardiology, USA",
+//   ],
+//   experienceYears: 12,
+//   languages: ["English", "Hindi", "Marathi"],
+//   rating: 4.8,
+//   totalReviews: 185,
+//   clinics: [
+//     {
+//       id: "clinic1",
+//       name: "MedHeart Clinic, Andheri West",
+//       address: "123 Cardiac Road, Andheri (W), Mumbai",
+//       timings: "Mon-Fri: 10 AM - 1 PM, Sat: 10 AM - 12 PM",
+//       type: "PHYSICAL",
+//     },
+//     {
+//       id: "clinic2",
+//       name: "CuraLink Telehealth Platform",
+//       address: "Online Video Consultation",
+//       timings: "Mon, Wed, Fri: 3 PM - 5 PM",
+//       type: "DIGITAL",
+//     },
+//   ],
+//   services: [
+//     "ECG",
+//     "Echocardiogram",
+//     "Angioplasty Consultation",
+//     "Preventive Cardiology",
+//     "Hypertension Management",
+//   ],
+// };
 
 // Mock Availability Slots - Fetch this based on doctorId and selected date
-const mockAvailability = {
-  "2023-10-26": [
-    // YYYY-MM-DD
-    {
-      time: "10:00 AM",
-      type: "PHYSICAL",
-      clinicId: "clinic1",
-      available: true,
-    },
-    {
-      time: "10:30 AM",
-      type: "PHYSICAL",
-      clinicId: "clinic1",
-      available: false,
-    },
-    {
-      time: "11:00 AM",
-      type: "PHYSICAL",
-      clinicId: "clinic1",
-      available: true,
-    },
-    { time: "03:00 PM", type: "DIGITAL", clinicId: "clinic2", available: true },
-    { time: "03:30 PM", type: "DIGITAL", clinicId: "clinic2", available: true },
-  ],
-  "2023-10-27": [
-    {
-      time: "10:00 AM",
-      type: "PHYSICAL",
-      clinicId: "clinic1",
-      available: true,
-    },
-    // ... more slots
-  ],
-};
+// const mockAvailability = {
+//   "2023-10-26": [
+//     // YYYY-MM-DD
+//     {
+//       time: "10:00 AM",
+//       type: "PHYSICAL",
+//       clinicId: "clinic1",
+//       available: true,
+//     },
+//     {
+//       time: "10:30 AM",
+//       type: "PHYSICAL",
+//       clinicId: "clinic1",
+//       available: false,
+//     },
+//     {
+//       time: "11:00 AM",
+//       type: "PHYSICAL",
+//       clinicId: "clinic1",
+//       available: true,
+//     },
+//     { time: "03:00 PM", type: "DIGITAL", clinicId: "clinic2", available: true },
+//     { time: "03:30 PM", type: "DIGITAL", clinicId: "clinic2", available: true },
+//   ],
+//   "2023-10-27": [
+//     {
+//       time: "10:00 AM",
+//       type: "PHYSICAL",
+//       clinicId: "clinic1",
+//       available: true,
+//     },
+//     // ... more slots
+//   ],
+// };
+
+
 
 const DoctorProfile = () => {
-  const { doctorId } = useParams(); // Get doctorId from URL like /doctors/:doctorId
+  const [DoctorDetails, setDoctorDetails] = useState({});
+  const { doctorId } = useParams();
+
+  const GetDoctorDetails = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8000/api/user/getDoctorProfile/${doctorId}`
+      );
+
+      if (response.data.success) {
+        setDoctor(response.data.doctorProfile);
+        console.log("Successfull fetch", response.data);
+      }
+    } catch (error) {
+      console.log("Error occurred fetching data", error);
+    }
+  };
+
+  useEffect(() => {
+    GetDoctorDetails();
+  },[doctorId]);
+  const [doctor, setDoctor] = useState(DoctorDetails);
+
   const navigate = useNavigate();
 
-  // In a real app, fetch doctorDetails and availability based on doctorId
-  const [doctor, setDoctor] = useState(mockDoctorDetails); // Using mock for now
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
-  ); // Default to today
+  );
   const [availability, setAvailability] = useState(
-    mockAvailability[selectedDate] || []
+    // mockAvailability[selectedDate] || []
+    []
   );
   const [selectedSlot, setSelectedSlot] = useState(null);
-  const [isLoading, setIsLoading] = useState(false); // For booking simulation
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     // Simulate fetching availability for the selected date
-    setAvailability(mockAvailability[selectedDate] || []);
-    setSelectedSlot(null); // Reset selected slot when date changes
+    // setAvailability(mockAvailability[selectedDate] || []);
+    setAvailability([]);
+    setSelectedSlot(null);
   }, [selectedDate]);
 
   const handleDateChange = (e) => {
@@ -209,7 +229,7 @@ const DoctorProfile = () => {
       return;
     }
     setIsLoading(true);
-    // Simulate booking API call
+
     console.log(
       "Booking appointment for:",
       doctor.name,
@@ -227,11 +247,9 @@ const DoctorProfile = () => {
       );
       // navigate('/my-appointments'); // Optionally navigate to appointments page
       setSelectedSlot(null);
-      // You would also update the availability state here or refetch
     }, 1500);
   };
 
-  // Animation Variants
   const pageVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -280,7 +298,7 @@ const DoctorProfile = () => {
         >
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8">
             <motion.img
-              src={doctor.profilePic}
+              src={doctor.ProfilePicture}
               alt={doctor.name}
               className="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-4 border-blue-200 shadow-lg"
               initial={{ scale: 0.5, opacity: 0 }}
@@ -295,15 +313,15 @@ const DoctorProfile = () => {
                 variants={itemVariants}
                 className="text-3xl sm:text-4xl font-bold text-slate-800"
               >
-                {doctor.name}
+                {doctor.FullName}
               </motion.h1>
               <motion.p
                 variants={itemVariants}
                 className="text-lg text-blue-600 font-semibold mt-1"
               >
-                {doctor.specialty}
+                {doctor.Speciality}
               </motion.p>
-              <motion.div
+              {/* <motion.div
                 variants={itemVariants}
                 className="flex items-center justify-center md:justify-start mt-2"
               >
@@ -313,32 +331,32 @@ const DoctorProfile = () => {
                 <span className="ml-2 text-sm text-slate-600">
                   ({doctor.rating.toFixed(1)} - {doctor.totalReviews} reviews)
                 </span>
-              </motion.div>
+              </motion.div> */}
               <motion.p
                 variants={itemVariants}
                 className="text-sm text-slate-500 mt-2"
               >
-                <BriefcaseIcon /> {doctor.experienceYears} years of experience
+                <BriefcaseIcon /> {doctor.Experience} years of experience
               </motion.p>
-              <motion.div
+              {/* <motion.div
                 variants={itemVariants}
                 className="mt-3 text-sm text-slate-500"
               >
                 Speaks: {doctor.languages.join(", ")}
-              </motion.div>
+              </motion.div> */}
             </div>
             <motion.div
               variants={itemVariants}
               className="md:ml-auto flex flex-col items-center md:items-end gap-2 mt-4 md:mt-0"
             >
               <Link
-                to={`/start-chat/${doctor.id}`} // Placeholder
+                to={`/start-chat/${doctor._id}`} 
                 className="w-full md:w-auto bg-teal-500 hover:bg-teal-600 text-white font-medium py-2.5 px-6 rounded-lg text-sm text-center transition-colors"
               >
                 Chat with Doctor (Digital)
               </Link>
               <p className="text-xs text-slate-400">
-                Teleconsultation fee: ₹{doctor.consultationFeeDigital || "N/A"}
+                Teleconsultation fee: ₹{doctor.DigitalConsultationFees || "N/A"}
               </p>
             </motion.div>
           </div>
@@ -356,10 +374,10 @@ const DoctorProfile = () => {
               className="bg-white p-6 rounded-xl shadow-lg"
             >
               <h2 className="text-xl font-semibold text-slate-800 mb-3 border-b pb-2">
-                About Dr. {doctor.name.split(" ").pop()}
+                About Dr. {doctor.FullName}
               </h2>
               <p className="text-slate-600 text-sm leading-relaxed">
-                {doctor.bio}
+                {doctor.Bio}
               </p>
             </motion.div>
 
@@ -371,9 +389,10 @@ const DoctorProfile = () => {
                 Qualifications
               </h2>
               <ul className="list-none space-y-2 text-sm text-slate-600">
-                {doctor.qualifications.map((q, i) => (
-                  <li key={i} className="flex items-center">
-                    <AcademicCapIcon /> {q}
+                {doctor.Qualifications?.split(",").map((q, i) => (
+                  <li key={i} className="flex items-center space-x-2">
+                    <AcademicCapIcon className="w-4 h-4 text-blue-500" />
+                    <span>{q.trim()}</span>
                   </li>
                 ))}
               </ul>
@@ -387,7 +406,7 @@ const DoctorProfile = () => {
                 Services Offered
               </h2>
               <div className="flex flex-wrap gap-2">
-                {doctor.services.map((service, i) => (
+                {doctor.ServicesOffered?.split(",").map((service, i) => (
                   <span
                     key={i}
                     className="bg-blue-100 text-blue-700 text-xs font-medium px-3 py-1.5 rounded-full"
@@ -405,7 +424,7 @@ const DoctorProfile = () => {
               <h2 className="text-xl font-semibold text-slate-800 mb-3 border-b pb-2">
                 Clinics & Timings
               </h2>
-              {doctor.clinics.map((clinic) => (
+              {/* {doctor.clinics.map((clinic) => (
                 <div
                   key={clinic.id}
                   className="mb-4 pb-4 border-b border-slate-100 last:border-b-0 last:pb-0 last:mb-0"
@@ -433,7 +452,7 @@ const DoctorProfile = () => {
                     </span>
                   </p>
                 </div>
-              ))}
+              ))} */}
             </motion.div>
           </motion.div>
 

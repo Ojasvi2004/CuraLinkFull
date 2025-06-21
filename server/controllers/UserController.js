@@ -117,4 +117,18 @@ const GetDctorList= async(req,res)=>{
   
 }
 
-module.exports = { RegisterUser, HashPassword,LoginUser ,GetDctorList};
+const GetDoctor= async (req,res) => 
+{
+ try {
+
+  const { doctorId }=req.params;
+
+  const doctorProfile= await Doctor.findById(doctorId );
+
+   return res.status(202).json({success:true,message:"Successfull Fetching",doctorProfile});
+ } catch (error) {
+   return res.status(400).json({success:false,message:`Error: ${error}`});
+ }  
+}
+
+module.exports = { RegisterUser, HashPassword,LoginUser ,GetDctorList,GetDoctor};

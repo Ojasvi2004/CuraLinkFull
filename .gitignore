@@ -1,0 +1,9 @@
+# dependencies
+server/node_modules/
+client/node_modules/
+doctors/node_modules
+
+# environment variables
+# Ignore server .env file
+server/.env
+
