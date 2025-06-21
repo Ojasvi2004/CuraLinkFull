@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+.roboto{
+    font-family:'roboto',sans-serif;
+}
