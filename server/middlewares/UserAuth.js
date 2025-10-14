@@ -13,7 +13,7 @@ const UserAuth=(req,res,next)=>{
     try {
         
         const decoded=jwt.verify(token,process.env.SECRET_KEY);
-       req._id=decoded._id;
+       req._id=decoded.id;
 
        next();
 

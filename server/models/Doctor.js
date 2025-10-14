@@ -1,6 +1,6 @@
 const mongoose=require("mongoose");
-const Clinic = require("./Clinic");
-const ClinicSchema = require("./Clinic");
+const { ClinicSchema } = require("./Clinic");
+
 
 const DoctorModel= new mongoose.Schema({
 
@@ -70,6 +70,9 @@ const DoctorModel= new mongoose.Schema({
     ClinicRegistrationCertificate:{
         type:String,
         required:true
+    },
+    Availabiity:{
+        type:Date
     }
 
 },{

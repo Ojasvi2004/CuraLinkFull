@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom"; // To get doctorId from URL
 import { motion } from "framer-motion";
 import axios from "axios";
+import { useContext } from "react";
+import { Authcontext } from "../Context/AuthContext";
+
 
 // --- Example Icons (Replace with actual icons) ---
 const StarIcon = ({ filled }) => (
@@ -168,11 +171,10 @@ const VideoCameraIcon = () => (
 //   ],
 // };
 
-
-
 const DoctorProfile = () => {
   const [DoctorDetails, setDoctorDetails] = useState({});
   const { doctorId } = useParams();
+  const { token, settoken } = useContext(Authcontext);
 
   const GetDoctorDetails = async () => {
     try {
@@ -191,10 +193,33 @@ const DoctorProfile = () => {
 
   useEffect(() => {
     GetDoctorDetails();
-  },[doctorId]);
+    console.log(doctorId);
+    console.log(selectedDate);
+  }, [doctorId]);
   const [doctor, setDoctor] = useState(DoctorDetails);
 
   const navigate = useNavigate();
+
+  const GetAvailibiltySlots = async () => {
+    try {
+      const response = await axios.post(
+        "http://localhost:8000/api/user/getSlotsOfDoctor",
+        { doctorId, date: selectedDate },
+        {
+          headers: {
+            authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setAvailability(response.data.AllSlots);
+        console.log(response);
+      }
+    } catch (error) {
+      console.log("Error occurred fetching slots", error);
+    }
+  };
 
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
@@ -209,7 +234,8 @@ const DoctorProfile = () => {
   useEffect(() => {
     // Simulate fetching availability for the selected date
     // setAvailability(mockAvailability[selectedDate] || []);
-    setAvailability([]);
+    GetAvailibiltySlots();
+    // setAvailability([]);
     setSelectedSlot(null);
   }, [selectedDate]);
 
@@ -218,36 +244,64 @@ const DoctorProfile = () => {
   };
 
   const handleSlotSelect = (slot) => {
-    if (slot.available) {
+    if (!slot.isBooked) {
       setSelectedSlot(slot);
     }
   };
 
-  const handleBookAppointment = () => {
-    if (!selectedSlot) {
-      alert("Please select an available time slot.");
-      return;
-    }
-    setIsLoading(true);
+  const handleBookAppointment =async() => {
 
-    console.log(
-      "Booking appointment for:",
-      doctor.name,
-      "on",
-      selectedDate,
-      "at",
-      selectedSlot.time,
-      "Type:",
-      selectedSlot.type
-    );
-    setTimeout(() => {
-      setIsLoading(false);
-      alert(
-        `Appointment booked with ${doctor.name} for ${selectedSlot.time} on ${selectedDate}! (UI Demo)`
-      );
-      // navigate('/my-appointments'); // Optionally navigate to appointments page
-      setSelectedSlot(null);
-    }, 1500);
+       if (!selectedSlot) {
+          alert("Please select an available time slot.");
+          return;
+        }
+    try {
+
+
+      const response=await axios.post('http://localhost:8000/api/user/bookSlot',{id:selectedSlot._id},{
+         headers:{
+          authorization:`Bearer ${token} `
+        }
+      })
+      console.log(response.data);
+
+      if(response.data.message=='Selected sot is already booked')
+      {
+        alert('This Slot is already booked');
+         return;
+      }
+
+      if (response.success) {
+     
+        setIsLoading(true);
+
+        console.log(
+          "Booking appointment for:",
+          doctor.FullName,
+          "on",
+          selectedDate,
+          "at",
+          selectedSlot.time,
+          "Type:",
+          selectedSlot.type
+        );
+       
+        setTimeout(async() => {
+          setIsLoading(false);
+          alert(
+            `Appointment booked with ${doctor.FullName} for ${selectedSlot.Time.Start} on ${selectedDate}`
+          );
+          // navigate('/my-appointments'); // Optionally navigate to appointments page
+      
+          setSelectedSlot(null);
+
+          await  GetAvailibiltySlots();
+         
+        }, 1500);
+      }
+    } catch (error) {
+       console.log("Error occurred booking slots", error);
+    }
   };
 
   const pageVariants = {
@@ -350,7 +404,7 @@ const DoctorProfile = () => {
               className="md:ml-auto flex flex-col items-center md:items-end gap-2 mt-4 md:mt-0"
             >
               <Link
-                to={`/start-chat/${doctor._id}`} 
+                to={`/start-chat/${doctor._id}`}
                 className="w-full md:w-auto bg-teal-500 hover:bg-teal-600 text-white font-medium py-2.5 px-6 rounded-lg text-sm text-center transition-colors"
               >
                 Chat with Doctor (Digital)
@@ -500,7 +554,7 @@ const DoctorProfile = () => {
                       <motion.button
                         key={index}
                         onClick={() => handleSlotSelect(slot)}
-                        disabled={!slot.available || isLoading}
+                        disabled={slot.isBooked || isLoading}
                         className={`p-2.5 border rounded-md text-xs font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-1
                                           ${
                                             selectedSlot === slot
@@ -508,15 +562,15 @@ const DoctorProfile = () => {
                                               : ""
                                           }
                                           ${
-                                            !slot.available
+                                            slot.isBooked
                                               ? "bg-slate-200 text-slate-400 cursor-not-allowed line-through"
                                               : "bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100 hover:border-blue-500 focus:ring-blue-500"
                                           }
                                         `}
-                        whileHover={slot.available ? { scale: 1.05 } : {}}
-                        whileTap={slot.available ? { scale: 0.95 } : {}}
+                        whileHover={slot.isBooked ? { scale: 1.05 } : {}}
+                        whileTap={slot.isBooked ? { scale: 0.95 } : {}}
                       >
-                        {slot.time}
+                        {slot.Time.Start}-{slot.Time.End}
                         <span className="block text-[10px] opacity-70">
                           {slot.type}
                         </span>
@@ -537,13 +591,13 @@ const DoctorProfile = () => {
                   className="mt-6 p-3 bg-indigo-50 rounded-md border border-indigo-200 text-center"
                 >
                   <p className="text-sm font-medium text-indigo-700">
-                    Selected: {selectedSlot.time} ({selectedSlot.type})
+                    Selected: {selectedSlot.Time.Start} ({selectedSlot.type})
                   </p>
-                  <p className="text-xs text-indigo-500">
+                  {/* <p className="text-xs text-indigo-500">
                     Clinic:{" "}
                     {doctor.clinics.find((c) => c.id === selectedSlot.clinicId)
                       ?.name || "N/A"}
-                  </p>
+                  </p> */}
                 </motion.div>
               )}
               <motion.button

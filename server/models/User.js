@@ -37,6 +37,10 @@ const Usermodel = new mongoose.Schema(
     address: {
       type: Addressmodel,
     },
+    Appointments:[{
+      type: mongoose.Schema.ObjectId,
+      ref:"AvailibilitySlot"
+    }]
   },
   {
     timestamps: true,

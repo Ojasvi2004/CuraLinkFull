@@ -2,48 +2,50 @@ const { User } = require("../models/User");
 
 const bcrypt = require("bcrypt");
 
-const jwt=require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 const Doctor = require("../models/Doctor");
+const AvailabiitySlot = require("../models/AvailabililitySlots");
+const { Appointment } = require("../models/Appointment");
 
-
-
-const GenToken= async (userId)=>{
-  const exp="1h";
-  const RefreshToken=jwt.sign({id:userId},process.env.SECRET_KEY,{expiresIn:exp});
+const GenToken = async (userId) => {
+  const exp = "1h";
+  const RefreshToken = jwt.sign({ id: userId }, process.env.SECRET_KEY, {
+    expiresIn: exp,
+  });
   return RefreshToken;
-}
+};
 
-const LoginUser= async(req,res)=>{
-    const {email,password}=req.body;
-    if (!email || !password) 
-      {
-       return res
+const LoginUser = async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res
       .status(401)
       .json({ success: false, message: "All fields are required." });
+  }
+  try {
+    const myUser = await User.findOne({ email });
+
+    if (!myUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User is not registered" });
     }
-    try {
-      const myUser= await User.findOne({email});
+    const myUserHash = myUser.passwordHash;
+    const bool = await bcrypt.compare(password, myUserHash);
 
-      if (!myUser) 
-      {
-        return res.status(404).json({success:false,message:"User is not registered"});
-      }
-      const myUserHash=myUser.passwordHash;
-      const bool= await bcrypt.compare(password,myUserHash);
-
-      if (bool==false) 
-      {
-        return res.status(401).json({success:false,message:"Password is incorrect"});
-      }
-      const token=await GenToken(myUser._id);
-      return res.status(200).json({success:true,message:"Login Successfull",token});
-      
-    } catch (error) 
-    {
-       return res.status(400).json({success:false,message:`Error: ${error}`});
+    if (bool == false) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Password is incorrect" });
     }
-}
-
+    const token = await GenToken(myUser._id);
+    return res
+      .status(200)
+      .json({ success: true, message: "Login Successfull", token });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: `Error: ${error}` });
+  }
+};
 
 const HashPassword = async (password) => {
   const saltRounds = 10;
@@ -62,12 +64,10 @@ const RegisterUser = async (req, res) => {
       .json({ success: false, message: "All fields are required." });
   }
   if (password != confirmPassword) {
-    return res
-      .send(406)
-      .json({
-        success: false,
-        message: "Password and ConfirmPassword does not match.",
-      });
+    return res.send(406).json({
+      success: false,
+      message: "Password and ConfirmPassword does not match.",
+    });
   }
 
   try {
@@ -80,7 +80,6 @@ const RegisterUser = async (req, res) => {
     }
 
     const userHashPassword = await HashPassword(password);
-    
 
     const myUser = new User({
       name: fullName,
@@ -91,44 +90,111 @@ const RegisterUser = async (req, res) => {
 
     await myUser.save();
 
-
-
     res.status(201).json({ success: true, message: "User Created" });
   } catch (error) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        message: `Error Occured while registering: ${error}`,
-      });
+    return res.status(400).json({
+      success: false,
+      message: `Error Occured while registering: ${error}`,
+    });
   }
 };
 
-
-
-const GetDctorList= async(req,res)=>{
+const GetDctorList = async (req, res) => {
   try {
-    const doctorList=await Doctor.find({});
+    const doctorList = await Doctor.find({});
 
-    return res.status(202).json({success:true,message:"Successfull Fetching",doctorList});
+    return res
+      .status(202)
+      .json({ success: true, message: "Successfull Fetching", doctorList });
   } catch (error) {
-    return res.status(400).json({success:false,message:`Error: ${error}`});
+    return res.status(400).json({ success: false, message: `Error: ${error}` });
   }
-  
-}
+};
 
-const GetDoctor= async (req,res) => 
-{
- try {
+const GetDoctor = async (req, res) => {
+  try {
+    const { doctorId } = req.params;
 
-  const { doctorId }=req.params;
+    const doctorProfile = await Doctor.findById(doctorId);
 
-  const doctorProfile= await Doctor.findById(doctorId );
+    return res
+      .status(202)
+      .json({ success: true, message: "Successfull Fetching", doctorProfile });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: `Error: ${error}` });
+  }
+};
 
-   return res.status(202).json({success:true,message:"Successfull Fetching",doctorProfile});
- } catch (error) {
-   return res.status(400).json({success:false,message:`Error: ${error}`});
- }  
-}
+const GetAvailabilitySlotsForUser = async (req, res) => {
+  try {
+    const { doctorId, date } = req.body;
 
-module.exports = { RegisterUser, HashPassword,LoginUser ,GetDctorList,GetDoctor};
+    const AllSlots = await AvailabiitySlot.find({
+      doctorId: doctorId,
+      Date: date,
+    });
+
+    return res
+      .status(200)
+      .json({ success: true, message: "Successfull Slots Fetching", AllSlots });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: `Error: ${error}` });
+  }
+};
+
+const BookSlot = async (req, res) => {
+  try {
+    const { id } = req.body;
+    const _id = req._id;
+    console.log(_id);
+
+    const selectedSlot = await AvailabiitySlot.findOne({ _id: id });
+
+    if (!selectedSlot) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Slot not found" });
+    }
+
+    if (selectedSlot.isBooked == false) {
+      selectedSlot.isBooked = true;
+      selectedSlot.patientId = _id;
+      console.log(selectedSlot);
+      await selectedSlot.save();
+
+      const AppointmentForSlot = new Appointment({
+        slotId: selectedSlot._id,
+        patientId: _id,
+        doctorId: selectedSlot.doctorId,
+        clinicId: selectedSlot.clinicId,
+        date: selectedSlot.Date, 
+        time:{
+          start:selectedSlot.Time.Start,
+          end:selectedSlot.Time.End,
+        },
+        consultationType:"InPerson",
+        status: "upcoming",
+      });
+
+      await AppointmentForSlot.save();
+
+      return res.status(200).json({ success: true, message: "Slot is booked",AppointmentForSlot });
+    } else {
+      return res
+        .status(200)
+        .json({ success: false, message: "Selected sot is already booked" });
+    }
+  } catch (error) {
+    return res.status(400).json({ success: false, message: `Error: ${error}` });
+  }
+};
+
+module.exports = {
+  RegisterUser,
+  HashPassword,
+  LoginUser,
+  GetDctorList,
+  GetDoctor,
+  GetAvailabilitySlotsForUser,
+  BookSlot,
+};

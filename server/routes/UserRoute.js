@@ -1,13 +1,21 @@
-const  express=require("express");
-const UserRoute=express.Router();
-const { RegisterUser, LoginUser, GetDctorList, GetDoctor}=require("../controllers/UserController.js") 
+const express = require("express");
+const UserRoute = express.Router();
+const {
+  RegisterUser,
+  LoginUser,
+  GetDctorList,
+  GetDoctor,
+  GetAvailabilitySlotsForUser,
+  BookSlot,
+} = require("../controllers/UserController.js");
+const UserAuth = require("../middlewares/UserAuth.js");
+const { FetchAppointmentsForPatient } = require("../controllers/FetchAppointments.js");
 
-
-
-UserRoute.post("/register",  RegisterUser );
-UserRoute.post("/login",LoginUser);
-UserRoute.get("/getDoctorList",GetDctorList);
-UserRoute.get("/getDoctorProfile/:doctorId",GetDoctor);
-module.exports=UserRoute;
-
-
+UserRoute.post("/register", RegisterUser);
+UserRoute.get("/getAppointmentsAll",UserAuth,FetchAppointmentsForPatient);
+UserRoute.post("/login", LoginUser);
+UserRoute.get("/getDoctorList", GetDctorList);
+UserRoute.get("/getDoctorProfile/:doctorId", GetDoctor);
+UserRoute.post("/getSlotsOfDoctor", GetAvailabilitySlotsForUser);
+UserRoute.post("/bookSlot",UserAuth,BookSlot);
+module.exports = UserRoute;

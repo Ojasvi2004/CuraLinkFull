@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import axios from "axios";
+import { useContext } from "react";
+import { Authcontext } from "../Context/AuthContext";
+import { useEffect } from "react";
 
 // Placeholder Icons
 const VideoCameraIcon = () => (
@@ -55,55 +59,98 @@ const ClockIcon = () => (
   </svg>
 );
 
-// Mock Appointments Data
-const mockAppointments = {
-  upcoming: [
-    {
-      id: "apt001",
-      doctorName: "Dr. Ananya Sharma",
-      specialty: "Cardiology",
-      type: "DIGITAL",
-      date: "2023-08-15",
-      time: "10:30 AM",
-      status: "Scheduled",
-      clinicName: "CuraLink Telehealth",
-    },
-    {
-      id: "apt002",
-      doctorName: "Dr. Vikram Singh",
-      specialty: "Pediatrics",
-      type: "PHYSICAL",
-      date: "2023-08-18",
-      time: "02:00 PM",
-      status: "Scheduled",
-      clinicName: "TinyCare Hospital, Delhi",
-    },
-  ],
-  past: [
-    {
-      id: "apt003",
-      doctorName: "Dr. Priya Reddy",
-      specialty: "Dermatology",
-      type: "DIGITAL",
-      date: "2023-07-20",
-      time: "11:00 AM",
-      status: "Completed",
-      clinicName: "CuraLink Telehealth",
-    },
-    {
-      id: "apt004",
-      doctorName: "Dr. Ananya Sharma",
-      specialty: "Cardiology",
-      type: "PHYSICAL",
-      date: "2023-07-05",
-      time: "09:00 AM",
-      status: "Completed",
-      clinicName: "MedHeart Clinic, Mumbai",
-    },
-  ],
-};
+
+// const mockAppointments = {
+//   upcoming: [
+//     {
+//       id: "apt001",
+//       doctorName: "Dr. Ananya Sharma",
+//       specialty: "Cardiology",
+//       type: "DIGITAL",
+//       date: "2023-08-15",
+//       time: "10:30 AM",
+//       status: "Scheduled",
+//       clinicName: "CuraLink Telehealth",
+//     },
+//     {
+//       id: "apt002",
+//       doctorName: "Dr. Vikram Singh",
+//       specialty: "Pediatrics",
+//       type: "PHYSICAL",
+//       date: "2023-08-18",
+//       time: "02:00 PM",
+//       status: "Scheduled",
+//       clinicName: "TinyCare Hospital, Delhi",
+//     },
+//   ],
+//   past: [
+//     {
+//       id: "apt003",
+//       doctorName: "Dr. Priya Reddy",
+//       specialty: "Dermatology",
+//       type: "DIGITAL",
+//       date: "2023-07-20",
+//       time: "11:00 AM",
+//       status: "Completed",
+//       clinicName: "CuraLink Telehealth",
+//     },
+//     {
+//       id: "apt004",
+//       doctorName: "Dr. Ananya Sharma",
+//       specialty: "Cardiology",
+//       type: "PHYSICAL",
+//       date: "2023-07-05",
+//       time: "09:00 AM",
+//       status: "Completed",
+//       clinicName: "MedHeart Clinic, Mumbai",
+//     },
+//   ],
+// };
+
+
 
 const Appointments = () => {
+
+
+  const {token,settoken}=useContext(Authcontext);
+const [mockAppointments,setmockAppointments]= useState({
+  upcoming:[],
+  past:[]
+});
+
+const GetAppointments=async ()=>{
+ 
+
+  try {
+
+    const response=await axios.get("http://localhost:8000/api/user/getAppointmentsAll",
+      {
+        headers:{
+          Authorization:`Bearer ${token}`
+        }
+      }
+    );
+    if (response.data.success) 
+    {
+      const allAppointments=response.data.MyScheduleArray || [];
+
+      const Upcoming=allAppointments.filter((appointment)=>appointment.status==="upcoming");
+      const Past=allAppointments.filter((appointment)=>appointment.status==="completed");
+      
+      setmockAppointments({
+        upcoming:Upcoming,
+        past:Past
+      });
+    }
+    
+  } catch (error) {
+    console.log("Error occurred fetching appointments", error);
+  }
+}
+
+useEffect(()=>{
+  GetAppointments();
+},[])
   const [activeTab, setActiveTab] = useState("upcoming"); // 'upcoming' or 'past'
 
   const pageVariants = {
