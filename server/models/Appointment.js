@@ -7,6 +7,10 @@ const AppointmentSchema = new mongoose.Schema(
       ref: "AvailabiitySlot",
       required: true,
     },
+    patientName:{
+      type:String,
+      required:true
+    },
     patientId: {
       type: mongoose.Schema.ObjectId,
       ref: "User",
@@ -25,6 +29,10 @@ const AppointmentSchema = new mongoose.Schema(
     date: {
       type: Date,
       required: true,
+    },
+    doctorName:{
+      type:String,
+      required:true,
     },
     time: {
       start: { type: String, required: true },

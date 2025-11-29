@@ -6,9 +6,10 @@ const jwt = require("jsonwebtoken");
 const Doctor = require("../models/Doctor");
 const AvailabiitySlot = require("../models/AvailabililitySlots");
 const { Appointment } = require("../models/Appointment");
+const { subtle } = require("crypto");
 
 const GenToken = async (userId) => {
-  const exp = "1h";
+  const exp = "5h";
   const RefreshToken = jwt.sign({ id: userId }, process.env.SECRET_KEY, {
     expiresIn: exp,
   });
@@ -142,6 +143,9 @@ const GetAvailabilitySlotsForUser = async (req, res) => {
   }
 };
 
+
+
+
 const BookSlot = async (req, res) => {
   try {
     const { id } = req.body;
@@ -150,21 +154,30 @@ const BookSlot = async (req, res) => {
 
     const selectedSlot = await AvailabiitySlot.findOne({ _id: id });
 
-    if (!selectedSlot) {
+    if (!selectedSlot) 
+    {
       return res
         .status(404)
         .json({ success: false, message: "Slot not found" });
     }
-
+    
     if (selectedSlot.isBooked == false) {
       selectedSlot.isBooked = true;
       selectedSlot.patientId = _id;
       console.log(selectedSlot);
       await selectedSlot.save();
 
+      const doctor= await Doctor.findOne({_id:selectedSlot.doctorId});
+      const patient= await User.findOne({_id});
+
+      const dname=doctor.FullName;
+      const pname=patient.name;
+
       const AppointmentForSlot = new Appointment({
         slotId: selectedSlot._id,
         patientId: _id,
+        patientName:pname,
+        doctorName:dname,
         doctorId: selectedSlot.doctorId,
         clinicId: selectedSlot.clinicId,
         date: selectedSlot.Date, 
@@ -189,6 +202,35 @@ const BookSlot = async (req, res) => {
   }
 };
 
+const GetUserData=async(req,res)=>{
+
+  try {
+    const _id=req._id;
+
+    if (_id) 
+    {
+      const user=await User.findById(_id);
+      const data={
+        name:user.name,
+        email:user.email
+      }
+      if (user) 
+      {
+        res.status(200).json({success:true,message:"Here is users data",data});
+      }
+      else{
+        res.status(401).json({subtle:false,message:"User not found "
+        })
+      }
+      
+    }
+    
+  } catch (error) {
+     return res.status(400).json({ success: false, message: `Error: ${error}` });
+  }
+};
+
+
 module.exports = {
   RegisterUser,
   HashPassword,
@@ -197,4 +239,5 @@ module.exports = {
   GetDoctor,
   GetAvailabilitySlotsForUser,
   BookSlot,
+  GetUserData
 };

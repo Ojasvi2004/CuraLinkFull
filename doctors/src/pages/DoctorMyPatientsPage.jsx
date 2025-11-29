@@ -1,29 +1,62 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
+import { useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
+import { useEffect } from 'react';
 
-// --- Example Icons (Replace with actual icons from a library like Heroicons) ---
+
 const UsersGroupIcon = () => <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.235-1.26-.652-1.741M12 12h.01M17 10h.01M7 10h.01M7 17h.01M12 17h.01M17 17h.01M12 20v-2a3 3 0 00-5.356-1.857M12 20H7"></path></svg>;
 const SearchIcon = () => <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>;
 const SortAscendingIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"></path></svg>;
 const UserCircleIcon = ({ size = "w-10 h-10" }) => <svg className={`${size} text-slate-400`} fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd"></path></svg>;
-// --- End Example Icons ---
 
 
-// Mock Patient Data - Replace with actual data fetched from API
-const mockPatientsData = [
-  { id: 'pat001', name: 'Rohan Patel', lastVisit: '2023-10-28', nextAppointment: '2023-11-15', primaryConcern: 'Hypertension', profilePic: 'https://via.placeholder.com/80/A78BFA/FFFFFF?text=RP' },
-  { id: 'pat002', name: 'Priya Kumari', lastVisit: '2023-09-10', nextAppointment: null, primaryConcern: 'Routine Checkup', profilePic: 'https://via.placeholder.com/80/9CA3AF/FFFFFF?text=PK' },
-  { id: 'pat003', name: 'Amit Singh', lastVisit: '2023-10-28', nextAppointment: '2023-12-01', primaryConcern: 'Knee Pain', profilePic: '' }, // No pic
-  { id: 'pat004', name: 'Sneha Iyer', lastVisit: '2023-08-05', nextAppointment: null, primaryConcern: 'Lab Results Discussion', profilePic: 'https://via.placeholder.com/80/FBBF24/FFFFFF?text=SI' },
-  { id: 'pat005', name: 'Vijay Kumar', lastVisit: '2023-10-29', nextAppointment: '2023-11-10', primaryConcern: 'New Consultation', profilePic: 'https://via.placeholder.com/80/34D399/FFFFFF?text=VK' },
-];
+
+
+// const mockPatientsData = [
+//   { id: 'pat001', name: 'Rohan Patel', lastVisit: '2023-10-28', nextAppointment: '2023-11-15', primaryConcern: 'Hypertension', profilePic: 'https://via.placeholder.com/80/A78BFA/FFFFFF?text=RP' },
+//   { id: 'pat002', name: 'Priya Kumari', lastVisit: '2023-09-10', nextAppointment: null, primaryConcern: 'Routine Checkup', profilePic: 'https://via.placeholder.com/80/9CA3AF/FFFFFF?text=PK' },
+//   { id: 'pat003', name: 'Amit Singh', lastVisit: '2023-10-28', nextAppointment: '2023-12-01', primaryConcern: 'Knee Pain', profilePic: '' }, // No pic
+//   { id: 'pat004', name: 'Sneha Iyer', lastVisit: '2023-08-05', nextAppointment: null, primaryConcern: 'Lab Results Discussion', profilePic: 'https://via.placeholder.com/80/FBBF24/FFFFFF?text=SI' },
+//   { id: 'pat005', name: 'Vijay Kumar', lastVisit: '2023-10-29', nextAppointment: '2023-11-10', primaryConcern: 'New Consultation', profilePic: 'https://via.placeholder.com/80/34D399/FFFFFF?text=VK' },
+// ];
 
 const DoctorMyPatientsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('name_asc'); // e.g., 'name_asc', 'last_visit_desc'
+  const [sortBy, setSortBy] = useState('name_asc'); 
+  const[mockPatientsData,setmockPaientData]=useState([]);
+  const {token,settoken}=useContext(AuthContext);
 
-  // Animation Variants
+  const GetAllPatientsData=async () => 
+  {
+      try {
+        const response=await axios.get("http://localhost:8000/api/doctors/get-patients",
+          {
+            headers:{
+              Authorization:`Bearer ${token}`
+            }
+          }
+        );
+        if (response.data.success) 
+        {
+          // console.log(response.data);
+            setmockPaientData(response.data.patient);
+            console.log(mockPatientsData);
+        }
+        
+      } catch (error) {
+        console.log(error);
+      }
+  }
+
+  useEffect(()=>{
+    GetAllPatientsData();
+    filteredAndSortedPatients
+    
+  },[])
+
   const pageVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.5, staggerChildren: 0.1 } },
@@ -45,7 +78,7 @@ const DoctorMyPatientsPage = () => {
       patient.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // Basic sorting example
+ 
     if (sortBy === 'name_asc') {
       patients.sort((a, b) => a.name.localeCompare(b.name));
     } else if (sortBy === 'name_desc') {
@@ -66,7 +99,7 @@ const DoctorMyPatientsPage = () => {
         initial="hidden"
         animate="visible"
       >
-        {/* Page Header */}
+        
         <motion.div variants={itemVariants} className="mb-8 sm:mb-10 text-center lg:text-left">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -78,7 +111,7 @@ const DoctorMyPatientsPage = () => {
               </p>
             </div>
             <Link
-              to="/doctor/add-patient" // Placeholder for adding a new patient manually
+              to="/doctor/add-patient" 
               className="mt-4 lg:mt-0 whitespace-nowrap bg-green-500 hover:bg-green-600 text-white font-medium py-2.5 px-5 rounded-lg text-sm shadow-md hover:shadow-lg transition-all duration-150 flex items-center self-center lg:self-auto"
             >
               <UsersGroupIcon /> <span className="ml-2">Add New Patient</span>
@@ -86,7 +119,7 @@ const DoctorMyPatientsPage = () => {
           </div>
         </motion.div>
 
-        {/* Search and Sort Bar */}
+       
         <motion.div variants={itemVariants} className="bg-white p-4 sm:p-6 rounded-xl shadow-lg mb-8 sm:mb-10">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="relative w-full sm:w-2/3 lg:w-1/2">
@@ -119,10 +152,10 @@ const DoctorMyPatientsPage = () => {
           </div>
         </motion.div>
 
-        {/* Patient List/Grid */}
+        
         {filteredAndSortedPatients.length > 0 ? (
           <motion.div
-            key={searchTerm + sortBy} // Re-trigger list animation on filter/sort change
+            key={searchTerm + sortBy} 
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8"
             variants={listVariants}
             initial="hidden"
@@ -130,8 +163,8 @@ const DoctorMyPatientsPage = () => {
           >
             {filteredAndSortedPatients.map((patient) => (
               <motion.div
-                key={patient.id}
-                variants={itemVariants} // Individual card entry
+                key={patient._id}
+                variants={itemVariants} 
                 whileHover="hover"
                 className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col transform transition-all duration-200 ease-out"
               >
@@ -144,7 +177,7 @@ const DoctorMyPatientsPage = () => {
                     </div>
                   )}
                   <h3 className="text-lg font-semibold text-slate-800 mb-1">{patient.name}</h3>
-                  <p className="text-xs text-slate-500 mb-1">Patient ID: {patient.id}</p>
+                  <p className="text-xs text-slate-500 mb-1">Patient ID: {patient._id}</p>
                   <p className="text-sm text-blue-600 font-medium mb-3">{patient.primaryConcern || 'General'}</p>
 
                   <div className="text-xs text-slate-500 space-y-1 my-3 py-3 border-t border-b border-slate-100 w-full">

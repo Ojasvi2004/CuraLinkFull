@@ -7,9 +7,10 @@ const fs = require("fs");
 const { any } = require("../middlewares/multer");
 const AvailabiitySlot = require("../models/AvailabililitySlots");
 const { Clinic } = require("../models/Clinic");
+const { Patient } = require("../models/PatientRecord");
 
 const GenToken = async (userId) => {
-  const exp = "1h";
+  const exp = "5h";
   const RefreshToken = jwt.sign({ userId }, process.env.SECRET_KEY, {
     expiresIn: exp,
   });
@@ -195,18 +196,18 @@ const CreateSlots = async (req, res) => {
   const currentTime = new Date(`${date}T${startTime}:00Z`);
   const blockEndTime = new Date(`${date}T${endTime}:00Z`);
 
-     await AvailabiitySlot.deleteMany({
-      doctorId: req._id,
-      Date: date,
-      $or: [
-        {
-          "Time.Start": { $gte: startTime, $lt: endTime },
-        },
-        {
-          "Time.End": { $gt: startTime, $lte: endTime },
-        },
-      ],
-    });
+  await AvailabiitySlot.deleteMany({
+    doctorId: req._id,
+    Date: date,
+    $or: [
+      {
+        "Time.Start": { $gte: startTime, $lt: endTime },
+      },
+      {
+        "Time.End": { $gt: startTime, $lte: endTime },
+      },
+    ],
+  });
 
   let slots = [];
   let current = new Date(currentTime);
@@ -218,12 +219,10 @@ const CreateSlots = async (req, res) => {
   }
 
   if (!slotDuration || slotDuration <= 0) {
-    return res
-      .status(403)
-      .json({
-        success: false,
-        message: "Please select correct slot duration.",
-      });
+    return res.status(403).json({
+      success: false,
+      message: "Please select correct slot duration.",
+    });
   }
 
   while (current < blockEndTime) {
@@ -244,14 +243,12 @@ const CreateSlots = async (req, res) => {
       doctorId: req._id,
       Date: date,
       "Time.Start": slotStartTimeStr,
-      "Time.End":slotEndTimeStr
+      "Time.End": slotEndTimeStr,
     });
 
     if (!existingSlot) {
       slots.push({
-
-       slotId: `${req._id}_${date}_${slotStartTimeStr}_${slotEndTimeStr}`,
-
+        slotId: `${req._id}_${date}_${slotStartTimeStr}_${slotEndTimeStr}`,
 
         doctorId: req._id,
         clinicId: clinicId,
@@ -306,54 +303,150 @@ const DeleteAllAvailabilitySlots = async (req, res) => {
   }
 };
 
-const GetSlotOfDate= async(req,res)=>{
-    const {date}=req.body;
+const GetSlotOfDate = async (req, res) => {
+  const { date } = req.body;
 
-    try {
-        const AllSlotOfADay=await AvailabiitySlot.find({Date:date});
+  try {
+    const AllSlotOfADay = await AvailabiitySlot.find({ Date: date });
 
-        return res.status(200).json({success:true,message:`These are he slots for ${date}`,AllSlotOfADay});
-
-        
-    } catch (error) {
-         return res.status(500).json({
+    return res.status(200).json({
+      success: true,
+      message: `These are he slots for ${date}`,
+      AllSlotOfADay,
+    });
+  } catch (error) {
+    return res.status(500).json({
       success: false,
       message: "Error fetching slots.",
       error: err.message,
     });
-    }
-
+  }
 };
 
-const DeleteSingleSlot=async(req,res)=>{
-
+const DeleteSingleSlot = async (req, res) => {
   try {
-    
-  const {id}=req.body;
-  console.log(id);
+    const { id } = req.body;
+    console.log(id);
 
-  const deleted=await AvailabiitySlot.deleteOne({_id:id});
+    const deleted = await AvailabiitySlot.deleteOne({ _id: id });
 
-  if (!deleted) {
-  return res.status(404).json({ success: false, message: "Slot not found" });
-}
+    if (!deleted) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Slot not found" });
+    }
 
-
-  return res.status(200).json({success:true,message:"Slot deleted"});
-
+    return res.status(200).json({ success: true, message: "Slot deleted" });
   } catch (error) {
-     return res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Error deleting slot.",
       error: error.message,
-  });
-}
-
-
-
+    });
+  }
 };
 
+const addPatient = async (req, res) => {
+  try {
+    const doctorId = req._id;
+    const {
+      patientFullName,
+      patientGender,
+      patientDob,
+      patientEmail,
+      patientPhone,
+      primaryConcern,
+      allergies,
+      chronicConditions,
+    } = req.body.formData;
 
+    if (
+      !patientFullName ||
+      !patientEmail ||
+      !patientPhone ||
+      !patientDob ||
+      !patientGender
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields.",
+      });
+    }
+
+    let existingPatient = await Patient.findOne({ email: patientEmail });
+
+    if (existingPatient) {
+      if (existingPatient.associatedDoctors.includes(doctorId)) {
+        return res.status(409).json({
+          success: false,
+          message: "Patient already exists and is linked with you.",
+        });
+      } else {
+        existingPatient.associatedDoctors.push(doctorId);
+        await existingPatient.save();
+        return res.status(200).json({
+          success: true,
+          message: "Existing patient linked to doctor successfully.",
+          data: existingPatient,
+        });
+      }
+    }
+    const newPatient = new Patient({
+      name: patientFullName,
+      gender: patientGender,
+      dateOfBirth: patientDob,
+      email: patientEmail,
+      phoneNumber: patientPhone,
+      medicalInfo: {
+        allergies: allergies ? allergies.split(",").map((a) => a.trim()) : [],
+        chronicConditions: chronicConditions
+          ? chronicConditions.split(",").map((c) => c.trim())
+          : [],
+      },
+      associatedDoctors: [doctorId],
+    });
+
+    await newPatient.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Patient added successfully.",
+      patientData: newPatient,
+    });
+  } catch (error) {
+    console.error("Error adding patient:", error);
+    res.status(500).json({
+      success: false,
+      message: "Sever error on adding patient.",
+      error: error.message,
+    });
+  }
+};
+
+const getPatients = async (req, res) => {
+  try {
+    const id = req._id;
+
+    const patient = await Patient.find({ associatedDoctors: id });
+
+    if (patient) {
+      res
+        .status(200)
+        .json({ success: true, message: "Here are yu all patients", patient });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: `Cannot get patients list`,
+      });
+    }
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: `Cannot get patients list`,
+      error: error.message,
+    });
+  }
+};
 
 module.exports = {
   RegisterDoctor,
@@ -361,5 +454,7 @@ module.exports = {
   CreateSlots,
   DeleteAllAvailabilitySlots,
   GetSlotOfDate,
-  DeleteSingleSlot
+  DeleteSingleSlot,
+  addPatient,
+  getPatients,
 };

@@ -13,10 +13,12 @@ import { useContext } from 'react'
 import { AuthContext } from './context/AuthContext'
 import DoctorAppointmentsPage from './pages/DoctorAppointmentsPage'
 import DoctorMyPatientsPage from './pages/DoctorMyPatientsPage'
-import DoctorLiveQueuePage from './DoctorLiveQueuePage'
+import DoctorLiveQueuePage from './pages/DoctorLiveQueuePage'
 import DoctorSetAvailabilityPage from './pages/DoctorSetAvailabilityPage'
 import ProtectedRouteForDoctors from './components/ProtectedRoute'
 import SettingsPage from './pages/ProfileSettings'
+import DoctorPatientRecordPage from './pages/DoctorPatientRecordPage'
+import DoctorAddPatientPage from './pages/AddPatientPage'
 
 
 
@@ -43,6 +45,8 @@ function App() {
 
 
 
+      <Route path='/doctor/patient-record/pat002' element={<ProtectedRouteForDoctors><DoctorPatientRecordPage/></ProtectedRouteForDoctors>}></Route>
+      <Route path='/doctor/add-patient' element={<DoctorAddPatientPage></DoctorAddPatientPage>}></Route>
       <Route  path='/doctor/dashboard' element={<ProtectedRouteForDoctors><DoctorDashboardPage/></ProtectedRouteForDoctors>} ></Route>
       <Route path='/doctor/appointments' element={<ProtectedRouteForDoctors><DoctorAppointmentsPage/></ProtectedRouteForDoctors>}></Route>
       <Route path='/doctor/patients' element={<ProtectedRouteForDoctors><DoctorMyPatientsPage/></ProtectedRouteForDoctors>} ></Route>

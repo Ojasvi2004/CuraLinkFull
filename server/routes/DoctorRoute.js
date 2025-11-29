@@ -6,9 +6,17 @@ const {
   DeleteAllAvailabilitySlots,
   GetSlotOfDate,
   DeleteSingleSlot,
+  addPatient,
+  getPatients,
 } = require("../controllers/DoctorController");
 const upload = require("../middlewares/multer");
 const DoctorAuth = require("../middlewares/DoctorAuth");
+const {
+  FetchAllAppointmentsForDoctors,
+  FetchTodaysAppointmentForDoctors,
+  handleAppointmentStatusAtLiveQueue,
+} = require("../controllers/FetchAppointments");
+const Doctor = require("../models/Doctor");
 const DoctorRoute = express.Router();
 
 DoctorRoute.post(
@@ -21,14 +29,43 @@ DoctorRoute.post(
   RegisterDoctor
 );
 
-DoctorRoute.post("/login", LoginDoctor);
+DoctorRoute.post("/login",
+   LoginDoctor);
 
-DoctorRoute.post("/createSlots", DoctorAuth, CreateSlots);
+DoctorRoute.post("/createSlots",
+   DoctorAuth,
+    CreateSlots);
 
-DoctorRoute.post("/deleteAllSlots", DeleteAllAvailabilitySlots);
+DoctorRoute.post("/deleteAllSlots",
+   DeleteAllAvailabilitySlots);
 
-DoctorRoute.post("/GetSlotsOfADate", GetSlotOfDate);
+DoctorRoute.post("/GetSlotsOfADate",
+   GetSlotOfDate);
 
-DoctorRoute.post("/deleteSingleSlot", DeleteSingleSlot);
+DoctorRoute.post("/deleteSingleSlot",
+   DeleteSingleSlot);
+
+DoctorRoute.get(
+  "/getAppointmentsAll",
+  DoctorAuth,
+  FetchAllAppointmentsForDoctors
+);
+
+DoctorRoute.post(
+  "/gettodayAppointment",
+  DoctorAuth,
+  FetchTodaysAppointmentForDoctors
+);
+
+DoctorRoute.post("/handleAppointment", 
+  handleAppointmentStatusAtLiveQueue);
+
+DoctorRoute.post("/add-patient",
+   DoctorAuth,
+    addPatient);
+
+DoctorRoute.get("/get-patients", 
+  DoctorAuth,
+   getPatients);
 
 module.exports = DoctorRoute;

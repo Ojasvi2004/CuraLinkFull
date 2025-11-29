@@ -7,6 +7,7 @@ const {
   GetDoctor,
   GetAvailabilitySlotsForUser,
   BookSlot,
+  GetUserData,
 } = require("../controllers/UserController.js");
 const UserAuth = require("../middlewares/UserAuth.js");
 const { FetchAppointmentsForPatient } = require("../controllers/FetchAppointments.js");
@@ -18,4 +19,5 @@ UserRoute.get("/getDoctorList", GetDctorList);
 UserRoute.get("/getDoctorProfile/:doctorId", GetDoctor);
 UserRoute.post("/getSlotsOfDoctor", GetAvailabilitySlotsForUser);
 UserRoute.post("/bookSlot",UserAuth,BookSlot);
+UserRoute.get("/getUserData",UserAuth,GetUserData);
 module.exports = UserRoute;

@@ -257,7 +257,7 @@ const DoctorProfile = () => {
         }
     try {
 
-
+      
       const response=await axios.post('http://localhost:8000/api/user/bookSlot',{id:selectedSlot._id},{
          headers:{
           authorization:`Bearer ${token} `

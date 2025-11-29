@@ -6,7 +6,7 @@ import { useContext } from "react";
 import { Authcontext } from "../Context/AuthContext";
 import { useEffect } from "react";
 
-// Placeholder Icons
+
 const VideoCameraIcon = () => (
   <svg
     className="w-5 h-5 mr-1.5 text-blue-500"
@@ -60,52 +60,7 @@ const ClockIcon = () => (
 );
 
 
-// const mockAppointments = {
-//   upcoming: [
-//     {
-//       id: "apt001",
-//       doctorName: "Dr. Ananya Sharma",
-//       specialty: "Cardiology",
-//       type: "DIGITAL",
-//       date: "2023-08-15",
-//       time: "10:30 AM",
-//       status: "Scheduled",
-//       clinicName: "CuraLink Telehealth",
-//     },
-//     {
-//       id: "apt002",
-//       doctorName: "Dr. Vikram Singh",
-//       specialty: "Pediatrics",
-//       type: "PHYSICAL",
-//       date: "2023-08-18",
-//       time: "02:00 PM",
-//       status: "Scheduled",
-//       clinicName: "TinyCare Hospital, Delhi",
-//     },
-//   ],
-//   past: [
-//     {
-//       id: "apt003",
-//       doctorName: "Dr. Priya Reddy",
-//       specialty: "Dermatology",
-//       type: "DIGITAL",
-//       date: "2023-07-20",
-//       time: "11:00 AM",
-//       status: "Completed",
-//       clinicName: "CuraLink Telehealth",
-//     },
-//     {
-//       id: "apt004",
-//       doctorName: "Dr. Ananya Sharma",
-//       specialty: "Cardiology",
-//       type: "PHYSICAL",
-//       date: "2023-07-05",
-//       time: "09:00 AM",
-//       status: "Completed",
-//       clinicName: "MedHeart Clinic, Mumbai",
-//     },
-//   ],
-// };
+
 
 
 
@@ -242,7 +197,7 @@ useEffect(()=>{
           >
             {appointmentsToDisplay.map((apt) => (
               <motion.div
-                key={apt.id}
+                key={apt._id}
                 variants={itemVariants}
                 whileHover="hover"
                 className="bg-white rounded-xl shadow-lg overflow-hidden border border-slate-200"
@@ -280,7 +235,7 @@ useEffect(()=>{
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm text-slate-600 mb-4">
                     <div className="flex items-center">
-                      <ClockIcon /> {apt.date} at {apt.time}
+                      <ClockIcon /> {apt.date} at {apt.time.start}-{apt.time.end}
                     </div>
                     <div className="flex items-center">
                       {apt.type === "DIGITAL" ? (

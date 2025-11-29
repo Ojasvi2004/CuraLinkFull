@@ -1,6 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useContext } from "react";
+import { Authcontext } from "../Context/AuthContext";
 
 // --- Example Icons (Replace these with a proper icon library like Heroicons or React Icons) ---
 const CalendarIcon = () => (
@@ -95,7 +97,11 @@ const MessagesIcon = () => (
 );
 // --- End Example Icons ---
 
-const Dashboard = ({ userName = "Aarav Sharma" }) => {
+
+const Dashboard = () => {
+
+  const {token,user}=useContext(Authcontext);
+  const userName=user.name;
   const pageVariants = {
     hidden: { opacity: 0 },
     visible: {
