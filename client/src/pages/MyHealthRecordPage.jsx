@@ -1,9 +1,11 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { PencilIcon } from '@heroicons/react/24/solid';
+import axios from "axios";
+import { Authcontext } from "../Context/AuthContext";
 
-// --- Example Icons (Replace with actual icons) ---
+
 const FolderOpenIcon = () => (
   <svg
     className="w-8 h-8 text-blue-600"
@@ -30,8 +32,8 @@ const UploadIcon = () => (
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeWidth="2"
-      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-    ></path>
+      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12"
+    />
   </svg>
 );
 const FilterIcon = () => (
@@ -100,56 +102,9 @@ const TrashIcon = () => (
     ></path>
   </svg>
 );
-// --- End Example Icons ---
 
-// Mock Health Records Data - Replace with actual data
-const mockHealthRecordsData = [
-  {
-    id: "hr001",
-    recordType: "Lab Report - Blood Test",
-    date: "2023-09-15",
-    source: "Metropolis Labs",
-    fileName: "blood_report_sep23.pdf",
-    fileUrl: "#",
-    tags: ["lab", "blood test"],
-  },
-  {
-    id: "hr002",
-    recordType: "Discharge Summary",
-    date: "2023-07-05",
-    source: "City General Hospital",
-    fileName: "discharge_summary_jul23.pdf",
-    fileUrl: "#",
-    tags: ["hospital", "summary"],
-  },
-  {
-    id: "hr003",
-    recordType: "Vaccination Certificate",
-    date: "2023-01-20",
-    source: "Govt. Health Portal",
-    fileName: "covid_vaccine_cert.pdf",
-    fileUrl: "#",
-    tags: ["vaccination", "certificate"],
-  },
-  {
-    id: "hr004",
-    recordType: "X-Ray - Chest",
-    date: "2022-11-10",
-    source: "Radiology Center",
-    fileName: "chest_xray_nov22.jpg",
-    fileUrl: "#",
-    tags: ["imaging", "x-ray"],
-  },
-  {
-    id: "hr005",
-    recordType: "Doctor Note - Follow-up",
-    date: "2023-08-20",
-    source: "Dr. Ananya Sharma",
-    fileName: "follow_up_notes_aug23.pdf",
-    fileUrl: "#",
-    tags: ["notes", "cardiology"],
-  },
-];
+
+
 
 const recordTypes = [
   "All",
@@ -161,13 +116,18 @@ const recordTypes = [
   "Other",
 ];
 
+const getISODate = (date) => {
+  return date.toISOString().split("T")[0];
+}
+
 const MyHealthRecordsPage = () => {
-  const [records, setRecords] = useState(mockHealthRecordsData);
+  const { token, settoken } = useContext(Authcontext)
+  const [records, setRecords] = useState([]);
   const [filterType, setFilterType] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [showUploadModal, setShowUploadModal] = useState(false);
 
-  // Animation Variants
+
   const pageVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -217,174 +177,304 @@ const MyHealthRecordsPage = () => {
     },
   };
 
-  const filteredRecords = useMemo(() => {
-    return records
-      .filter(
-        (record) =>
-          (filterType === "All" ||
-            record.recordType
-              .toLowerCase()
-              .includes(filterType.toLowerCase())) &&
-          (record.recordType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            record.source.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            record.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (record.tags &&
-              record.tags.some((tag) =>
-                tag.toLowerCase().includes(searchTerm.toLowerCase())
-              )))
-      )
-      .sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date descending
-  }, [records, filterType, searchTerm]);
+ const filteredRecords = useMemo(() => {
+  return records
+    .filter((record) => {
+      const type = record.recordType || "";
+      const source = record.source || "";
+      const fileName = record.fileName || "";
+      const tags = record.tags || [];
 
-  const handleUploadRecord = (e) => {
-    e.preventDefault();
-    // UI only: Simulate upload and add to list
-    const newRecord = {
-      id: `hr${Date.now()}`,
-      recordType: e.target.uploadRecordType.value || "General Document",
-      date: e.target.uploadDate.value || new Date().toISOString().split("T")[0],
-      source: e.target.uploadSource.value || "Self Uploaded",
-      fileName: e.target.uploadFile.files[0]?.name || "document.pdf",
-      fileUrl: "#", // Placeholder
-      tags: e.target.uploadTags.value
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter((tag) => tag),
-    };
-    setRecords((prev) => [newRecord, ...prev]);
-    setShowUploadModal(false);
-    alert("Record Uploaded (UI Only)!");
-  };
+      return (
+        (filterType === "All" ||
+          type.toLowerCase().includes(filterType.toLowerCase())) &&
+        (
+          type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          source.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          tags.some(tag =>
+            (tag || "").toLowerCase().includes(searchTerm.toLowerCase())
+          )
+        )
+      );
+    })
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+}, [records, filterType, searchTerm]);
 
-  const RecordUploadModal = () => (
-    <motion.div
-      key="uploadModal"
-      variants={modalOuterVariants}
-      initial="hidden"
-      animate="visible"
-      exit="exit"
-      className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm"
-      onClick={() => setShowUploadModal(false)}
-    >
+  const GetHealthRecords = async (req, res) => {
+    try {
+      const response = await axios.get('http://localhost:8000/api/user/getHealthRecordsForUser', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (response.data.success) {
+        setRecords(response.data.records);
+        console.log("Successfull fetch.", response.data);
+      }
+    } catch (error) {
+      console.log("Error occurred in fetching.", error);
+
+    }
+  }
+
+  useEffect(() => {
+    GetHealthRecords();
+  }, [])
+
+
+const DeleteHealthRecord = async (id) => {
+  try {
+    const response = await axios.delete(
+      `http://localhost:8000/api/user/deleteUserRecord/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (response.data.success) {
+    
+      setRecords((prev) => prev.filter((record) => record._id !== id));
+
+      console.log("Successfully deleted");
+    }
+  } catch (error) {
+    console.log("Error occurred in deletion.", error);
+  }
+};
+const handleUploadRecord = async (e) => {
+  e.preventDefault();
+
+  const formData = new FormData();
+
+  formData.append("recordType", e.target.uploadRecordType.value);
+  formData.append("source", e.target.uploadSource.value);
+  formData.append("fileName", e.target.uploadFile.files[0]?.name);
+  formData.append("metadata", e.target.uploadSummary.value);
+
+  const tags = e.target.uploadTags.value
+    .split(",")
+    .map(tag => tag.trim())
+    .filter(tag => tag);
+
+  formData.append("tags", JSON.stringify(tags));
+
+  formData.append("file", e.target.uploadFile.files[0]); // 🔥 IMPORTANT
+
+  try {
+    const response = await axios.post(
+      "http://localhost:8000/api/user/uploadHealthRecord",
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    if (response.data.success) {
+      GetHealthRecords();
+      setShowUploadModal(false);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+
+
+  const RecordUploadModal = () => {{}
+    const [recordType, setRecordType] = useState("");
+
+    const isImaging =
+      recordType.toLowerCase().includes("imaging") ||
+      recordType.toLowerCase().includes("x-ray");
+
+    return (
       <motion.div
-        variants={modalContentVariants}
-        className="bg-white p-6 sm:p-8 rounded-xl shadow-2xl w-full max-w-lg"
-        onClick={(e) => e.stopPropagation()}
+        key="uploadModal"
+        variants={modalOuterVariants}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm"
+        onClick={() => setShowUploadModal(false)}
       >
-        <h2 className="text-xl font-semibold text-slate-800 mb-6">
-          Upload New Health Record
-        </h2>
-        <form onSubmit={handleUploadRecord} className="space-y-4">
-          <div>
-            <label
-              htmlFor="uploadRecordType"
-              className="block text-sm font-medium text-slate-700"
-            >
-              Record Type
-            </label>
-            <input
-              type="text"
-              name="uploadRecordType"
-              id="uploadRecordType"
-              placeholder="e.g., Lab Report, X-Ray, Doctor's Note"
-              required
-              className="mt-1 block w-full input-style"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
+        <motion.div
+          variants={modalContentVariants}
+          className="bg-white p-6 sm:p-8 rounded-xl shadow-2xl w-full max-w-lg"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h2 className="text-xl font-semibold text-slate-800 mb-6">
+            Upload New Health Record
+          </h2>
+          <form onSubmit={handleUploadRecord} className="space-y-4">
+            {/* Record Type Select */}
             <div>
               <label
-                htmlFor="uploadDate"
+                htmlFor="uploadRecordType"
                 className="block text-sm font-medium text-slate-700"
               >
-                Date of Record
+                Record Type
+              </label>
+              <select
+                name="uploadRecordType"
+                id="uploadRecordType"
+                required
+                value={recordType}
+                onChange={(e) => setRecordType(e.target.value)}
+                className="mt-1 block w-full px-3 py-2.5 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              >
+                <option value="">Select Record Type</option>
+                {recordTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Date and Source */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="uploadDate"
+                  className="block text-sm font-medium text-slate-700"
+                >
+                  Date of Record
+                </label>
+                <input
+                  type="date"
+                  name="uploadDate"
+                  id="uploadDate"
+                  defaultValue={getISODate(new Date())}
+                  required
+                  className="mt-1 block w-full input-style"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="uploadSource"
+                  className="block text-sm font-medium text-slate-700"
+                >
+                  Source/Facility
+                </label>
+                <input
+                  type="text"
+                  name="uploadSource"
+                  id="uploadSource"
+                  placeholder="e.g., City Hospital, Self"
+                  required
+                  className="mt-1 block w-full input-style"
+                />
+              </div>
+            </div>
+
+            {/* File Upload */}
+            <div>
+              <label
+                htmlFor="uploadFile"
+                className="block text-sm font-medium text-slate-700"
+              >
+                Select File (PDF, JPG, PNG)
               </label>
               <input
-                type="date"
-                name="uploadDate"
-                id="uploadDate"
-                defaultValue={getISODate(new Date())}
+                type="file"
+                name="uploadFile"
+                id="uploadFile"
                 required
-                className="mt-1 block w-full input-style"
+                accept=".pdf,.jpg,.jpeg,.png"
+                className="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
               />
             </div>
+
+            {/* Tags */}
             <div>
               <label
-                htmlFor="uploadSource"
+                htmlFor="uploadTags"
                 className="block text-sm font-medium text-slate-700"
               >
-                Source/Facility
+                Tags (comma-separated, optional)
               </label>
               <input
                 type="text"
-                name="uploadSource"
-                id="uploadSource"
-                placeholder="e.g., City Hospital, Self"
-                required
+                name="uploadTags"
+                id="uploadTags"
+                placeholder="e.g., blood test, annual checkup, cardiology"
                 className="mt-1 block w-full input-style"
               />
             </div>
-          </div>
-          <div>
-            <label
-              htmlFor="uploadFile"
-              className="block text-sm font-medium text-slate-700"
-            >
-              Select File (PDF, JPG, PNG)
-            </label>
-            <input
-              type="file"
-              name="uploadFile"
-              id="uploadFile"
-              required
-              accept=".pdf,.jpg,.jpeg,.png"
-              className="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="uploadTags"
-              className="block text-sm font-medium text-slate-700"
-            >
-              Tags (comma-separated, optional)
-            </label>
-            <input
-              type="text"
-              name="uploadTags"
-              id="uploadTags"
-              placeholder="e.g., blood test, annual checkup, cardiology"
-              className="mt-1 block w-full input-style"
-            />
-          </div>
-          <style jsx>{`
+
+            {/* Metadata subform: only show if not Imaging */}
+            {!isImaging && (
+              <>
+                <div>
+                  <label
+                    htmlFor="uploadNotes"
+                    className="block text-sm font-medium text-slate-700"
+                  >
+                    Notes
+                  </label>
+                  <textarea
+                    name="uploadNotes"
+                    id="uploadNotes"
+                    placeholder="Optional summary for dr.bot"
+                    className="mt-1 block w-full input-style"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="uploadSummary"
+                    className="block text-sm font-medium text-slate-700"
+                  >
+                    Metadata Summary
+                  </label>
+                  <input
+                    type="text"
+                    name="uploadSummary"
+                    id="uploadSummary"
+                    placeholder="Optional metadata info"
+                    className="mt-1 block w-full input-style"
+                  />
+                </div>
+              </>
+            )}
+
+            <style jsx>{`
             .input-style {
               @apply px-3 py-2.5 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm;
             }
           `}</style>
-          <div className="flex justify-end gap-3 pt-5">
-            <motion.button
-              type="button"
-              onClick={() => setShowUploadModal(false)}
-              className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
-              whileHover={{ y: -1 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              Cancel
-            </motion.button>
-            <motion.button
-              type="submit"
-              className="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors"
-              whileHover={{ y: -1 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              Upload Record
-            </motion.button>
-          </div>
-        </form>
-      </motion.div>
-    </motion.div>
-  );
 
+            {/* Buttons */}
+            <div className="flex justify-end gap-3 pt-5">
+              <motion.button
+                type="button"
+                onClick={() => setShowUploadModal(false)}
+                className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Cancel
+              </motion.button>
+              <motion.button
+                type="submit"
+                className="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors"
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Upload Record
+              </motion.button>
+            </div>
+          </form>
+        </motion.div>
+      </motion.div>
+    );
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-gray-100 to-stone-200 p-4 sm:p-6 lg:p-8">
       <motion.div
@@ -481,7 +571,7 @@ const MyHealthRecordsPage = () => {
           >
             {filteredRecords.map((record) => (
               <motion.div
-                key={record.id}
+                key={record._id}
                 variants={itemVariants}
                 whileHover="hover"
                 className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden"
@@ -540,7 +630,8 @@ const MyHealthRecordsPage = () => {
                     </button>
                     <button
                       onClick={() =>
-                        alert(`Deleting ${record.fileName} (UI Only)`)
+                        {alert(`Deleting ${record.fileName}`);
+                         DeleteHealthRecord(record._id)}
                       }
                       className="text-xs bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center"
                     >
@@ -556,7 +647,7 @@ const MyHealthRecordsPage = () => {
             variants={itemVariants}
             className="text-center py-16 bg-white rounded-xl shadow-lg"
           >
-            <FolderOpenIcon />
+            {/* <FolderOpenIcon /> */}
             <h3 className="mt-4 text-lg font-medium text-slate-800">
               No health records found
             </h3>

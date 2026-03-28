@@ -13,7 +13,7 @@ connectDB();
 
 app.use(cors({
    
-    methods:["GET","PUT","POST"],
+    methods:["GET","PUT","POST","DELETE"],
     credentials:true
 }));
 

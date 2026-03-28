@@ -179,7 +179,7 @@ const Dashboard = () => {
       color: "purple",
     },
     {
-      title: "Messages",
+      title: "Notifications",
       description: "Communicate securely with your doctors (simulated).",
       icon: <MessagesIcon />,
       link: "/messages",
