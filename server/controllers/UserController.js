@@ -9,6 +9,7 @@ const AvailabiitySlot = require('../models/AvailabililitySlots');
 const { Appointment } = require('../models/Appointment');
 const { subtle } = require('crypto');
 const { v2 } = require('cloudinary');
+const { Prescription } = require('../models/prescriptions');
 
 
 const GenToken = async (userId) => {
@@ -310,7 +311,7 @@ const uploadHealthRecord = async (req, res) => {
 
     await record.save();
 
-  
+
     processOCRInBackground(record._id, upload.secure_url);
 
     return res.status(200).json({
@@ -329,7 +330,7 @@ const uploadHealthRecord = async (req, res) => {
   } finally {
     if (file?.path) {
       const fs = require("fs/promises");
-      await fs.unlink(file.path).catch(() => {});
+      await fs.unlink(file.path).catch(() => { });
     }
   }
 };
@@ -396,7 +397,7 @@ const GetHealthRecoordsOfUser = async (req, res) => {
       fileName: record.fileName,
       fileUrl: record.fileUrl,
       tags: record.tags || [],
-      aiProcessing:record.aiProcessing
+      aiProcessing: record.aiProcessing
     }));
     return res.status(200).json({
       success: true,
@@ -447,6 +448,8 @@ const DeleteHealthRecord = async (req, res) => {
     });
   }
 }
+
+
 
 module.exports = {
   RegisterUser,

@@ -1,145 +1,413 @@
-import React, { useState } from "react";
-import { NavLink,Navigate, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useContext } from "react";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { Authcontext } from "../Context/AuthContext";
 
+// ─── ICONS ──────────────────────────────────────────────────────────────────
+const Icon = ({ d, size = 18, color = "currentColor", style = {} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
+    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    {Array.isArray(d) ? d.map((p, i) => <path key={i} d={p} />) : <path d={d} />}
+  </svg>
+);
+
+const ICONS = {
+  home:     ["M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", "M9 22V12h6v10"],
+  about:    ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M12 8v4M12 16h.01"],
+  contact:  ["M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"],
+  menu:     "M4 6h16M4 12h16M4 18h16",
+  close:    "M18 6L6 18M6 6l12 12",
+  arrow:    "M17 8l4 4m0 0l-4 4m4-4H3",
+  cross:    ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M8 12h8M12 8v8"],
+  heart:    ["M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"],
+  sparkle:  ["M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"],
+  user:     ["M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2", "M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"],
+  logout:   ["M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4", "M16 17l5-5-5-5", "M21 12H9"],
+};
+
+const NAV_LINKS = [
+  { to: "/",        label: "Home",    icon: ICONS.home    },
+  { to: "/about",   label: "About",   icon: ICONS.about   },
+  { to: "/contact", label: "Contact", icon: ICONS.contact },
+];
+
+// ─── NAVBAR ──────────────────────────────────────────────────────────────────
 const Navbar = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const navigate=useNavigate();
+  const [scrolled, setScrolled] = useState(false);
+
+  // Optional: consume auth context if available
+  let user = null;
+  let token = null;
+  try {
+    const ctx = useContext(Authcontext);
+    user = ctx?.user;
+    token = ctx?.token;
+  } catch (_) {}
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => { setIsOpen(false); }, [location]);
 
   return (
     <>
-      <nav className="relative bg-white shadow ">
-        <div className="container px-6 py-3 mx-auto flex flex-wrap items-center justify-between">
-          {/* Logo */}
-          <span>
-            <img
-              className="w-auto h-14 sm:h-14"
-              src="Health_App-512.webp"
-              alt="Logo"
-            />
-          </span>
-          <span className=" pl-5 font-bold  text-4xl">
-            CURA <span className=" text-blue-600" >LINK</span>
-          </span>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap');
 
-          {/* Toggle Button for Mobile */}
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="text-gray-500 dark:text-gray-200 lg:hidden"
-            aria-label="Toggle Menu"
-          >
-            {isOpen ? (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-6 h-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            ) : (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-6 h-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 8h16M4 16h16"
-                />
-              </svg>
-            )}
-          </button>
+        .nav-root {
+          position: sticky;
+          top: 0;
+          z-index: 1000;
+          font-family: 'DM Sans', sans-serif;
+          transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+        }
 
-          {/* Menu */}
-          <div
-            className={`${
-              isOpen ? "flex" : "hidden"
-            } flex-col w-full mt-4 lg:flex lg:flex-row lg:items-center lg:w-auto lg:mt-0 lg:space-x-6 lg:justify-between flex-grow`}
-          >
-            {/* Centered Nav Links */}
-            <div className="flex roboto flex-col items-center justify-center gap-10 max-sm:gap-4 lg:flex-row lg:flex-grow lg:justify-center">
-              <NavLink
-                to={"/"}
-                className="group relative px-3 py-2 text-gray-700 font-semibold"
-              >
-                Home
-                <span className="absolute left-1/2 bottom-0 -translate-x-1/2 h-0.5 w-0 bg-gray-500 transition-all duration-300 group-hover:w-full"></span>
-              </NavLink>
+        /* Thin gradient accent line at very top */
+        .nav-root::before {
+          content: '';
+          display: block;
+          height: 3px;
+          background: linear-gradient(90deg, #6366F1, #8B5CF6, #A78BFA, #6366F1);
+          background-size: 200% 100%;
+          animation: shimmer 3s linear infinite;
+        }
 
-              <NavLink
-                to={"/about"}
-                className="group relative px-3 py-2 text-gray-700 font-semibold"
-              >
-                About
-                <span className="absolute left-1/2 bottom-0 -translate-x-1/2 h-0.5 w-0 bg-gray-500 transition-all duration-300 group-hover:w-full"></span>
-              </NavLink>
+        @keyframes shimmer {
+          0%   { background-position: 0% 0; }
+          100% { background-position: 200% 0; }
+        }
 
-              <NavLink
-                to={"/contact"}
-                className="group relative px-3 py-2 text-gray-700 font-semibold"
-              >
-                Contact
-                <span className="absolute left-1/2 bottom-0 -translate-x-1/2 h-0.5 w-0 bg-gray-500 transition-all duration-300 group-hover:w-full"></span>
-              </NavLink>
-{/* 
-              <NavLink
-                to={"/team"}
-                className="group relative px-3 py-2 text-gray-700 font-semibold"
-              >
-                Team
-                <span className="absolute left-1/2 bottom-0 -translate-x-1/2 h-0.5 w-0 bg-gray-500 transition-all duration-300 group-hover:w-full"></span>
-              </NavLink> */}
-            </div>
+        .nav-inner {
+          background: rgba(255,255,255,0.88);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border-bottom: 1px solid rgba(99,102,241,0.10);
+          transition: box-shadow 0.35s;
+        }
+        .nav-inner.scrolled {
+          box-shadow: 0 4px 32px rgba(99,102,241,0.13);
+          background: rgba(255,255,255,0.95);
+        }
 
-            {/* Right Side - Search and Buttons */}
-            <div className="flex flex-col items-center gap-4 mt-4 lg:flex-row lg:mt-0">
-              {/* Search */}
-              {/* <div className="relative w-full lg:w-64">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                  <svg
-                    className="w-5 h-5 text-gray-400"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <path
-                      d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.134 17 3 13.866 3 10C3 6.134 6.134 3 10 3C13.866 3 17 6.134 17 10Z"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-                <input
-                  type="text"
-                  placeholder="Search"
-                  className="w-full py-2 pl-10 pr-4  bg-white text-gray-700 rounded-md focus:outline-none focus:ring focus:ring-blue-300"
-                />
-              </div> */}
+        .nav-link-item {
+          position: relative;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 7px 14px;
+          border-radius: 10px;
+          font-size: 14px;
+          font-weight: 600;
+          color: #475569;
+          text-decoration: none;
+          transition: color 0.2s, background 0.2s;
+        }
+        .nav-link-item:hover {
+          color: #6366F1;
+          background: #EEF2FF;
+        }
+        .nav-link-item.active {
+          color: #6366F1;
+          background: #EEF2FF;
+        }
+        .nav-link-item.active::after {
+          content: '';
+          position: absolute;
+          bottom: -1px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 20px;
+          height: 2px;
+          border-radius: 2px;
+          background: linear-gradient(90deg, #6366F1, #8B5CF6);
+        }
 
-              {/* Auth Buttons */}
-              <div className="flex gap-2">
-                <button onClick={()=>navigate('/login')} className="px-4 py-2 text-sm font-medium text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-gray-700">
-                  Login
-                </button>
-                <button onClick={()=>navigate('/signup')} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
-                  Signup
-                </button>
+        .btn-login {
+          padding: 8px 20px;
+          font-size: 13px;
+          font-weight: 700;
+          color: #6366F1;
+          border: 1.5px solid #C7D2FE;
+          border-radius: 10px;
+          background: transparent;
+          cursor: pointer;
+          transition: all 0.2s;
+          letter-spacing: 0.01em;
+        }
+        .btn-login:hover {
+          background: #EEF2FF;
+          border-color: #6366F1;
+        }
+
+        .btn-signup {
+          padding: 8px 20px;
+          font-size: 13px;
+          font-weight: 700;
+          color: white;
+          border: none;
+          border-radius: 10px;
+          background: linear-gradient(135deg, #6366F1, #8B5CF6);
+          cursor: pointer;
+          transition: all 0.2s;
+          box-shadow: 0 4px 14px rgba(99,102,241,0.30);
+          letter-spacing: 0.01em;
+        }
+        .btn-signup:hover {
+          box-shadow: 0 6px 20px rgba(99,102,241,0.42);
+          transform: translateY(-1px);
+        }
+
+        /* Mobile drawer */
+        .mobile-drawer {
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          z-index: 999;
+          display: flex;
+          flex-direction: column;
+        }
+        .drawer-backdrop {
+          position: absolute; inset: 0;
+          background: rgba(15,23,42,0.45);
+          backdrop-filter: blur(4px);
+        }
+        .drawer-panel {
+          position: absolute;
+          top: 0; right: 0;
+          width: min(320px, 100vw);
+          height: 100%;
+          background: white;
+          box-shadow: -8px 0 48px rgba(99,102,241,0.18);
+          display: flex;
+          flex-direction: column;
+          padding: 0;
+          overflow: hidden;
+        }
+        .drawer-header {
+          background: linear-gradient(135deg,#6366F1 0%,#8B5CF6 100%);
+          padding: 28px 24px 24px;
+          position: relative;
+          overflow: hidden;
+        }
+        .drawer-header::before {
+          content: '';
+          position: absolute;
+          top: -30px; right: -30px;
+          width: 120px; height: 120px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.08);
+        }
+        .drawer-links {
+          padding: 16px 16px;
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+        .drawer-link {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 13px 16px;
+          border-radius: 14px;
+          font-size: 14px;
+          font-weight: 600;
+          color: #475569;
+          text-decoration: none;
+          transition: all 0.18s;
+        }
+        .drawer-link:hover, .drawer-link.active {
+          background: #EEF2FF;
+          color: #6366F1;
+        }
+        .drawer-link-icon {
+          width: 36px; height: 36px;
+          border-radius: 10px;
+          background: #EEF2FF;
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0;
+          transition: background 0.18s;
+        }
+        .drawer-link:hover .drawer-link-icon,
+        .drawer-link.active .drawer-link-icon {
+          background: #C7D2FE;
+        }
+        .drawer-footer {
+          padding: 16px;
+          border-top: 1px solid #EEF2FF;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+      `}</style>
+
+      {/* ── MAIN NAV ── */}
+      <div className="nav-root">
+        <div className={`nav-inner ${scrolled ? "scrolled" : ""}`}>
+          <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 68, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+
+            {/* ── LOGO ── */}
+            <NavLink to="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", flexShrink: 0 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 11, background: "linear-gradient(135deg,#6366F1,#8B5CF6)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(99,102,241,0.35)" }}>
+                <Icon d={ICONS.cross} size={20} color="white" />
               </div>
+              <div style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
+                <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 800, color: "#0F172A", letterSpacing: "-0.02em" }}>
+                  CURA<span style={{ color: "#6366F1" }}>LINK</span>
+                </span>
+                <span style={{ fontSize: 9, fontWeight: 700, color: "#94A3B8", letterSpacing: "0.12em", textTransform: "uppercase", marginTop: 1 }}>Your Health Hub</span>
+              </div>
+            </NavLink>
+
+            {/* ── CENTER NAV LINKS (desktop) ── */}
+            <nav style={{ display: "flex", alignItems: "center", gap: 2, flex: 1, justifyContent: "center" }} className="hidden lg:flex">
+              {NAV_LINKS.map(({ to, label, icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={to === "/"}
+                  className={({ isActive }) => `nav-link-item ${isActive ? "active" : ""}`}
+                >
+                  <Icon d={icon} size={15} color="currentColor" />
+                  {label}
+                </NavLink>
+              ))}
+            </nav>
+
+            {/* ── RIGHT SIDE (desktop) ── */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }} className="hidden lg:flex">
+              {token && user ? (
+                /* Logged in: avatar chip */
+                <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#EEF2FF", borderRadius: 12, padding: "6px 14px 6px 8px", border: "1px solid #C7D2FE" }}>
+                  <div style={{ width: 30, height: 30, borderRadius: 9, background: "linear-gradient(135deg,#6366F1,#8B5CF6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Icon d={ICONS.user} size={15} color="white" />
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#3730A3" }}>{user.name?.split(" ")[0]}</span>
+                </div>
+              ) : (
+                <>
+                  <button className="btn-login" onClick={() => navigate("/login")}>Login</button>
+                  <button className="btn-signup" onClick={() => navigate("/signup")}>
+                    Get Started &nbsp;→
+                  </button>
+                </>
+              )}
             </div>
+
+            {/* ── HAMBURGER (mobile) ── */}
+            <button
+              onClick={() => setIsOpen(true)}
+              style={{ width: 40, height: 40, borderRadius: 11, background: "#EEF2FF", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
+              className="lg:hidden"
+              aria-label="Open menu"
+            >
+              <Icon d={ICONS.menu} size={18} color="#6366F1" />
+            </button>
+
           </div>
         </div>
-      </nav>
+      </div>
+
+      {/* ── MOBILE DRAWER ── */}
+      <AnimatePresence>
+        {isOpen && (
+          <div className="mobile-drawer">
+            {/* Backdrop */}
+            <motion.div
+              className="drawer-backdrop"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setIsOpen(false)}
+            />
+
+            {/* Panel */}
+            <motion.div
+              className="drawer-panel"
+              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 340, damping: 34 }}
+            >
+              {/* Header */}
+              <div className="drawer-header">
+                <button
+                  onClick={() => setIsOpen(false)}
+                  style={{ position: "absolute", top: 16, right: 16, width: 32, height: 32, borderRadius: 9, background: "rgba(255,255,255,0.2)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                >
+                  <Icon d={ICONS.close} size={16} color="white" />
+                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Icon d={ICONS.cross} size={18} color="white" />
+                  </div>
+                  <div>
+                    <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 800, color: "white", lineHeight: 1 }}>
+                      CURA<span style={{ color: "rgba(255,255,255,0.6)" }}>LINK</span>
+                    </p>
+                    <p style={{ fontSize: 10, color: "rgba(255,255,255,0.65)", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>Your Health Hub</p>
+                  </div>
+                </div>
+
+                {token && user && (
+                  <div style={{ marginTop: 18, display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.15)", borderRadius: 12, padding: "10px 14px", border: "1px solid rgba(255,255,255,0.2)" }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 9, background: "rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Icon d={ICONS.user} size={16} color="white" />
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "white" }}>{user.name}</p>
+                      <p style={{ fontSize: 11, color: "rgba(255,255,255,0.65)" }}>{user.email}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Links */}
+              <div className="drawer-links">
+                <p style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", letterSpacing: "0.1em", textTransform: "uppercase", padding: "4px 16px 8px" }}>Navigation</p>
+                {NAV_LINKS.map(({ to, label, icon }, i) => (
+                  <motion.div key={to} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.06 * i }}>
+                    <NavLink
+                      to={to}
+                      end={to === "/"}
+                      className={({ isActive }) => `drawer-link ${isActive ? "active" : ""}`}
+                    >
+                      <div className="drawer-link-icon">
+                        <Icon d={icon} size={16} color="#6366F1" />
+                      </div>
+                      {label}
+                      <Icon d={ICONS.arrow} size={13} color="#CBD5E1" style={{ marginLeft: "auto" }} />
+                    </NavLink>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Footer auth buttons */}
+              {!token && (
+                <div className="drawer-footer">
+                  <button className="btn-login" style={{ width: "100%" }} onClick={() => navigate("/login")}>Login</button>
+                  <button className="btn-signup" style={{ width: "100%", padding: "11px 20px", fontSize: 14 }} onClick={() => navigate("/signup")}>
+                    Get Started →
+                  </button>
+                </div>
+              )}
+
+              {token && (
+                <div className="drawer-footer">
+                  <button
+                    style={{ width: "100%", padding: "11px 20px", fontSize: 13, fontWeight: 700, color: "#EF4444", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 10, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+                    onClick={() => { /* call logout */ }}
+                  >
+                    <Icon d={ICONS.logout} size={15} color="#EF4444" />
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </>
   );
 };

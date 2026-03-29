@@ -2,613 +2,374 @@ import React from "react";
 import { motion } from "framer-motion";
 import { NavLink } from "react-router-dom";
 
-// Placeholder Icons (Replace with actual icons)
-const MissionIcon = () => (
-  <svg
-    className="w-12 h-12 text-blue-600 mb-4"
-    fill="none"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    strokeWidth="2"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0h6m4 0V9a2 2 0 00-2-2h-2a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2z"></path>
-  </svg>
-);
-const VisionIcon = () => (
-  <svg
-    className="w-12 h-12 text-indigo-600 mb-4"
-    fill="none"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    strokeWidth="2"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-    <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-  </svg>
-);
-const ValuesIcon = () => (
-  <svg
-    className="w-12 h-12 text-teal-600 mb-4"
-    fill="none"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    strokeWidth="2"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-  </svg>
-);
-const PatientCareIcon = () => (
-  <svg
-    className="w-10 h-10 text-green-500"
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M12 1.5A9.5 9.5 0 002.5 11v9.5A2.5 2.5 0 005 23h14a2.5 2.5 0 002.5-2.5V11A9.5 9.5 0 0012 1.5zm0 0V4m0 15v-3.5m0-5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM3 11.5h2.5m13 0H16"
-    ></path>
-  </svg>
-); // Simplified icon
-const SecurityLockIcon = () => (
-  <svg
-    className="w-10 h-10 text-red-500"
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-    ></path>
-  </svg>
-);
-const InnovationIcon = () => (
-  <svg
-    className="w-10 h-10 text-yellow-500"
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M9.663 17h4.673M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-    ></path>
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M12 1v2.5m0 17v-2.5m0-12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm-7.5 7.5a2.5 2.5 0 10-5 0 2.5 2.5 0 005 0zm15 0a2.5 2.5 0 10-5 0 2.5 2.5 0 005 0zm-7.5 7.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"
-    ></path>
+// ─── SHARED ICON PRIMITIVE ───────────────────────────────────────────────────
+const Icon = ({ d, size = 22, color = "currentColor", style = {} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
+    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    {Array.isArray(d) ? d.map((p, i) => <path key={i} d={p} />) : <path d={d} />}
   </svg>
 );
 
-// Placeholder team images
-const teamMember1 = "https://via.placeholder.com/150/A78BFA/FFFFFF?text=Evelyn";
-const teamMember2 = "https://via.placeholder.com/150/9CA3AF/FFFFFF?text=Alex";
-const teamMember3 = "https://via.placeholder.com/150/FBBF24/FFFFFF?text=Priya";
-const ourStoryImage =
-  "https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80";
-const howItWorksImage =
-  "https://images.unsplash.com/photo-1581091226809-5c04E0607502?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80"; // Replace
+const ICONS = {
+  mission:  ["M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0h6m4 0V9a2 2 0 00-2-2h-2a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2z"],
+  vision:   ["M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z", "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"],
+  heart:    ["M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"],
+  shield:   ["M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"],
+  sparkle:  ["M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z", "M5 3v4M3 5h4M19 17v4M17 19h4"],
+  check:    ["M22 11.08V12a10 10 0 1 1-5.93-9.14", "m9 11 3 3L22 4"],
+  arrow:    "M17 8l4 4m0 0l-4 4m4-4H3",
+  cross:    ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M8 12h8M12 8v8"],
+  pill:     "M10.5 3.5a4 4 0 0 1 5.657 5.657l-7.07 7.07a4 4 0 0 1-5.658-5.656l7.07-7.07z M14 10l-4 4",
+  ai:       ["M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z"],
+  calendar: ["M8 2v3M16 2v3M3 8h18M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5z"],
+  chat:     ["M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"],
+  lock:     ["M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z", "M7 11V7a5 5 0 0 1 10 0v4"],
+  bulb:     ["M9 18h6", "M10 22h4", "M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C4.19 13.47 3 11.38 3 9a7 7 0 0 1 7-7z"],
+  search:   ["M11 19A8 8 0 1 0 11 3a8 8 0 0 0 0 16z", "m21 21-4.35-4.35"],
+};
 
-const AboutUsPage = () => {
-  const sectionVariants = {
-    hidden: { opacity: 0, y: 60 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.7,
-        ease: [0.6, 0.05, 0.01, 0.99],
-        staggerChildren: 0.2,
-      },
-    },
-  };
+// ─── IMAGE ASSETS ────────────────────────────────────────────────────────────
+const ourStoryImage = "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1170&q=80";
+const howItWorksImage = "https://images.unsplash.com/photo-1581091226809-5c04E0607502?auto=format&fit=crop&w=774&q=80";
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 30, scale: 0.95 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: { duration: 0.6, ease: "circOut" },
-    },
-  };
+const teamMembers = [
+  { name: "Dr. Evelyn Reed", role: "Chief Medical Officer", initials: "ER", color: "#6366F1", bg: "#EEF2FF", bio: "With 20+ years in clinical practice, Dr. Reed ensures CuraLink's medical guidance is sound, ethical, and patient-first." },
+  { name: "Alex Chen",       role: "Lead AI Engineer",     initials: "AC", color: "#059669", bg: "#ECFDF5", bio: "Alex spearheads our AI development, building intelligent systems that are powerful yet deeply human in feel." },
+  { name: "Priya Sharma",    role: "Head of Product & UX", initials: "PS", color: "#D97706", bg: "#FFFBEB", bio: "Priya is obsessed with the user — leading design and product strategy so CuraLink feels effortless and intuitive." },
+];
 
-  const imageZoomVariants = {
-    hidden: { opacity: 0, scale: 0.85 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      transition: { duration: 0.8, ease: [0.6, 0.05, 0.01, 0.99] },
-    },
-  };
+const VALUES = [
+  "Patient-Centricity Above All",
+  "Unwavering Innovation",
+  "Trust & Transparency",
+  "Universal Accessibility",
+  "Empathy in Every Interaction",
+  "Excellence in Delivery",
+];
 
-  return (
-    <div className="bg-white text-slate-800 overflow-x-hidden">
-      {/* Hero Section for About Page */}
-      <section className="relative h-[80vh] sm:h-[90vh] lg:h-screen flex items-center justify-center text-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-        {/* Subtle static background pattern if not using an image */}
-        <div
-          className="absolute inset-0 opacity-20"
-          style={{
-            backgroundImage: "url('your-subtle-abstract-light-bg.png')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        ></div>
+const HOW_IT_WORKS = [
+  { step: 1, icon: ICONS.ai,       color: "#059669", bg: "#ECFDF5", title: "Tell Us Your Symptoms",  desc: "Use our AI Symptom Analyzer to get intelligent guidance on which specialist is right for you."  },
+  { step: 2, icon: ICONS.search,   color: "#6366F1", bg: "#EEF2FF", title: "Find Your Doctor",       desc: "Browse our verified network. Filter by specialty, location, ratings, and more."                },
+  { step: 3, icon: ICONS.calendar, color: "#D97706", bg: "#FFFBEB", title: "Book with Ease",         desc: "View real-time availability and confirm your in-person or digital appointment in seconds."       },
+  { step: 4, icon: ICONS.chat,     color: "#8B5CF6", bg: "#F5F3FF", title: "Consult & Connect",      desc: "Attend your visit or join a secure video call — your care, your way."                          },
+];
 
-        <motion.div
-          className="relative z-10 container mx-auto px-6 lg:px-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, transition: { duration: 0.8 } }}
-        >
-          <motion.h1
-            className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-slate-900 mb-6"
-            initial={{ y: -30, opacity: 0 }}
-            animate={{
-              y: 0,
-              opacity: 1,
-              transition: {
-                delay: 0.2,
-                duration: 0.7,
-                type: "spring",
-                stiffness: 100,
-              },
-            }}
-          >
-            About <span className="text-blue-600">CuraLink</span>
+const COMMITMENTS = [
+  { icon: ICONS.heart,   color: "#EC4899", bg: "#FDF2F8", title: "Exceptional Patient Care",    desc: "Your health journey is unique. We provide tools and connections that respect your individuality with empathy and professionalism." },
+  { icon: ICONS.lock,    color: "#6366F1", bg: "#EEF2FF", title: "Data Security & Privacy",     desc: "Built with enterprise-grade security. Your health data is encrypted, private, and never sold — ever."                         },
+  { icon: ICONS.bulb,    color: "#D97706", bg: "#FFFBEB", title: "Continuous Innovation",       desc: "We're always evolving. From AI breakthroughs to UX refinements — every update makes CuraLink smarter for you."                },
+];
+
+// ─── ANIMATION VARIANTS ───────────────────────────────────────────────────────
+const fadeUp = {
+  hidden:  { opacity: 0, y: 40 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] } },
+};
+const stagger = {
+  hidden:  {},
+  visible: { transition: { staggerChildren: 0.12 } },
+};
+const scaleIn = {
+  hidden:  { opacity: 0, scale: 0.88 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } },
+};
+
+// ─── SECTION WRAPPER ─────────────────────────────────────────────────────────
+const Section = ({ children, style = {}, once = true }) => (
+  <motion.section
+    initial="hidden" whileInView="visible"
+    viewport={{ once, amount: 0.15 }}
+    variants={stagger}
+    style={style}
+  >
+    {children}
+  </motion.section>
+);
+
+// ─── PILL LABEL ───────────────────────────────────────────────────────────────
+const Pill = ({ children, color = "#6366F1", bg = "#EEF2FF" }) => (
+  <motion.span variants={fadeUp} style={{
+    display: "inline-flex", alignItems: "center", gap: 6,
+    fontSize: 11, fontWeight: 800, color, background: bg,
+    padding: "5px 13px", borderRadius: 20,
+    letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: 14,
+  }}>
+    <Icon d={ICONS.sparkle} size={11} color={color} />
+    {children}
+  </motion.span>
+);
+
+// ─── SECTION HEADING ─────────────────────────────────────────────────────────
+const SectionHeading = ({ title, sub }) => (
+  <div style={{ textAlign: "center", marginBottom: 52 }}>
+    <motion.h2 variants={fadeUp} style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 800, color: "#0F172A", lineHeight: 1.2, marginBottom: 12 }}>
+      {title}
+    </motion.h2>
+    {sub && <motion.p variants={fadeUp} style={{ fontSize: 15, color: "#64748B", maxWidth: 520, margin: "0 auto", lineHeight: 1.7 }}>{sub}</motion.p>}
+  </div>
+);
+
+// ─── MAIN PAGE ────────────────────────────────────────────────────────────────
+const AboutUsPage = () => (
+  <>
+    <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+      .about-root { font-family:'DM Sans',sans-serif; background: linear-gradient(145deg,#F0F4FF 0%,#F8F6FF 40%,#EFF6FF 100%); color:#334155; }
+      .about-card { background:white; border-radius:20px; border:1px solid #EEF2FF; box-shadow:0 2px 16px rgba(0,0,0,0.06); transition:box-shadow 0.25s, transform 0.25s; }
+      .about-card:hover { box-shadow:0 12px 40px rgba(99,102,241,0.14); transform:translateY(-4px); }
+      .step-connector { position:absolute; left:23px; top:52px; bottom:-24px; width:2px; background:linear-gradient(to bottom,#C7D2FE,transparent); }
+    `}</style>
+
+    <div className="about-root" style={{ overflowX: "hidden" }}>
+
+      {/* ──────────────── HERO ──────────────── */}
+      <section style={{ position: "relative", minHeight: "92vh", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+
+        {/* Background blobs */}
+        <div style={{ position: "absolute", top: -120, right: -120, width: 560, height: 560, borderRadius: "50%", background: "radial-gradient(circle,rgba(99,102,241,0.12) 0%,transparent 70%)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", bottom: -80, left: -80, width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle,rgba(139,92,246,0.10) 0%,transparent 70%)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", top: "30%", left: "10%", width: 200, height: 200, borderRadius: "50%", background: "radial-gradient(circle,rgba(236,72,153,0.06) 0%,transparent 70%)", pointerEvents: "none" }} />
+
+        <div style={{ position: "relative", zIndex: 1, maxWidth: 820, margin: "0 auto", padding: "120px 24px 80px", textAlign: "center" }}>
+
+          {/* Floating badge */}
+          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.6 }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.85)", backdropFilter: "blur(12px)", border: "1px solid #C7D2FE", borderRadius: 40, padding: "7px 18px 7px 10px", marginBottom: 28 }}>
+            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg,#6366F1,#8B5CF6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon d={ICONS.cross} size={14} color="white" />
+            </div>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "#6366F1", letterSpacing: "0.06em" }}>TRUSTED HEALTHCARE PLATFORM</span>
+          </motion.div>
+
+          <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.7, type: "spring", stiffness: 100 }}
+            style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(38px, 6vw, 72px)", fontWeight: 800, color: "#0F172A", lineHeight: 1.1, marginBottom: 22 }}>
+            About{" "}
+            <span style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              CuraLink
+            </span>
           </motion.h1>
-          <motion.p
-            className="text-lg sm:text-xl lg:text-2xl text-slate-700 max-w-3xl mx-auto leading-relaxed"
-            initial={{ y: 30, opacity: 0 }}
-            animate={{
-              y: 0,
-              opacity: 1,
-              transition: { delay: 0.4, duration: 0.7, ease: "easeOut" },
-            }}
-          >
-            Pioneering a future where intelligent technology and compassionate
-            healthcare converge for everyone, making quality medical support
-            accessible and understandable.
+
+          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35, duration: 0.6 }}
+            style={{ fontSize: "clamp(15px,2vw,18px)", color: "#64748B", lineHeight: 1.75, maxWidth: 620, margin: "0 auto 40px" }}>
+            Pioneering a future where intelligent technology and compassionate healthcare converge — making quality medical support accessible, understandable, and deeply personal.
           </motion.p>
-        </motion.div>
+
+          {/* Stat pills */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.6 }}
+            style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "center" }}>
+            {[
+              { label: "Verified Doctors", value: "2,400+", color: "#6366F1", bg: "#EEF2FF" },
+              { label: "Patients Served",  value: "180K+",  color: "#059669", bg: "#ECFDF5" },
+              { label: "Cities Covered",   value: "120+",   color: "#D97706", bg: "#FFFBEB" },
+              { label: "Avg. Rating",      value: "4.9 ★",  color: "#EC4899", bg: "#FDF2F8" },
+            ].map((s, i) => (
+              <div key={i} style={{ background: s.bg, border: `1px solid ${s.color}22`, borderRadius: 14, padding: "10px 18px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <span style={{ fontSize: 20, fontWeight: 800, color: s.color, fontFamily: "'Playfair Display', serif" }}>{s.value}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: "#94A3B8", marginTop: 2 }}>{s.label}</span>
+              </div>
+            ))}
+          </motion.div>
+        </div>
       </section>
 
-      {/* Our Story Section */}
-      <motion.section
-        className="py-16 sm:py-24"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
-        variants={sectionVariants}
-      >
-        <div className="container mx-auto px-6 lg:px-8 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <motion.div variants={itemVariants}>
-            <span className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-2 inline-block">
-              Our Genesis
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-6">
+      {/* ──────────────── OUR STORY ──────────────── */}
+      <Section style={{ padding: "96px 0" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 56, alignItems: "center" }}>
+          <div>
+            <Pill>Our Genesis</Pill>
+            <motion.h2 variants={fadeUp} style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(26px,3.5vw,36px)", fontWeight: 800, color: "#0F172A", lineHeight: 1.25, marginBottom: 22 }}>
               The Journey to Simplify Your Healthcare
-            </h2>
-            <p className="text-slate-600 leading-relaxed mb-4">
-              CuraLink was born from a deeply personal observation: navigating
-              the healthcare system can often feel like a maze – complex,
-              fragmented, and overwhelming. We saw patients struggling to
-              identify the right specialists, enduring long waits, and feeling
-              lost in a sea of medical jargon. This wasn't just an
-              inconvenience; it was a barrier to timely and effective care.
-            </p>
-            <p className="text-slate-600 leading-relaxed mb-4">
-              Driven by a desire to make a tangible difference, our founding
-              team—a collective of passionate technologists, experienced
-              healthcare advocates, and user-centric design thinkers—embarked on
-              a mission. Our shared vision was clear: to build an intelligent,
-              empathetic bridge connecting patients directly to the quality care
-              they deserve, irrespective of their location or medical literacy.
-            </p>
-            <p className="text-slate-600 leading-relaxed">
-              We believe that technology, when thoughtfully applied, can
-              humanize healthcare, not complicate it. Every feature within
-              CuraLink, from our AI-powered symptom analyzer to our seamless
-              telemedicine capabilities, is meticulously crafted with the
-              patient's journey and well-being at its absolute core.
-            </p>
-          </motion.div>
-          <motion.div variants={imageZoomVariants} className="mt-10 lg:mt-0">
-            <img
-              src={ourStoryImage}
-              alt="Diverse team collaborating or a patient having a positive interaction"
-              className="rounded-xl shadow-2xl object-cover w-full h-auto max-h-[500px]"
-            />
-          </motion.div>
-        </div>
-      </motion.section>
-
-      {/* Mission, Vision, Values Section */}
-      <motion.section
-        className="py-16 sm:py-24 bg-slate-50"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
-        variants={sectionVariants}
-      >
-        <div className="container mx-auto px-6 lg:px-8">
-          <div className="text-center mb-12 sm:mb-16">
-            <motion.h2
-              variants={itemVariants}
-              className="text-3xl sm:text-4xl font-bold text-slate-900"
-            >
-              Our Guiding Principles
             </motion.h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-10">
-            <motion.div
-              variants={itemVariants}
-              className="p-6 sm:p-8 bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 text-center"
-            >
-              <div className="inline-block p-3 bg-blue-100 rounded-full mb-4">
-                <MissionIcon />
-              </div>
-              <h3 className="text-2xl font-semibold text-slate-900 mb-3">
-                Our Mission
-              </h3>
-              <p className="text-slate-600 leading-relaxed">
-                To empower every individual by providing intuitive, AI-driven
-                access to a network of trusted healthcare professionals and
-                services, fostering informed decisions and ultimately leading to
-                better health outcomes for all.
-              </p>
-            </motion.div>
-            <motion.div
-              variants={itemVariants}
-              className="p-6 sm:p-8 bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 text-center"
-            >
-              <div className="inline-block p-3 bg-indigo-100 rounded-full mb-4">
-                <VisionIcon />
-              </div>
-              <h3 className="text-2xl font-semibold text-slate-900 mb-3">
-                Our Vision
-              </h3>
-              <p className="text-slate-600 leading-relaxed">
-                To be the most trusted and comprehensive digital health
-                platform, seamlessly integrating cutting-edge technology with
-                compassionate, patient-first care, making proactive healthcare
-                universally accessible and deeply personalized.
-              </p>
-            </motion.div>
-            <motion.div
-              variants={itemVariants}
-              className="p-6 sm:p-8 bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 text-center"
-            >
-              <div className="inline-block p-3 bg-teal-100 rounded-full mb-4">
-                <ValuesIcon />
-              </div>
-              <h3 className="text-2xl font-semibold text-slate-900 mb-3">
-                Our Core Values
-              </h3>
-              <ul className="text-slate-600 leading-relaxed space-y-1.5 text-left sm:text-center list-none sm:list-disc sm:list-inside">
-                <li>Patient-Centricity Above All</li>
-                <li>Unwavering Pursuit of Innovation</li>
-                <li>Absolute Trust & Transparency</li>
-                <li>Commitment to Accessibility</li>
-                <li>Empathy in Every Interaction</li>
-                <li>Excellence in Service Delivery</li>
-              </ul>
-            </motion.div>
-          </div>
-        </div>
-      </motion.section>
-
-      {/* NEW: "Our Commitment to You" Section */}
-      <motion.section
-        className="py-16 sm:py-24"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
-        variants={sectionVariants}
-      >
-        <div className="container mx-auto px-6 lg:px-8">
-          <div className="text-center mb-12 sm:mb-16">
-            <motion.h2
-              variants={itemVariants}
-              className="text-3xl sm:text-4xl font-bold text-slate-900"
-            >
-              Our Commitment to You
-            </motion.h2>
-            <motion.p
-              variants={itemVariants}
-              className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto"
-            >
-              At CuraLink, we're not just building a platform; we're fostering a
-              community built on trust and dedicated to your well-being.
-            </motion.p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-10">
-            <motion.div
-              variants={itemVariants}
-              className="flex flex-col items-center text-center p-6 border border-gray-200 rounded-xl hover:shadow-lg transition-shadow duration-300"
-            >
-              <div className="p-3 bg-green-100 rounded-full mb-4">
-                <PatientCareIcon />
-              </div>
-              <h4 className="text-xl font-semibold text-slate-800 mb-2">
-                Exceptional Patient Care
-              </h4>
-              <p className="text-slate-600 text-sm leading-relaxed">
-                Your health journey is unique. We strive to provide tools and
-                connections that respect your individuality and support your
-                specific needs with empathy and professionalism.
-              </p>
-            </motion.div>
-            <motion.div
-              variants={itemVariants}
-              className="flex flex-col items-center text-center p-6 border border-gray-200 rounded-xl hover:shadow-lg transition-shadow duration-300"
-            >
-              <div className="p-3 bg-red-100 rounded-full mb-4">
-                <SecurityLockIcon />
-              </div>
-              <h4 className="text-xl font-semibold text-slate-800 mb-2">
-                Data Security & Privacy
-              </h4>
-              <p className="text-slate-600 text-sm leading-relaxed">
-                We understand the sensitivity of health information. CuraLink is
-                built with robust security measures to protect your data and
-                ensure your privacy at every step.
-              </p>
-            </motion.div>
-            <motion.div
-              variants={itemVariants}
-              className="flex flex-col items-center text-center p-6 border border-gray-200 rounded-xl hover:shadow-lg transition-shadow duration-300"
-            >
-              <div className="p-3 bg-yellow-100 rounded-full mb-4">
-                {" "}
-                <InnovationIcon />
-              </div>
-              <h4 className="text-xl font-semibold text-slate-800 mb-2">
-                Continuous Innovation
-              </h4>
-              <p className="text-slate-600 text-sm leading-relaxed">
-                The world of healthcare and technology is always evolving. We
-                are committed to continuous learning, improvement, and
-                integrating the latest advancements to better serve you.
-              </p>
-            </motion.div>
-          </div>
-        </div>
-      </motion.section>
-
-      {/* NEW: "How CuraLink Works" Section */}
-      <motion.section
-        className="py-16 sm:py-24 bg-slate-50"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
-        variants={sectionVariants}
-      >
-        <div className="container mx-auto px-6 lg:px-8">
-          <div className="text-center mb-12 sm:mb-16">
-            <motion.h2
-              variants={itemVariants}
-              className="text-3xl sm:text-4xl font-bold text-slate-900"
-            >
-              Getting Started is Easy
-            </motion.h2>
-            <motion.p
-              variants={itemVariants}
-              className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto"
-            >
-              Experience a new era of healthcare access in just a few simple
-              steps.
-            </motion.p>
-          </div>
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            <motion.div variants={itemVariants} className="space-y-8">
-              {[
-                {
-                  step: 1,
-                  title: "Tell Us Your Symptoms (Optional)",
-                  description:
-                    "Use our intuitive AI Symptom Analyzer to get intelligent guidance on which type of specialist might be best for you.",
-                  icon: "💡",
-                },
-                {
-                  step: 2,
-                  title: "Find Your Doctor",
-                  description:
-                    "Search our comprehensive directory of verified doctors. Filter by specialty, location, insurance, ratings, and more.",
-                  icon: "🔍",
-                },
-                {
-                  step: 3,
-                  title: "Book with Ease",
-                  description:
-                    "View doctor availability and book your in-person or digital consultation in a few simple clicks.",
-                  icon: "🗓️",
-                },
-                {
-                  step: 4,
-                  title: "Consult & Connect",
-                  description:
-                    "Attend your appointment, whether it's a face-to-face visit or a secure video call directly through CuraLink.",
-                  icon: "💬",
-                },
-              ].map((item) => (
-                <motion.div
-                  key={item.step}
-                  variants={itemVariants}
-                  className="flex items-start"
-                >
-                  <div className="flex-shrink-0 h-12 w-12 rounded-full bg-blue-500 text-white flex items-center justify-center text-xl font-bold mr-4 shadow-md">
-                    {item.step}
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-semibold text-slate-800 mb-1">
-                      {item.icon} {item.title}
-                    </h4>
-                    <p className="text-slate-600 leading-relaxed">
-                      {item.description}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-            <motion.div variants={imageZoomVariants} className="mt-10 lg:mt-0">
-              <img
-                src={howItWorksImage}
-                alt="Illustrative image of CuraLink platform usage"
-                className="rounded-xl shadow-2xl object-cover w-full h-auto max-h-[550px]"
-              />
-            </motion.div>
-          </div>
-        </div>
-      </motion.section>
-
-      {/* Meet The Team Section (Potentially more detail here if needed) */}
-      <motion.section
-        className="py-16 sm:py-24"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
-        variants={sectionVariants}
-      >
-        <div className="container mx-auto px-6 lg:px-8 text-center">
-          <motion.h2
-            variants={itemVariants}
-            className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4"
-          >
-            Meet Our Core Team
-          </motion.h2>
-          <motion.p
-            variants={itemVariants}
-            className="text-lg text-slate-600 max-w-xl mx-auto mb-12 sm:mb-16"
-          >
-            A dedicated group of innovators passionate about transforming
-            healthcare through technology and empathy.
-          </motion.p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
             {[
-              {
-                name: "Dr. Evelyn Reed",
-                role: "Chief Medical Officer",
-                img: teamMember1,
-                bio: "With over 20 years in clinical practice, Dr. Reed ensures CuraLink's medical guidance is sound, ethical, and patient-first. Passionate about integrating clinical expertise with cutting-edge technology.",
-              },
-              {
-                name: "Alex Chen",
-                role: "Lead AI Engineer",
-                img: teamMember2,
-                bio: "Alex spearheads our AI development, focusing on creating intelligent systems that are both powerful and easy to understand. Driving innovation to make healthcare smarter.",
-              },
-              {
-                name: "Priya Sharma",
-                role: "Head of Product & UX",
-                img: teamMember3,
-                bio: "Priya is obsessed with the user. She leads the design and product strategy, ensuring CuraLink is intuitive, accessible, and truly solves patient and doctor needs.",
-              },
-            ].map((member, index) => (
-              <motion.div
-                key={index}
-                variants={itemVariants}
-                className="bg-white p-6 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col items-center text-center group"
-              >
-                <motion.img
-                  src={member.img}
-                  alt={member.name}
-                  className="w-32 h-32 sm:w-36 sm:h-36 rounded-full mx-auto mb-5 object-cover border-4 border-transparent group-hover:border-blue-300 transition-all duration-300"
-                  initial={{ scale: 0.5, opacity: 0 }}
-                  whileInView={{
-                    scale: 1,
-                    opacity: 1,
-                    transition: {
-                      delay: 0.1 + index * 0.1,
-                      duration: 0.5,
-                      ease: "easeOut",
-                    },
-                  }}
-                  viewport={{ once: true }}
-                />
-                <h4 className="text-xl font-semibold text-slate-800 mb-1">
-                  {member.name}
-                </h4>
-                <p className="text-blue-600 text-sm font-medium mb-3">
-                  {member.role}
-                </p>
-                <p className="text-sm text-slate-500 leading-relaxed px-2">
-                  {member.bio}
-                </p>
+              "CuraLink was born from a deeply personal observation: navigating the healthcare system can feel like a maze — complex, fragmented, and overwhelming. We saw patients struggling to find the right specialists, enduring long waits, and feeling lost in a sea of medical jargon.",
+              "Driven by a desire to make a tangible difference, our founding team — technologists, healthcare advocates, and design thinkers — embarked on a shared mission: to build an intelligent, empathetic bridge connecting patients to the quality care they deserve.",
+              "We believe technology, when thoughtfully applied, can humanize healthcare. Every feature in CuraLink, from our AI symptom analyzer to seamless telemedicine, is crafted with the patient's journey at its absolute core.",
+            ].map((text, i) => (
+              <motion.p key={i} variants={fadeUp} style={{ fontSize: 14.5, color: "#64748B", lineHeight: 1.8, marginBottom: 14 }}>{text}</motion.p>
+            ))}
+          </div>
+          <motion.div variants={scaleIn} style={{ borderRadius: 24, overflow: "hidden", boxShadow: "0 24px 64px rgba(99,102,241,0.18)" }}>
+            <img src={ourStoryImage} alt="CuraLink story" style={{ width: "100%", height: 420, objectFit: "cover", display: "block" }} />
+          </motion.div>
+        </div>
+      </Section>
+
+      {/* ──────────────── MISSION / VISION / VALUES ──────────────── */}
+      <Section style={{ padding: "96px 0", background: "white" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
+          <SectionHeading title="Our Guiding Principles" sub="The beliefs and commitments that shape everything we build at CuraLink." />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24 }}>
+
+            {/* Mission */}
+            <motion.div variants={fadeUp} className="about-card" style={{ padding: "32px 28px", overflow: "hidden", position: "relative" }}>
+              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: "linear-gradient(90deg,#6366F1,#8B5CF6)" }} />
+              <div style={{ width: 52, height: 52, borderRadius: 15, background: "#EEF2FF", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 18 }}>
+                <Icon d={ICONS.mission} size={24} color="#6366F1" />
+              </div>
+              <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#0F172A", marginBottom: 12 }}>Our Mission</h3>
+              <p style={{ fontSize: 14, color: "#64748B", lineHeight: 1.75 }}>To empower every individual by providing intuitive, AI-driven access to a network of trusted healthcare professionals, fostering informed decisions and better health outcomes for all.</p>
+            </motion.div>
+
+            {/* Vision */}
+            <motion.div variants={fadeUp} className="about-card" style={{ padding: "32px 28px", overflow: "hidden", position: "relative" }}>
+              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: "linear-gradient(90deg,#8B5CF6,#A78BFA)" }} />
+              <div style={{ width: 52, height: 52, borderRadius: 15, background: "#F5F3FF", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 18 }}>
+                <Icon d={ICONS.vision} size={24} color="#8B5CF6" />
+              </div>
+              <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#0F172A", marginBottom: 12 }}>Our Vision</h3>
+              <p style={{ fontSize: 14, color: "#64748B", lineHeight: 1.75 }}>To be the most trusted digital health platform — seamlessly integrating cutting-edge technology with compassionate, patient-first care that is universally accessible and deeply personalized.</p>
+            </motion.div>
+
+            {/* Values */}
+            <motion.div variants={fadeUp} className="about-card" style={{ padding: "32px 28px", overflow: "hidden", position: "relative" }}>
+              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: "linear-gradient(90deg,#EC4899,#F472B6)" }} />
+              <div style={{ width: 52, height: 52, borderRadius: 15, background: "#FDF2F8", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 18 }}>
+                <Icon d={ICONS.heart} size={24} color="#EC4899" />
+              </div>
+              <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#0F172A", marginBottom: 12 }}>Core Values</h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {VALUES.map((v, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 18, height: 18, borderRadius: 6, background: "#FDF2F8", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Icon d={ICONS.check} size={11} color="#EC4899" />
+                    </div>
+                    <span style={{ fontSize: 13.5, color: "#334155", fontWeight: 600 }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+          </div>
+        </div>
+      </Section>
+
+      {/* ──────────────── COMMITMENT ──────────────── */}
+      <Section style={{ padding: "96px 0" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
+          <SectionHeading title="Our Commitment to You" sub="At CuraLink, we're not just building a platform — we're building a community founded on trust and dedicated to your well-being." />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24 }}>
+            {COMMITMENTS.map((c, i) => (
+              <motion.div key={i} variants={fadeUp} className="about-card" style={{ padding: "30px 26px", display: "flex", flexDirection: "column", gap: 14 }}>
+                <div style={{ width: 52, height: 52, borderRadius: 15, background: c.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon d={c.icon} size={24} color={c.color} />
+                </div>
+                <div>
+                  <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#0F172A", marginBottom: 8 }}>{c.title}</h4>
+                  <p style={{ fontSize: 13.5, color: "#64748B", lineHeight: 1.75 }}>{c.desc}</p>
+                </div>
+                <div style={{ marginTop: "auto", paddingTop: 14, borderTop: `1px solid ${c.bg}`, display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: c.color, cursor: "pointer" }}>Learn more</span>
+                  <Icon d={ICONS.arrow} size={12} color={c.color} />
+                </div>
               </motion.div>
             ))}
           </div>
         </div>
-      </motion.section>
+      </Section>
 
-      {/* Call to Action Section (As before) */}
-      <motion.section
-        className="py-16 sm:py-20 bg-gradient-to-r from-blue-600 to-indigo-700 text-white text-center"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1, transition: { duration: 0.7 } }}
-        viewport={{ once: true }}
-      >
-        <div className="container mx-auto px-6 lg:px-8">
-          <motion.h2
-            className="text-3xl sm:text-4xl font-bold mb-6"
-            initial={{ y: 20, opacity: 0 }}
-            whileInView={{
-              y: 0,
-              opacity: 1,
-              transition: { delay: 0.2, duration: 0.5 },
-            }}
-            viewport={{ once: true }}
-          >
-            Ready to Experience Smarter Healthcare?
-          </motion.h2>
-          <motion.p
-            className="text-lg sm:text-xl max-w-xl mx-auto mb-8 leading-relaxed"
-            initial={{ y: 20, opacity: 0 }}
-            whileInView={{
-              y: 0,
-              opacity: 1,
-              transition: { delay: 0.4, duration: 0.5 },
-            }}
-            viewport={{ once: true }}
-          >
-            Join CuraLink today and take the first step towards a more connected
-            and empowered health journey.
-          </motion.p>
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            whileInView={{
-              scale: 1,
-              opacity: 1,
-              transition: { delay: 0.6, duration: 0.5 },
-            }}
-            viewport={{ once: true }}
-          >
-            <NavLink
-              to={'/signup'}
-              className="inline-block bg-white text-blue-600 font-semibold px-10 py-4 rounded-lg shadow-lg hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700 transition-all duration-300 text-lg transform hover:scale-105"
-            >
-              Get Started with CuraLink
-            </NavLink>
+      {/* ──────────────── HOW IT WORKS ──────────────── */}
+      <Section style={{ padding: "96px 0", background: "white" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 56, alignItems: "center" }}>
+
+          {/* Steps */}
+          <div>
+            <Pill color="#059669" bg="#ECFDF5">How It Works</Pill>
+            <motion.h2 variants={fadeUp} style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(26px,3.5vw,34px)", fontWeight: 800, color: "#0F172A", lineHeight: 1.25, marginBottom: 36 }}>
+              Getting Started<br />is Easy
+            </motion.h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+              {HOW_IT_WORKS.map((item, i) => (
+                <motion.div key={i} variants={fadeUp} style={{ display: "flex", gap: 18, position: "relative", paddingBottom: i < HOW_IT_WORKS.length - 1 ? 28 : 0 }}>
+                  {/* Connector line */}
+                  {i < HOW_IT_WORKS.length - 1 && (
+                    <div style={{ position: "absolute", left: 23, top: 52, bottom: 0, width: 2, background: "linear-gradient(to bottom,#C7D2FE,transparent)" }} />
+                  )}
+                  {/* Step icon */}
+                  <div style={{ flexShrink: 0, width: 48, height: 48, borderRadius: 14, background: item.bg, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${item.color}22`, position: "relative", zIndex: 1 }}>
+                    <Icon d={item.icon} size={20} color={item.color} />
+                  </div>
+                  <div style={{ paddingTop: 4 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: item.color, background: item.bg, padding: "2px 8px", borderRadius: 10 }}>Step {item.step}</span>
+                    </div>
+                    <h4 style={{ fontSize: 15, fontWeight: 700, color: "#0F172A", marginBottom: 4 }}>{item.title}</h4>
+                    <p style={{ fontSize: 13.5, color: "#64748B", lineHeight: 1.7 }}>{item.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          <motion.div variants={scaleIn} style={{ borderRadius: 24, overflow: "hidden", boxShadow: "0 24px 64px rgba(99,102,241,0.16)" }}>
+            <img src={howItWorksImage} alt="How CuraLink works" style={{ width: "100%", height: 480, objectFit: "cover", display: "block" }} />
           </motion.div>
         </div>
-      </motion.section>
+      </Section>
+
+      {/* ──────────────── TEAM ──────────────── */}
+      <Section style={{ padding: "96px 0" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
+          <SectionHeading title="Meet Our Core Team" sub="A dedicated group of innovators passionate about transforming healthcare through technology and empathy." />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24 }}>
+            {teamMembers.map((m, i) => (
+              <motion.div key={i} variants={fadeUp} className="about-card" style={{ padding: "32px 26px", textAlign: "center", overflow: "hidden", position: "relative" }}>
+                {/* Top gradient bar */}
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg,${m.color},${m.color}88)` }} />
+
+                {/* Avatar */}
+                <div style={{ width: 72, height: 72, borderRadius: "50%", background: `linear-gradient(135deg,${m.color},${m.color}88)`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 22, fontWeight: 800, color: "white", fontFamily: "'Playfair Display', serif", boxShadow: `0 8px 24px ${m.color}40` }}>
+                  {m.initials}
+                </div>
+
+                <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#0F172A", marginBottom: 4 }}>{m.name}</h4>
+                <span style={{ fontSize: 11, fontWeight: 700, color: m.color, background: m.bg, padding: "3px 10px", borderRadius: 20, letterSpacing: "0.07em", textTransform: "uppercase" }}>{m.role}</span>
+                <p style={{ fontSize: 13.5, color: "#64748B", lineHeight: 1.7, marginTop: 14 }}>{m.bio}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </Section>
+
+      {/* ──────────────── CTA ──────────────── */}
+      <Section style={{ padding: "0 24px 96px" }}>
+        <motion.div variants={scaleIn} style={{ maxWidth: 1100, margin: "0 auto", background: "linear-gradient(135deg,#6366F1 0%,#8B5CF6 60%,#A78BFA 100%)", borderRadius: 28, padding: "clamp(40px,6vw,72px) clamp(28px,6vw,72px)", position: "relative", overflow: "hidden", boxShadow: "0 24px 64px rgba(99,102,241,0.38)" }}>
+
+          {/* Decorative blobs inside CTA */}
+          <div style={{ position: "absolute", top: -60, right: -60, width: 260, height: 260, borderRadius: "50%", background: "rgba(255,255,255,0.07)", pointerEvents: "none" }} />
+          <div style={{ position: "absolute", bottom: -40, left: 80, width: 180, height: 180, borderRadius: "50%", background: "rgba(255,255,255,0.05)", pointerEvents: "none" }} />
+
+          <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
+            {/* Badge */}
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: 20, padding: "5px 14px", marginBottom: 22 }}>
+              <Icon d={ICONS.sparkle} size={13} color="rgba(255,255,255,0.9)" />
+              <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.9)", letterSpacing: "0.08em" }}>START YOUR JOURNEY</span>
+            </div>
+
+            <motion.h2 variants={fadeUp} style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px,4vw,44px)", fontWeight: 800, color: "white", lineHeight: 1.2, marginBottom: 16 }}>
+              Ready to Experience<br />Smarter Healthcare?
+            </motion.h2>
+            <motion.p variants={fadeUp} style={{ fontSize: 15, color: "rgba(255,255,255,0.78)", maxWidth: 480, margin: "0 auto 36px", lineHeight: 1.75 }}>
+              Join CuraLink today and take the first step towards a more connected, empowered health journey.
+            </motion.p>
+            <motion.div variants={fadeUp} style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+              <NavLink to="/signup" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "white", color: "#6366F1", fontWeight: 800, fontSize: 14, padding: "13px 28px", borderRadius: 12, textDecoration: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.15)", transition: "all 0.2s" }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 14px 32px rgba(0,0,0,0.2)"; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.15)"; }}>
+                Get Started Free
+                <Icon d={ICONS.arrow} size={15} color="#6366F1" />
+              </NavLink>
+              <NavLink to="/find-doctors" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.15)", color: "white", fontWeight: 700, fontSize: 14, padding: "13px 28px", borderRadius: 12, textDecoration: "none", border: "1px solid rgba(255,255,255,0.25)", backdropFilter: "blur(8px)", transition: "all 0.2s" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.22)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; }}>
+                Browse Doctors
+              </NavLink>
+            </motion.div>
+          </div>
+        </motion.div>
+      </Section>
+
     </div>
-  );
-};
+  </>
+);
 
 export default AboutUsPage;
