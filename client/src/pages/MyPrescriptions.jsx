@@ -1,47 +1,34 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// MyPrescriptionsPage.jsx  — FIXES APPLIED
-//
-// BUG FIXED:  const {token} = useContext(Authcontext) was at module scope
-//             (outside any React component) — this crashes with "Invalid hook call".
-//             Moved inside the component. Token is threaded into buildApi().
-//
-// API RESPONSE COMPATIBILITY:
-//   POST /api/prescriptions  → expects { success, prescription }
-//   GET  /api/prescriptions/patient/:id → expects { success, prescriptions: [] }
-//   DELETE /api/prescriptions/:id → expects { success }
-// ─────────────────────────────────────────────────────────────────────────────
-
 import React, { useState, useMemo, useEffect, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Authcontext } from "../Context/AuthContext";
 
-const API_BASE_URL = "/api";
+const API_BASE_URL = "http://localhost:8000";
 
-// Build api object with token at call-time (not module scope)
+
 const buildApi = (token) => ({
   getPrescriptions: async (patientId) => {
-    const res = await fetch(`${API_BASE_URL}/prescriptions/patient/${patientId}`, {
+    const res = await fetch(`${API_BASE_URL}/api/prescription/patient/${patientId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) throw new Error("Failed to fetch prescriptions");
-    return res.json(); // { success, prescriptions }
+    return res.json();
   },
   uploadPrescription: async (formData) => {
-    const res = await fetch(`${API_BASE_URL}/prescriptions`, {
+    const res = await fetch(`${API_BASE_URL}/api/prescription`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: formData,
     });
     if (!res.ok) throw new Error("Upload failed");
-    return res.json(); // { success, prescription }
+    return res.json();
   },
   deletePrescription: async (id) => {
-    const res = await fetch(`${API_BASE_URL}/prescriptions/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/api/prescription/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) throw new Error("Delete failed");
-    return res.json(); // { success }
+    return res.json();
   },
 });
 
@@ -92,39 +79,39 @@ const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
 );
 
 const ICONS = {
-  pill:     "M10.5 3.5a4 4 0 0 1 5.657 5.657l-7.07 7.07a4 4 0 0 1-5.658-5.656l7.07-7.07z M14 10l-4 4",
-  eye:      ["M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z","M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"],
+  pill: "M10.5 3.5a4 4 0 0 1 5.657 5.657l-7.07 7.07a4 4 0 0 1-5.658-5.656l7.07-7.07z M14 10l-4 4",
+  eye: ["M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z", "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"],
   download: "M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1m-4-4-4 4m0 0-4-4m4 4V4",
-  upload:   "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12",
-  close:    "M18 6 6 18M6 6l12 12",
-  clock:    ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z","M12 6v6l4 2"],
-  doc:      "M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z",
-  plus:     "M12 5v14M5 12h14",
-  trash:    "M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2",
-  search:   ["M11 19A8 8 0 1 0 11 3a8 8 0 0 0 0 16z","m21 21-4.35-4.35"],
-  tag:      "M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z M7 7h.01",
-  verified: ["M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z","m9 12 2 2 4-4"],
+  upload: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12",
+  close: "M18 6 6 18M6 6l12 12",
+  clock: ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M12 6v6l4 2"],
+  doc: "M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z",
+  plus: "M12 5v14M5 12h14",
+  trash: "M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2",
+  search: ["M11 19A8 8 0 1 0 11 3a8 8 0 0 0 0 16z", "m21 21-4.35-4.35"],
+  tag: "M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z M7 7h.01",
+  verified: ["M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z", "m9 12 2 2 4-4"],
 };
 
 const fmtDate = (d) =>
   d ? new Date(d + (d.includes("T") ? "" : "T00:00:00Z"))
-        .toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+    .toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
     : "—";
 
 const CAT_COLOR = {
-  General:     { bg: "#EEF2FF", text: "#4338CA", dot: "#6366F1" },
-  Specialist:  { bg: "#F0FDF4", text: "#15803D", dot: "#22C55E" },
-  Emergency:   { bg: "#FFF7ED", text: "#C2410C", dot: "#F97316" },
+  General: { bg: "#EEF2FF", text: "#4338CA", dot: "#6366F1" },
+  Specialist: { bg: "#F0FDF4", text: "#15803D", dot: "#22C55E" },
+  Emergency: { bg: "#FFF7ED", text: "#C2410C", dot: "#F97316" },
   "Follow-up": { bg: "#FDF4FF", text: "#7E22CE", dot: "#A855F7" },
-  "Lab Report":{ bg: "#FFFBEB", text: "#B45309", dot: "#F59E0B" },
-  Other:       { bg: "#F1F5F9", text: "#475569", dot: "#94A3B8" },
+  "Lab Report": { bg: "#FFFBEB", text: "#B45309", dot: "#F59E0B" },
+  Other: { bg: "#F1F5F9", text: "#475569", dot: "#94A3B8" },
 };
 
 const STAT_CFG = {
-  active:    { label: "Active",    color: "#16A34A", bg: "#F0FDF4" },
+  active: { label: "Active", color: "#16A34A", bg: "#F0FDF4" },
   completed: { label: "Completed", color: "#2563EB", bg: "#EFF6FF" },
-  expired:   { label: "Expired",   color: "#DC2626", bg: "#FEF2F2" },
-  archived:  { label: "Archived",  color: "#6B7280", bg: "#F9FAFB" },
+  expired: { label: "Expired", color: "#DC2626", bg: "#FEF2F2" },
+  archived: { label: "Archived", color: "#6B7280", bg: "#F9FAFB" },
 };
 
 // ─── SHARED INPUT STYLE ────────────────────────────────────────────────────────
@@ -140,9 +127,9 @@ const UploadModal = ({ onClose, onSuccess, api }) => {
     prescriptionDate: "", diagnosis: "", category: "General",
     patientNotes: "", tags: "",
   });
-  const [file, setFile]       = useState(null);
+  const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState("");
+  const [error, setError] = useState("");
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
 
@@ -160,13 +147,12 @@ const UploadModal = ({ onClose, onSuccess, api }) => {
       }));
       fd.append("prescriptionDate", form.prescriptionDate);
       fd.append("uploadDate", new Date().toISOString());
-      fd.append("diagnosis",    form.diagnosis);
-      fd.append("category",     form.category);
+      fd.append("diagnosis", form.diagnosis);
+      fd.append("category", form.category);
       fd.append("patientNotes", form.patientNotes);
       fd.append("tags", JSON.stringify(form.tags.split(",").map(t => t.trim()).filter(Boolean)));
-      // patientId & uploadedBy are derived from JWT on the server — don't send them
       const data = await api.uploadPrescription(fd);
-      onSuccess(data.prescription || data); // controller returns { success, prescription }
+      onSuccess(data.prescription || data);
       onClose();
     } catch (err) { setError(err.message); }
     finally { setLoading(false); }
@@ -215,7 +201,7 @@ const UploadModal = ({ onClose, onSuccess, api }) => {
               <div>
                 <Label>Category</Label>
                 <select value={form.category} onChange={set("category")} style={iS}>
-                  {["General","Specialist","Emergency","Follow-up","Lab Report","Other"].map(c => <option key={c}>{c}</option>)}
+                  {["General", "Specialist", "Emergency", "Follow-up", "Lab Report", "Other"].map(c => <option key={c}>{c}</option>)}
                 </select>
               </div>
               <div style={{ gridColumn: "1/-1" }}><Label>Diagnosis</Label><input placeholder="e.g. Hypertension, Viral Fever" value={form.diagnosis} onChange={set("diagnosis")} style={iS} /></div>
@@ -242,8 +228,8 @@ const UploadModal = ({ onClose, onSuccess, api }) => {
 
 // ─── DETAIL MODAL ──────────────────────────────────────────────────────────────
 const DetailModal = ({ rx, onClose, onDelete }) => {
-  const cat  = CAT_COLOR[rx.category] || CAT_COLOR.Other;
-  const stat = STAT_CFG[rx.status]    || STAT_CFG.active;
+  const cat = CAT_COLOR[rx.category] || CAT_COLOR.Other;
+  const stat = STAT_CFG[rx.status] || STAT_CFG.active;
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
@@ -312,7 +298,7 @@ const DetailModal = ({ rx, onClose, onDelete }) => {
                     </div>
                     <div style={{ display: "flex", gap: 16, marginTop: 6, marginLeft: 16 }}>
                       {m.frequency && <span style={{ fontSize: 12, color: "#64748B" }}>⏱ {m.frequency}</span>}
-                      {m.duration  && <span style={{ fontSize: 12, color: "#64748B" }}>📅 {m.duration}</span>}
+                      {m.duration && <span style={{ fontSize: 12, color: "#64748B" }}>📅 {m.duration}</span>}
                     </div>
                     {m.instructions && <p style={{ fontSize: 12, color: "#94A3B8", marginTop: 4, marginLeft: 16, fontStyle: "italic" }}>{m.instructions}</p>}
                   </div>
@@ -374,8 +360,8 @@ const DetailModal = ({ rx, onClose, onDelete }) => {
 
 // ─── CARD ──────────────────────────────────────────────────────────────────────
 const RxCard = ({ rx, onView }) => {
-  const cat  = CAT_COLOR[rx.category] || CAT_COLOR.Other;
-  const stat = STAT_CFG[rx.status]    || STAT_CFG.active;
+  const cat = CAT_COLOR[rx.category] || CAT_COLOR.Other;
+  const stat = STAT_CFG[rx.status] || STAT_CFG.active;
   return (
     <motion.div layout initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
@@ -438,22 +424,20 @@ const RxCard = ({ rx, onView }) => {
 
 // ─── MAIN PAGE ──────────────────────────────────────────────────────────────────
 export default function MyPrescriptionsPage() {
-  // ✅ CORRECT: useContext inside the component
   const { token, user } = useContext(Authcontext);
-  // Rebuild api object only when token changes
   const api = useMemo(() => buildApi(token), [token]);
 
   const [prescriptions, setPrescriptions] = useState([]);
-  const [loading, setLoading]             = useState(true);
-  const [error, setError]                 = useState("");
-  const [filterDoctor, setFilterDoctor]   = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [filterDoctor, setFilterDoctor] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
-  const [filterStatus, setFilterStatus]   = useState("");
-  const [search, setSearch]               = useState("");
-  const [sortBy, setSortBy]               = useState("desc");
-  const [selected, setSelected]           = useState(null);
-  const [showUpload, setShowUpload]       = useState(false);
-  const [useMock, setUseMock]             = useState(true); // ← set false when API ready
+  const [filterStatus, setFilterStatus] = useState("");
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("desc");
+  const [selected, setSelected] = useState(null);
+  const [showUpload, setShowUpload] = useState(false);
+  const [useMock, setUseMock] = useState(true); // ← set false when API ready
 
   useEffect(() => {
     const load = async () => {
@@ -480,10 +464,10 @@ export default function MyPrescriptionsPage() {
 
   const filtered = useMemo(() =>
     prescriptions
-      .filter(p => !filterDoctor   || p.prescribedBy?.name === filterDoctor)
+      .filter(p => !filterDoctor || p.prescribedBy?.name === filterDoctor)
       .filter(p => !filterCategory || p.category === filterCategory)
-      .filter(p => !filterStatus   || p.status === filterStatus)
-      .filter(p => !search || [p.prescribedBy?.name, p.diagnosis, ...(p.tags||[]), ...(p.medications?.map(m=>m.name)||[])].some(s => s?.toLowerCase().includes(search.toLowerCase())))
+      .filter(p => !filterStatus || p.status === filterStatus)
+      .filter(p => !search || [p.prescribedBy?.name, p.diagnosis, ...(p.tags || []), ...(p.medications?.map(m => m.name) || [])].some(s => s?.toLowerCase().includes(search.toLowerCase())))
       .sort((a, b) => {
         const da = new Date(a.prescriptionDate), db = new Date(b.prescriptionDate);
         return sortBy === "desc" ? db - da : da - db;
@@ -492,7 +476,7 @@ export default function MyPrescriptionsPage() {
   );
 
   const handleDelete = async (id) => {
-    setPrescriptions(p => p.filter(r => r._id !== id)); // optimistic
+    setPrescriptions(p => p.filter(r => r._id !== id));
     if (!useMock) {
       try { await api.deletePrescription(id); }
       catch (e) { setError(e.message); }
@@ -502,8 +486,8 @@ export default function MyPrescriptionsPage() {
   const handleUploadSuccess = (newRx) => setPrescriptions(p => [newRx, ...p]);
 
   const stats = useMemo(() => ({
-    total:    prescriptions.length,
-    active:   prescriptions.filter(p => p.status === "active").length,
+    total: prescriptions.length,
+    active: prescriptions.filter(p => p.status === "active").length,
     verified: prescriptions.filter(p => p.isVerified).length,
   }), [prescriptions]);
 
@@ -545,9 +529,9 @@ export default function MyPrescriptionsPage() {
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             className="grid grid-cols-3 gap-4 mb-8">
             {[
-              { label: "Total Records", value: stats.total,    icon: ICONS.doc,      color: "#6366F1", bg: "#EEF2FF" },
-              { label: "Active",        value: stats.active,   icon: ICONS.clock,    color: "#16A34A", bg: "#F0FDF4" },
-              { label: "Verified",      value: stats.verified, icon: ICONS.verified, color: "#8B5CF6", bg: "#F5F3FF" },
+              { label: "Total Records", value: stats.total, icon: ICONS.doc, color: "#6366F1", bg: "#EEF2FF" },
+              { label: "Active", value: stats.active, icon: ICONS.clock, color: "#16A34A", bg: "#F0FDF4" },
+              { label: "Verified", value: stats.verified, icon: ICONS.verified, color: "#8B5CF6", bg: "#F5F3FF" },
             ].map((s, i) => (
               <motion.div key={i} whileHover={{ y: -3 }}
                 style={{ background: "white", borderRadius: 18, padding: "18px 20px", border: "1px solid #EEF2FF", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
@@ -579,11 +563,11 @@ export default function MyPrescriptionsPage() {
               </select>
               <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} style={{ background: "#F8FAFF", border: "1px solid #E2E8F0", borderRadius: 12, padding: "10px 14px", fontSize: 13, color: "#475569", outline: "none" }}>
                 <option value="">All Categories</option>
-                {["General","Specialist","Emergency","Follow-up","Lab Report","Other"].map(c => <option key={c}>{c}</option>)}
+                {["General", "Specialist", "Emergency", "Follow-up", "Lab Report", "Other"].map(c => <option key={c}>{c}</option>)}
               </select>
               <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ background: "#F8FAFF", border: "1px solid #E2E8F0", borderRadius: 12, padding: "10px 14px", fontSize: 13, color: "#475569", outline: "none" }}>
                 <option value="">All Status</option>
-                {["active","completed","expired","archived"].map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
+                {["active", "completed", "expired", "archived"].map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
               </select>
               <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ background: "#F8FAFF", border: "1px solid #E2E8F0", borderRadius: 12, padding: "10px 14px", fontSize: 13, color: "#475569", outline: "none" }}>
                 <option value="desc">Newest First</option>
@@ -629,7 +613,7 @@ export default function MyPrescriptionsPage() {
         </div>
 
         <AnimatePresence>
-          {selected   && <DetailModal rx={selected} onClose={() => setSelected(null)} onDelete={handleDelete} />}
+          {selected && <DetailModal rx={selected} onClose={() => setSelected(null)} onDelete={handleDelete} />}
           {showUpload && <UploadModal onClose={() => setShowUpload(false)} onSuccess={handleUploadSuccess} api={api} />}
         </AnimatePresence>
       </div>

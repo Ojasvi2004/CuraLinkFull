@@ -1,13 +1,7 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// prescriptionRoutes.js
-// Mount in app.js / server.js:
-//   const prescriptionRoutes = require('./routes/prescriptionRoutes');
-//   app.use('/api/prescriptions', prescriptionRoutes);
-// ─────────────────────────────────────────────────────────────────────────────
-
 const express  = require("express");
 const multer   = require("multer");
-const router   = express.Router();
+const PrescriptionRoute   = express.Router();
+const UserAuth = require("../middlewares/UserAuth.js");
 
 const {
   UploadPrescription,
@@ -15,33 +9,27 @@ const {
   GetPrescriptionById,
   UpdatePrescription,
   DeletePrescription,
-} = require("../controllers/PrescriptionController"); // adjust path
+} = require("../controllers/PrescriptionController");
 
-const { isAuthenticated } = require("../middlewares/auth"); // adjust path — your JWT middleware
 
-// ── Multer: store temporarily in /tmp before Cloudinary upload ────────────────
+
+
+
 const upload = multer({ dest: "tmp/" });
 
-// ─── ROUTES ──────────────────────────────────────────────────────────────────
 
-// GET all prescriptions for a patient
-//   Called by React:  GET /api/prescriptions/patient/:patientId
-router.get("/patient/:patientId", isAuthenticated, GetPrescriptionsForPatient);
+PrescriptionRoute.get("/patient/:patientId", UserAuth, GetPrescriptionsForPatient);
 
-// GET single prescription
-//   Called by React:  GET /api/prescriptions/:id
-router.get("/:id", isAuthenticated, GetPrescriptionById);
 
-// POST upload new prescription
-//   Called by React:  POST /api/prescriptions   (multipart/form-data, field name = "file")
-router.post("/", isAuthenticated, upload.single("file"), UploadPrescription);
+PrescriptionRoute.get("/:id", UserAuth, GetPrescriptionById);
 
-// PUT update prescription metadata
-//   Called by React:  PUT /api/prescriptions/:id   (JSON body)
-router.put("/:id", isAuthenticated, UpdatePrescription);
 
-// DELETE prescription
-//   Called by React:  DELETE /api/prescriptions/:id
-router.delete("/:id", isAuthenticated, DeletePrescription);
+PrescriptionRoute.post("/", UserAuth, upload.single("file"), UploadPrescription);
 
-module.exports = router;
+
+PrescriptionRoute.put("/:id", UserAuth, UpdatePrescription);
+
+
+PrescriptionRoute.delete("/:id", UserAuth, DeletePrescription);
+
+module.exports = PrescriptionRoute;

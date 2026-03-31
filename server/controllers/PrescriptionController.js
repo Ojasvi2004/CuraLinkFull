@@ -6,12 +6,13 @@
 //   • multer for file uploads  →  uploadTocloudinary(file.path, folder)
 // ─────────────────────────────────────────────────────────────────────────────
 
+const { v2 } = require("cloudinary");          // ✅ FIX 1: was missing entirely
 const { Prescription } = require("../models/prescriptions");
 
-const uploadTocloudinary = async (FilePath, Folder) => {
-  return await v2.uploader.upload(FilePath, {
-    Folder,
-    resource_type: 'auto',
+const uploadTocloudinary = async (filePath, folder) => {
+  return await v2.uploader.upload(filePath, {
+    folder,                                    // ✅ FIX 2: was `Folder` (uppercase) — Cloudinary expects lowercase `folder`
+    resource_type: "auto",
   });
 };
 
@@ -43,8 +44,6 @@ const UploadPrescription = async (req, res) => {
     const file = req.file; // set by multer middleware
 
     // ── Auth guard ─────────────────────────────────────────────────────────
-    // Your auth middleware should attach the user _id to req._id (or req.user._id).
-    // Adjust the line below to match your middleware convention.
     const userId = req._id || req.user?._id;
     if (!userId) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
@@ -75,11 +74,8 @@ const UploadPrescription = async (req, res) => {
     if (!prescriptionDate) {
       return res.status(400).json({ success: false, message: "prescriptionDate is required" });
     }
-    
 
-    // ── Upload file to Cloudinary ──────────────────────────────────────────
     const cloudinaryResult = await uploadTocloudinary(file.path, "Prescriptions");
-    // uploadTocloudinary should return an object with at least { secure_url, format, bytes, original_filename }
 
     // ── Determine MIME type from Cloudinary result or original mimetype ────
     const mimeMap = {
@@ -91,21 +87,20 @@ const UploadPrescription = async (req, res) => {
     const ext      = (cloudinaryResult.format || file.originalname?.split(".").pop() || "").toLowerCase();
     const fileType = mimeMap[ext] || file.mimetype || "application/pdf";
 
-    // ── Create document ────────────────────────────────────────────────────
     const newPrescription = new Prescription({
       patientId:        userId,
-      uploadedBy:       userId,           // patient uploads their own prescription
+      uploadedBy:       userId,
       prescribedBy: {
-        name:           prescribedBy.name,
-        specialization: prescribedBy.specialization || "",
+        name:             prescribedBy.name,
+        specialization:   prescribedBy.specialization   || "",
         hospitalOrClinic: prescribedBy.hospitalOrClinic || "",
       },
       prescriptionDate: new Date(prescriptionDate),
       uploadDate:       uploadDate ? new Date(uploadDate) : new Date(),
-      diagnosis:        diagnosis  || "",
-      category:         category   || "General",
-      patientNotes:     patientNotes || "",
-      metaData:         metaData   || "",
+      diagnosis:        diagnosis     || "",
+      category:         category      || "General",
+      patientNotes:     patientNotes  || "",
+      metaData:         metaData      || "",
       tags,
       fileURL:          cloudinaryResult.secure_url,
       fileType,
@@ -134,24 +129,18 @@ const UploadPrescription = async (req, res) => {
 };
 
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 2. GET ALL PRESCRIPTIONS FOR A PATIENT
-//    GET /api/prescriptions/patient/:patientId
-//    Headers: Authorization: Bearer <token>
-// ─────────────────────────────────────────────────────────────────────────────
 const GetPrescriptionsForPatient = async (req, res) => {
   try {
     const userId = req._id || req.user?._id;
     const { patientId } = req.params;
 
-    // Only allow a user to fetch their own prescriptions (or an admin)
     if (userId.toString() !== patientId.toString()) {
       return res.status(403).json({ success: false, message: "Forbidden" });
     }
 
     const prescriptions = await Prescription
       .find({ patientId })
-      .sort({ prescriptionDate: -1 })  // newest first
+      .sort({ prescriptionDate: -1 })
       .lean();
 
     return res.status(200).json({
@@ -171,7 +160,7 @@ const GetPrescriptionsForPatient = async (req, res) => {
 };
 
 
-// ─────────────────────────────────────────────────────────────────────────────
+
 // 3. GET SINGLE PRESCRIPTION BY ID
 //    GET /api/prescriptions/:id
 //    Headers: Authorization: Bearer <token>
@@ -203,13 +192,6 @@ const GetPrescriptionById = async (req, res) => {
   }
 };
 
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 4. UPDATE PRESCRIPTION (status, notes, tags, etc.)
-//    PUT /api/prescriptions/:id
-//    Headers: Authorization: Bearer <token>
-//    Body: JSON — any subset of updatable fields
-// ─────────────────────────────────────────────────────────────────────────────
 const UpdatePrescription = async (req, res) => {
   try {
     const userId = req._id || req.user?._id;
@@ -223,7 +205,6 @@ const UpdatePrescription = async (req, res) => {
       return res.status(403).json({ success: false, message: "Forbidden" });
     }
 
-    // Allowed fields the patient may update
     const ALLOWED = [
       "diagnosis", "category", "status", "patientNotes",
       "metaData", "tags", "expiryDate", "isShared",
@@ -254,11 +235,6 @@ const UpdatePrescription = async (req, res) => {
 };
 
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 5. DELETE PRESCRIPTION
-//    DELETE /api/prescriptions/:id
-//    Headers: Authorization: Bearer <token>
-// ─────────────────────────────────────────────────────────────────────────────
 const DeletePrescription = async (req, res) => {
   try {
     const userId = req._id || req.user?._id;
@@ -290,9 +266,7 @@ const DeletePrescription = async (req, res) => {
 };
 
 
-// ─────────────────────────────────────────────────────────────────────────────
-// EXPORTS
-// ─────────────────────────────────────────────────────────────────────────────
+
 module.exports = {
   UploadPrescription,
   GetPrescriptionsForPatient,

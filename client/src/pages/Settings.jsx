@@ -1,7 +1,7 @@
 // src/pages/SettingsPage.js
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import PageLayout from '../components/Layout/PageLayout'; // Adjust path if needed
+import PageLayout from '../components/Layout/PageLayout'; // Adjust path if needed-
 import { Link } from 'react-router-dom'; // For navigation links
 
 // --- Example Icons ---

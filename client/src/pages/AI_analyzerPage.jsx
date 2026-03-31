@@ -226,7 +226,7 @@ const AiAnalyzerPage = () => {
           conversationHistory: updatedMessages.slice(0, -1).map(m => `${m.role === "user" ? "Patient" : "Doctor"}: ${m.content}`).join("\n"),
         },
       };
-      const res = await axios.post("http://127.0.0.1:8001/askDrBot", payload);
+      const res = await axios.post("http://127.0.0.1:5000/askDrBot", payload);
       setMessages(prev => [...prev, { role: "assistant", content: extractReplyText(res.data) }]);
     } catch (err) {
       setMessages(prev => [...prev, { role: "assistant", content: "Sorry, something went wrong. Please try again.", isError: true }]);

@@ -367,19 +367,31 @@ const processOCRInBackground = async (recordId, imageUrl) => {
 const get_ocr_data = async (image_url) => {
   try {
     const response = await axios.post(
-      "http://127.0.0.1:8001/ocr",
+      "http://127.0.0.1:5000/ocr",
       { image_url },
-      { timeout: 90000 }
+      { timeout: 900000 }
     );
+
+    
+    console.log("OCR RAW RESPONSE:", JSON.stringify(response.data, null, 2));
 
     if (response.data.success) {
       return response.data.data;
     }
 
-    throw new Error("FastAPI returned failure");
+
+    throw new Error(`FastAPI returned failure: ${JSON.stringify(response.data)}`);
 
   } catch (error) {
-    console.error("OCR ERROR:", error.message);
+    if (error.response) {
+  
+      console.error("OCR HTTP ERROR:", error.response.status, JSON.stringify(error.response.data));
+    } else if (error.request) {
+     
+      console.error("OCR NO RESPONSE - is FastAPI running on port 5000?");
+    } else {
+      console.error("OCR ERROR:", error.message);
+    }
     throw error;
   }
 };

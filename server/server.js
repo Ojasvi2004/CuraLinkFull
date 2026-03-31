@@ -4,11 +4,12 @@ const cors=require('cors');
 const  UserRoute  = require("./routes/UserRoute");
 const connectDB = require("./config/mongoConfig");
 const DoctorRoute = require("./routes/DoctorRoute");
+const PrescriptionRoute = require("./routes/Prescriptionroutes");
 const app=express();
 
 
 
-const port=process.env.PORT || 5000
+const port=process.env.PORT || 5002
 connectDB();
 
 app.use(cors({
@@ -21,6 +22,7 @@ app.use(express.json());
 
 app.use("/api/user",UserRoute);
 app.use("/api/doctors",DoctorRoute);
+app.use("/api/prescription",PrescriptionRoute);
 
 app.get('/',(req,res)=>{
     res.send("hello");

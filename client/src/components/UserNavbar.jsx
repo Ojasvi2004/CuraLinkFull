@@ -278,10 +278,10 @@ const NavbarAfterLogin = ({
 
               {/* Notification bell */}
               <div style={{ position: "relative" }} ref={notifRef}>
-                <button className="anl-icon-btn" onClick={handleNotifOpen} aria-label="Notifications">
+                {/* <button className="anl-icon-btn" onClick={handleNotifOpen} aria-label="Notifications">
                   <Icon d={ICONS.bell} size={18} />
                   {unreadCount > 0 && <span className="anl-badge">{unreadCount}</span>}
-                </button>
+                </button> */}
 
                 <AnimatePresence>
                   {notifOpen && (
