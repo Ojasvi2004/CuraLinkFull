@@ -1,202 +1,275 @@
 import React, { useState, useEffect, useRef } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
-// --- Example Icons (Replace these with actual icons from a library like Heroicons) ---
-const DashboardIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>;
-const CalendarIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>;
-const UsersIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>;
-const BellIcon = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>;
-const UserCircleIconPlaceholder = ({ imageUrl, altText }) => imageUrl ? <img src={imageUrl} alt={altText} className="w-9 h-9 rounded-full object-cover border-2 border-transparent group-hover:border-blue-300 transition-colors" /> : <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-sm font-semibold group-hover:border-blue-300 border-2 border-transparent transition-colors">DR</div>;
-const CogIcon = () => <svg className="w-5 h-5 mr-3 text-slate-500 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>;
-const LogoutIcon = () => <svg className="w-5 h-5 mr-3 text-slate-500 group-hover:text-red-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>;
-const UserProfileIcon = () => <svg className="w-5 h-5 mr-3 text-slate-500 group-hover:text-blue-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>;
-// --- End Example Icons ---
+// ─── ICONS ──────────────────────────────────────────────────────────────────────
+const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
+    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    {Array.isArray(d) ? d.map((p, i) => <path key={i} d={p} />) : <path d={d} />}
+  </svg>
+);
 
+const ICONS = {
+  dashboard:  ["M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", "M9 22V12h6v10"],
+  calendar:   ["M8 2v3M16 2v3M3 8h18M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5z"],
+  users:      ["M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2", "M23 21v-2a4 4 0 0 0-3-3.87", "M16 3.13a4 4 0 0 1 0 7.75", "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"],
+  queue:      ["M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2", "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z", "M23 21v-2a4 4 0 0 0-3-3.87", "M16 3.13a4 4 0 0 1 0 7.75"],
+  avail:      ["M8 2v3M16 2v3M3 8h18M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5z", "M12 18h.01"],
+  bell:       ["M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9", "M13.73 21a2 2 0 0 1-3.46 0"],
+  profile:    ["M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2", "M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"],
+  settings:   ["M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z", "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"],
+  logout:     ["M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h4a3 3 0 0 1 3 3v1"],
+  chevronD:   "M6 9l6 6 6-6",
+  menu:       ["M4 6h16", "M4 12h16", "M4 18h16"],
+  close:      ["M18 6L6 18", "M6 6l12 12"],
+};
 
-const NavbarAfterLogin = ({ doctorName = "Dr. Sharma", doctorProfilePic = "", onLogout }) => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+// ─── NAV ITEMS ───────────────────────────────────────────────────────────────
+const NAV_ITEMS = [
+  { label: "Dashboard",    to: "/doctor/dashboard",        icon: ICONS.dashboard },
+  { label: "Appointments", to: "/doctor/appointments",     icon: ICONS.calendar  },
+  { label: "Patients",  to: "/doctor/patients",         icon: ICONS.users     },
+  { label: "Queue",   to: "/doctor/queue-management", icon: ICONS.queue     },
+  { label: "Availability", to: "/doctor/availability",     icon: ICONS.avail     },
+];
+
+// ─── AVATAR ──────────────────────────────────────────────────────────────────
+const Avatar = ({ imageUrl, name, size = 36 }) => {
+  const initials = name ? name.replace("Dr. ", "").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : "DR";
+  return imageUrl
+    ? <img src={imageUrl} alt={name} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.3)" }} />
+    : (
+      <div style={{ width: size, height: size, borderRadius: "50%", background: "linear-gradient(135deg,#6366F1,#8B5CF6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "white", border: "2px solid rgba(255,255,255,0.2)", flexShrink: 0 }}>
+        {initials}
+      </div>
+    );
+};
+
+// ─── NAVBAR ──────────────────────────────────────────────────────────────────
+const DoctorNavbar = ({ doctorName = "Dr. Ananya Sharma", doctorProfilePic = "", onLogout }) => {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const navigate = useNavigate();
-  const profileDropdownRef = useRef(null);
+  const dropdownRef = useRef(null);
+  const notifRef = useRef(null);
 
-  // Close profile dropdown if clicked outside
+  // Close dropdowns on outside click
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
-        setIsProfileDropdownOpen(false);
-      }
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setDropdownOpen(false);
+      if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false);
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [profileDropdownRef]);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
-  const handleLogoutClick = () => {
-    setIsProfileDropdownOpen(false); // Close dropdown
-    if (onLogout) {
-      onLogout(); // Call the passed logout function
-    } else {
-      console.log("Logout function not provided to navbar");
-      navigate("/doctor/login"); // Fallback redirect
-    }
+  // Close mobile menu on route change
+  useEffect(() => { setMobileOpen(false); }, []);
+
+  const handleLogout = () => {
+    setDropdownOpen(false);
+    // Clear token from localStorage
+    localStorage.removeItem("token");
+    localStorage.removeItem("doctorToken");
+    // Call external logout handler if provided
+    if (typeof onLogout === "function") onLogout();
+    navigate("/doctor/login");
   };
 
-  const navLinkBaseClass = "px-3 py-2 text-sm font-medium rounded-md transition-colors duration-150 ease-in-out";
-  const navLinkClass = ({isActive}) =>
-    `${navLinkBaseClass} ${isActive ? 'bg-blue-100 text-blue-700 shadow-sm' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'}`;
-  const mobileNavLinkClass = ({isActive}) =>
-    `${navLinkBaseClass} block w-full text-left ${isActive ? 'bg-blue-100 text-blue-700' : 'text-slate-700 hover:bg-slate-100'}`;
-
+  const navLinkStyle = (isActive) => ({
+    display: "flex", alignItems: "center", gap: 7, padding: "8px 14px",
+    borderRadius: 12, fontSize: 13, fontWeight: 600, textDecoration: "none",
+    transition: "all 0.18s",
+    background: isActive ? "rgba(99,102,241,0.12)" : "transparent",
+    color: isActive ? "#6366F1" : "#475569",
+  });
 
   return (
-    <nav className="relative bg-white shadow-lg sticky top-0 z-50"> {/* Sticky navbar */}
-      <div className="container px-4 sm:px-6 py-3 mx-auto">
-        <div className="flex items-center justify-between">
-          {/* Logo & Brand Name */}
-          <NavLink to="/doctor/dashboard" className="flex items-center flex-shrink-0">
-            <img
-              className="w-auto h-10 sm:h-12" // Slightly smaller logo
-              src="/Health_App-512.webp" // Make sure this path is correct
-              alt="CuraLink Logo"
-            />
-            <span className="ml-2 font-bold text-xl sm:text-2xl text-slate-800">
-              CURA<span className="text-blue-600">LINK</span>
-              <span className="ml-1.5 text-xs font-normal text-teal-600 tracking-wider align-middle">PRO</span>
-            </span>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+        .nav-link:hover { background: rgba(99,102,241,0.07) !important; color: #6366F1 !important; }
+        .mobile-link:hover { background: rgba(99,102,241,0.08) !important; color: #6366F1 !important; }
+        .drop-item:hover { background: #F8FAFF !important; }
+        .drop-item-danger:hover { background: #FEF2F2 !important; color: #DC2626 !important; }
+      `}</style>
+
+      {/* Main Navbar */}
+      <nav style={{ background: "white", boxShadow: "0 1px 0 #EEF2FF, 0 4px 24px rgba(0,0,0,0.06)", position: "sticky", top: 0, zIndex: 100, fontFamily: "'DM Sans', sans-serif" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+
+          {/* Logo */}
+          <NavLink to="/doctor/dashboard" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", flexShrink: 0 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg,#1E3A5F,#3B5CB8)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+              </svg>
+            </div>
+            <div>
+              <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 800, color: "#0F172A", letterSpacing: "-0.02em" }}>
+                CURA<span style={{ color: "#6366F1" }}>LINK</span>
+              </span>
+              <span style={{ display: "inline-block", marginLeft: 6, fontSize: 9, fontWeight: 700, color: "#059669", background: "#ECFDF5", padding: "1px 6px", borderRadius: 6, letterSpacing: "0.06em", verticalAlign: "middle" }}>PRO</span>
+            </div>
           </NavLink>
 
-          {/* Desktop Menu Links (Center) */}
-          <div className="hidden lg:flex lg:items-center lg:space-x-1 xl:space-x-2">
-            <NavLink to="/doctor/dashboard" className={navLinkClass}>
-                <DashboardIcon/> <span className="ml-2">Dashboard</span>
-            </NavLink>
-            <NavLink to="/doctor/appointments" className={navLinkClass}>
-                <CalendarIcon/> <span className="ml-2">Appointments</span>
-            </NavLink>
-            <NavLink to="/doctor/patients" className={navLinkClass}>
-                <UsersIcon/> <span className="ml-2">My Patients</span>
-            </NavLink>
-            <NavLink to="/doctor/queue-management" className={navLinkClass}>
-                {/* Add a specific queue icon */}
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l7 3-7 3v7zm3-11l7 3-7 3" /></svg>
-                <span className="ml-2">Live Queue</span>
-            </NavLink>
-             <NavLink to="/doctor/availability" className={navLinkClass}>
-                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zM12 18h.01" /></svg>
-                <span className="ml-2">Set Availability</span>
-            </NavLink>
+          {/* Desktop Nav Links */}
+          <div style={{ display: "flex", alignItems: "center", gap: 2, flex: 1, justifyContent: "center" }}>
+            {NAV_ITEMS.map(item => (
+              <NavLink key={item.to} to={item.to} className="nav-link"
+                style={({ isActive }) => navLinkStyle(isActive)}>
+                <Icon d={item.icon} size={15} color="currentColor" />
+                <span style={{ display: window.innerWidth < 1024 ? "none" : "inline" }}>{item.label}</span>
+              </NavLink>
+            ))}
           </div>
 
-          {/* Right Side - Notifications and User Profile Dropdown */}
-          <div className="flex items-center gap-3 sm:gap-4">
-            <button
-              className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-              aria-label="Notifications"
-              onClick={() => alert("Notifications clicked (UI only)")}
-            >
-              <BellIcon />
-            </button>
+          {/* Right Side */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
 
-            {/* Profile Dropdown */}
-            <div className="relative" ref={profileDropdownRef}>
-              <button
-                onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                className="flex items-center gap-2 p-1 rounded-full hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 group"
-                aria-label="User Menu"
-                aria-expanded={isProfileDropdownOpen}
-              >
-                <UserCircleIconPlaceholder imageUrl={doctorProfilePic} altText={doctorName} />
-                <span className="hidden md:block text-sm font-medium text-slate-700 group-hover:text-blue-600">{doctorName}</span>
-                <svg className={`w-4 h-4 text-slate-500 group-hover:text-blue-600 transition-transform duration-200 ${isProfileDropdownOpen ? 'transform rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-              </button>
+            {/* Notification Bell */}
+            <div ref={notifRef} style={{ position: "relative" }}>
+              <motion.button whileTap={{ scale: 0.92 }} onClick={() => setNotifOpen(o => !o)}
+                style={{ width: 38, height: 38, borderRadius: 11, border: "1.5px solid #EEF2FF", background: "#F8FAFF", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative" }}>
+                <Icon d={ICONS.bell} size={17} color="#6366F1" />
+                <span style={{ position: "absolute", top: 7, right: 7, width: 7, height: 7, borderRadius: "50%", background: "#EF4444", border: "1.5px solid white" }} />
+              </motion.button>
 
               <AnimatePresence>
-                {isProfileDropdownOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -10, scale: 0.95, transition: {duration: 0.15} }}
-                    transition={{ duration: 0.2, ease: "easeOut" }}
-                    className="absolute right-0 mt-2 w-60 bg-white rounded-lg shadow-xl py-2 z-30 origin-top-right
-                               ring-1 ring-black ring-opacity-5 focus:outline-none"
-                    role="menu"
-                    aria-orientation="vertical"
-                  >
-                    <div className="px-4 py-3 border-b border-slate-200">
-                      <p className="text-sm font-semibold text-slate-900 truncate">{doctorName}</p>
-                      <p className="text-xs text-slate-500 truncate">Doctor Profile</p>
+                {notifOpen && (
+                  <motion.div initial={{ opacity: 0, y: -8, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: 0.95 }} transition={{ duration: 0.18 }}
+                    style={{ position: "absolute", right: 0, top: "calc(100% + 10px)", width: 300, background: "white", borderRadius: 16, boxShadow: "0 20px 60px rgba(0,0,0,0.12)", border: "1px solid #EEF2FF", zIndex: 200, overflow: "hidden" }}>
+                    <div style={{ padding: "16px 20px 12px", borderBottom: "1px solid #F1F5F9" }}>
+                      <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#0F172A" }}>Notifications</p>
                     </div>
-                    <NavLink
-                      to="/doctor/profile"
-                      onClick={() => setIsProfileDropdownOpen(false)}
-                      className="flex items-center w-full px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-600 group transition-colors"
-                      role="menuitem"
-                    >
-                      <UserProfileIcon /> My Profile
-                    </NavLink>
-                    <NavLink
-                      to="/doctor/settings"
-                      onClick={() => setIsProfileDropdownOpen(false)}
-                      className="flex items-center w-full px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-600 group transition-colors"
-                      role="menuitem"
-                    >
-                      <CogIcon /> Account Settings
-                    </NavLink>
-                    <div className="border-t border-slate-200 my-1"></div>
-                    <button
-                      onClick={handleLogoutClick}
-                      className="flex items-center w-full px-4 py-2.5 text-sm text-slate-700 hover:bg-red-50 hover:text-red-600 group transition-colors"
-                      role="menuitem"
-                    >
-                      <LogoutIcon /> Sign out
-                    </button>
+                    {[
+                      { msg: "Rohan Patel checked in for 10:30 AM", time: "2m ago", color: "#6366F1" },
+                      { msg: "New appointment booked by Priya Kumari", time: "1h ago", color: "#059669" },
+                      { msg: "Tomorrow's schedule: 15 appointments", time: "3h ago", color: "#D97706" },
+                    ].map((n, i) => (
+                      <div key={i} style={{ padding: "12px 20px", borderBottom: i < 2 ? "1px solid #F8FAFF" : "none", cursor: "pointer" }}
+                        className="drop-item">
+                        <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                          <div style={{ width: 8, height: 8, borderRadius: "50%", background: n.color, marginTop: 5, flexShrink: 0 }} />
+                          <div>
+                            <p style={{ fontSize: 13, color: "#1E293B", fontWeight: 500, lineHeight: 1.4 }}>{n.msg}</p>
+                            <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 3 }}>{n.time}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
-             {/* Mobile Menu Button - Placed after profile for consistent right alignment */}
-            <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-slate-600 hover:text-blue-600 lg:hidden p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                aria-label="Toggle Menu"
-                aria-expanded={isMobileMenuOpen}
-            >
-                {isMobileMenuOpen ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
+
+            {/* Profile Dropdown */}
+            <div ref={dropdownRef} style={{ position: "relative" }}>
+              <motion.button whileTap={{ scale: 0.95 }} onClick={() => setDropdownOpen(o => !o)}
+                style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 10px 5px 5px", borderRadius: 12, border: "1.5px solid #EEF2FF", background: "#F8FAFF", cursor: "pointer" }}>
+                <Avatar imageUrl={doctorProfilePic} name={doctorName} size={32} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: "#1E293B", maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: window.innerWidth < 768 ? "none" : "inline" }}>
+                  {doctorName}
+                </span>
+                <motion.span animate={{ rotate: dropdownOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                  <Icon d={ICONS.chevronD} size={14} color="#94A3B8" />
+                </motion.span>
+              </motion.button>
+
+              <AnimatePresence>
+                {dropdownOpen && (
+                  <motion.div initial={{ opacity: 0, y: -8, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: 0.96 }} transition={{ duration: 0.18 }}
+                    style={{ position: "absolute", right: 0, top: "calc(100% + 10px)", width: 240, background: "white", borderRadius: 16, boxShadow: "0 20px 60px rgba(0,0,0,0.13)", border: "1px solid #EEF2FF", zIndex: 200, overflow: "hidden" }}>
+
+                    {/* Doctor info header */}
+                    <div style={{ padding: "16px 18px 14px", borderBottom: "1px solid #F1F5F9", display: "flex", alignItems: "center", gap: 12 }}>
+                      <Avatar imageUrl={doctorProfilePic} name={doctorName} size={40} />
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ fontSize: 13, fontWeight: 700, color: "#0F172A", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{doctorName}</p>
+                        <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 2 }}>Doctor Account</p>
+                      </div>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div style={{ padding: "8px 0" }}>
+                      <NavLink to="/doctor/profile" onClick={() => setDropdownOpen(false)} style={{ textDecoration: "none" }}>
+                        <div className="drop-item" style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 18px", cursor: "pointer", transition: "all 0.15s" }}>
+                          <div style={{ width: 32, height: 32, borderRadius: 9, background: "#EEF2FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Icon d={ICONS.profile} size={15} color="#6366F1" />
+                          </div>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: "#1E293B" }}>My Profile</span>
+                        </div>
+                      </NavLink>
+
+                      <NavLink to="/doctor/settings" onClick={() => setDropdownOpen(false)} style={{ textDecoration: "none" }}>
+                        <div className="drop-item" style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 18px", cursor: "pointer", transition: "all 0.15s" }}>
+                          <div style={{ width: 32, height: 32, borderRadius: 9, background: "#F5F3FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Icon d={ICONS.settings} size={15} color="#7C3AED" />
+                          </div>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: "#1E293B" }}>Account Settings</span>
+                        </div>
+                      </NavLink>
+                    </div>
+
+                    <div style={{ height: 1, background: "#F1F5F9", margin: "0 12px" }} />
+
+                    <div style={{ padding: "8px 0 8px" }}>
+                      <button onClick={handleLogout} className="drop-item-danger"
+                        style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "11px 18px", cursor: "pointer", background: "transparent", border: "none", transition: "all 0.15s" }}>
+                        <div style={{ width: 32, height: 32, borderRadius: 9, background: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Icon d={ICONS.logout} size={15} color="#DC2626" />
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: "#DC2626" }}>Sign Out</span>
+                      </button>
+                    </div>
+                  </motion.div>
                 )}
-            </button>
+              </AnimatePresence>
+            </div>
+
+            {/* Hamburger (mobile) */}
+            <motion.button whileTap={{ scale: 0.9 }} onClick={() => setMobileOpen(o => !o)}
+              style={{ width: 38, height: 38, borderRadius: 11, border: "1.5px solid #EEF2FF", background: "#F8FAFF", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              <Icon d={mobileOpen ? ICONS.close : ICONS.menu} size={18} color="#6366F1" />
+            </motion.button>
           </div>
         </div>
 
-        {/* Mobile Menu Dropdown */}
+        {/* Mobile Menu */}
         <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="lg:hidden w-full bg-white absolute top-full left-0 right-0 shadow-lg rounded-b-lg overflow-hidden z-40" // Ensure it's below sticky navbar if it overlays
-          >
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-              <NavLink to="/doctor/dashboard" className={mobileNavLinkClass} onClick={()=>setIsMobileMenuOpen(false)}>Dashboard</NavLink>
-              <NavLink to="/doctor/appointments" className={mobileNavLinkClass} onClick={()=>setIsMobileMenuOpen(false)}>Appointments</NavLink>
-              <NavLink to="/doctor/patients" className={mobileNavLinkClass} onClick={()=>setIsMobileMenuOpen(false)}>My Patients</NavLink>
-              <NavLink to="/doctor/queue-management" className={mobileNavLinkClass} onClick={()=>setIsMobileMenuOpen(false)}>Live Queue</NavLink>
-              <NavLink to="/doctor/availability" className={mobileNavLinkClass} onClick={()=>setIsMobileMenuOpen(false)}>Set Availability</NavLink>
-            </div>
-          </motion.div>
-        )}
+          {mobileOpen && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25, ease: "easeInOut" }}
+              style={{ borderTop: "1px solid #EEF2FF", background: "white", overflow: "hidden" }}>
+              <div style={{ padding: "12px 16px 16px", display: "flex", flexDirection: "column", gap: 4 }}>
+                {NAV_ITEMS.map(item => (
+                  <NavLink key={item.to} to={item.to} onClick={() => setMobileOpen(false)} className="mobile-link"
+                    style={({ isActive }) => ({ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 12, textDecoration: "none", fontWeight: 600, fontSize: 14, transition: "all 0.15s", background: isActive ? "rgba(99,102,241,0.1)" : "transparent", color: isActive ? "#6366F1" : "#475569" })}>
+                    <Icon d={item.icon} size={16} color="currentColor" />
+                    {item.label}
+                  </NavLink>
+                ))}
+                <div style={{ height: 1, background: "#F1F5F9", margin: "8px 0" }} />
+                <NavLink to="/doctor/profile" onClick={() => setMobileOpen(false)} className="mobile-link"
+                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 12, textDecoration: "none", fontWeight: 600, fontSize: 14, color: "#475569", transition: "all 0.15s" }}>
+                  <Icon d={ICONS.profile} size={16} color="currentColor" /> My Profile
+                </NavLink>
+                <NavLink to="/doctor/settings" onClick={() => setMobileOpen(false)} className="mobile-link"
+                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 12, textDecoration: "none", fontWeight: 600, fontSize: 14, color: "#475569", transition: "all 0.15s" }}>
+                  <Icon d={ICONS.settings} size={16} color="currentColor" /> Account Settings
+                </NavLink>
+                <button onClick={handleLogout}
+                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 12, fontWeight: 600, fontSize: 14, color: "#DC2626", background: "#FEF2F2", border: "none", cursor: "pointer", width: "100%", textAlign: "left", marginTop: 4 }}>
+                  <Icon d={ICONS.logout} size={16} color="#DC2626" /> Sign Out
+                </button>
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
-      </div>
-    </nav>
+      </nav>
+    </>
   );
 };
 
-export default NavbarAfterLogin;
+export default DoctorNavbar;

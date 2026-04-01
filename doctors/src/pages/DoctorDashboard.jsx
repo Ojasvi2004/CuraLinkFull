@@ -1,475 +1,301 @@
-import React, { useState } from "react";
-import { motion } from "framer-motion";
+import React, { useContext, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
-// --- Example Icons (Replace with actual icons from a library like Heroicons) ---
-const CalendarDaysIcon = () => (
-  <svg
-    className="w-8 h-8 text-indigo-500"
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-    ></path>
+// ─── ICONS ──────────────────────────────────────────────────────────────────────
+const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
+    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    {Array.isArray(d) ? d.map((p, i) => <path key={i} d={p} />) : <path d={d} />}
   </svg>
 );
-const UsersIcon = () => (
-  <svg
-    className="w-8 h-8 text-teal-500"
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-    ></path>
-  </svg>
-);
-const VideoCameraIcon = () => (
-  <svg
-    className="w-8 h-8 text-sky-500"
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M4 6h10M4 10h10M4 14h10M4 18h10"
-    ></path>
-  </svg>
-);
-const ClockIcon = () => (
-  <svg
-    className="w-5 h-5 mr-1.5 text-slate-500"
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-    ></path>
-  </svg>
-);
-const UserCircleIcon = () => (
-  <svg
-    className="w-5 h-5 mr-1.5 text-slate-500"
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-    />
-  </svg>
-);
-const ChartBarIcon = () => (
-  <svg
-    className="w-8 h-8 text-purple-500"
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0h6m4 0V9a2 2 0 00-2-2h-2a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2z"
-    ></path>
-  </svg>
-);
-const CogIcon = () => (
-  <svg
-    className="w-8 h-8 text-orange-500"
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-    ></path>
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-    ></path>
-  </svg>
-);
-// --- End Example Icons ---
 
-// Mock Data - Replace with actual data fetched from API
-const mockDoctorName = "Dr. Ananya Sharma";
-const mockUpcomingAppointments = [
-  {
-    id: "apt001",
-    patientName: "Rohan Patel",
-    time: "10:30 AM",
-    type: "DIGITAL",
-    status: "Scheduled",
-  },
-  {
-    id: "apt002",
-    patientName: "Priya Kumari",
-    time: "11:00 AM",
-    type: "PHYSICAL",
-    status: "Scheduled",
-  },
-  {
-    id: "apt003",
-    patientName: "Amit Singh",
-    time: "11:30 AM",
-    type: "PHYSICAL",
-    status: "Checked-In",
-  },
-];
-const mockQueueStatus = {
-  currentServing: "A005",
-  patientsWaiting: 7,
-  avgWaitTime: "15 mins",
-};
-const mockStats = {
-  todayAppointments: 15,
-  digitalConsultsToday: 6,
-  totalPatients: 235,
+const ICONS = {
+  calendar:    ["M8 2v3M16 2v3M3 8h18M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5z"],
+  users:       ["M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2", "M23 21v-2a4 4 0 0 0-3-3.87", "M16 3.13a4 4 0 0 1 0 7.75", "M9 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"],
+  video:       ["M23 7l-7 5 7 5V7z", "M1 5h15a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H1a2 2 0 0 0 0-5V5z"],
+  chart:       ["M18 20V10", "M12 20V4", "M6 20v-6"],
+  settings:    ["M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z", "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"],
+  clock:       ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M12 6v6l4 2"],
+  arrow:       "M17 8l4 4m0 0l-4 4m4-4H3",
+  chevron:     "m9 18 6-6-6-6",
+  sun:         ["M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z","M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"],
+  sparkle:     ["M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z", "M5 3v4M3 5h4M19 17v4M17 19h4"],
+  stethoscope: ["M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3", "M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"],
+  pulse:       "M22 12h-4l-3 9L9 3l-3 9H2",
+  check:       ["M22 11.08V12a10 10 0 1 1-5.93-9.14", "m9 11 3 3L22 4"],
+  phone:       "M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.5 19.79 19.79 0 0 1 1.61 4.9 2 2 0 0 1 3.6 2.69l3-.15a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6.29 6.29l.96-.88a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z",
+  queue:       ["M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2", "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z", "M23 21v-2a4 4 0 0 0-3-3.87", "M16 3.13a4 4 0 0 1 0 7.75"],
+  building:    ["M6 22V2l6 2 6-2v20", "M6 12h6", "M12 12h6"],
+  moon:        "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z",
 };
 
-const DoctorDashboardPage = () => {
-  const pageVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { duration: 0.5, staggerChildren: 0.1 },
-    },
-  };
+const getGreeting = () => {
+  const h = new Date().getHours();
+  if (h < 12) return { text: "Good morning", icon: ICONS.sun };
+  if (h < 17) return { text: "Good afternoon", icon: ICONS.sun };
+  return { text: "Good evening", icon: ICONS.moon };
+};
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20, scale: 0.98 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: { duration: 0.5, ease: "circOut" },
-    },
-  };
-
-  const statCardVariants = {
-    hidden: { opacity: 0, y: 30, scale: 0.9 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.1 },
-    },
-  };
-
-  const cardHover = {
-    hover: {
-      y: -5,
-      boxShadow: "0 10px 20px rgba(0,0,0,0.08)",
-      transition: { type: "spring", stiffness: 300, damping: 15 },
-    },
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-gray-100 to-stone-200 p-4 sm:p-6 lg:p-8">
-      <motion.div
-        className="container mx-auto"
-        variants={pageVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {/* Welcome Header */}
-        <motion.div variants={itemVariants} className="mb-8 sm:mb-10">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800">
-            Welcome back,{" "}
-            <span className="text-blue-600">{mockDoctorName}!</span>
-          </h1>
-          <p className="text-slate-600 mt-2 text-lg">
-            Here's an overview of your practice today.
-          </p>
-        </motion.div>
-
-        {/* Stats Cards */}
-        <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 sm:mb-10"
-          variants={{ visible: { transition: { staggerChildren: 0.1 } } }} // Stagger children
-        >
-          {[
-            {
-              title: "Today's Appointments",
-              value: mockStats.todayAppointments,
-              icon: <CalendarDaysIcon />,
-              color: "indigo",
-            },
-            {
-              title: "Digital Consults Today",
-              value: mockStats.digitalConsultsToday,
-              icon: <VideoCameraIcon />,
-              color: "sky",
-            },
-            {
-              title: "Total Patients",
-              value: mockStats.totalPatients,
-              icon: <UsersIcon />,
-              color: "teal",
-            },
-          ].map((stat, index) => (
-            <motion.div
-              key={index}
-              variants={statCardVariants}
-              className={`bg-white p-6 rounded-xl shadow-lg border-l-4 border-${stat.color}-500 flex items-center justify-between`}
-            >
-              <div>
-                <p className="text-sm text-slate-500">{stat.title}</p>
-                <p className="text-3xl font-bold text-slate-800">
-                  {stat.value}
-                </p>
-              </div>
-              <div className={`p-3 rounded-full bg-${stat.color}-100`}>
-                {stat.icon}
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Main Dashboard Sections (e.g., Live Queue, Upcoming Appointments) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Live Patient Queue */}
-          <motion.section
-            variants={itemVariants}
-            className="lg:col-span-2 bg-white p-6 rounded-xl shadow-xl"
-          >
-            <h2 className="text-xl sm:text-2xl font-semibold text-slate-800 mb-5 border-b border-slate-200 pb-3">
-              Live Patient Queue
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-center">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-xs text-blue-700 font-medium">
-                  CURRENTLY SERVING
-                </p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {mockQueueStatus.currentServing || "N/A"}
-                </p>
-              </div>
-              <div className="bg-yellow-50 p-4 rounded-lg">
-                <p className="text-xs text-yellow-700 font-medium">
-                  PATIENTS WAITING
-                </p>
-                <p className="text-2xl font-bold text-yellow-600">
-                  {mockQueueStatus.patientsWaiting}
-                </p>
-              </div>
-              <div className="bg-green-50 p-4 rounded-lg">
-                <p className="text-xs text-green-700 font-medium">
-                  AVG. WAIT TIME
-                </p>
-                <p className="text-2xl font-bold text-green-600">
-                  {mockQueueStatus.avgWaitTime}
-                </p>
-              </div>
-            </div>
-            {/* Add actions like "Call Next Patient", "Pause Queue" here */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <motion.button
-                className="flex-1 bg-green-500 hover:bg-green-600 text-white font-medium py-2.5 px-5 rounded-lg text-sm shadow-sm"
-                whileHover={{ y: -1 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => alert("Call Next Patient (UI Only)")}
-              >
-                Call Next Patient
-              </motion.button>
-              <motion.button
-                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 px-5 rounded-lg text-sm shadow-sm"
-                whileHover={{ y: -1 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => alert("Pause Queue (UI Only)")}
-              >
-                Pause Queue
-              </motion.button>
-            </div>
-            <Link
-              to="/doctor/queue-management"
-              className="block text-center mt-4 text-sm text-blue-600 hover:underline"
-            >
-              Manage Full Queue →
-            </Link>
-          </motion.section>
-
-          {/* Quick Links / Actions */}
-          <motion.section
-            variants={itemVariants}
-            className="lg:col-span-1 bg-white p-6 rounded-xl shadow-xl space-y-4"
-          >
-            <h2 className="text-xl sm:text-2xl font-semibold text-slate-800 mb-4 border-b border-slate-200 pb-3">
-              Quick Actions
-            </h2>
-            {[
-              {
-                title: "Manage Availability",
-                link: "/doctor/availability",
-                icon: <CalendarDaysIcon />,
-                color: "indigo",
-              },
-              {
-                title: "View All Appointments",
-                link: "/doctor/appointments",
-                icon: <UsersIcon />,
-                color: "teal",
-              },
-              {
-                title: "Start Teleconsultation",
-                link: "/doctor/teleconsult",
-                icon: <VideoCameraIcon />,
-                color: "sky",
-              },
-              {
-                title: "Practice Analytics",
-                link: "/doctor/analytics",
-                icon: <ChartBarIcon />,
-                color: "purple",
-              },
-              {
-                title: "Profile & Settings",
-                link: "/doctor/settings",
-                icon: <CogIcon />,
-                color: "orange",
-              },
-            ].map((item, index) => (
-              <Link key={index} to={item.link}>
-                <motion.div
-                  className={`p-4 rounded-lg flex items-center bg-${item.color}-50 border border-${item.color}-200 hover:bg-${item.color}-100 hover:shadow-md transition-all duration-200 cursor-pointer`}
-                  whileHover={{
-                    x: 5,
-                    transition: { type: "spring", stiffness: 400, damping: 12 },
-                  }}
-                >
-                  <div className={`p-2 rounded-full bg-${item.color}-100 mr-4`}>
-                    {item.icon}
-                  </div>
-                  <span className={`font-medium text-${item.color}-700`}>
-                    {item.title}
-                  </span>
-                  <svg
-                    className={`w-5 h-5 text-${item.color}-500 ml-auto transform transition-transform group-hover:translate-x-1`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M9 5l7 7-7 7"
-                    ></path>
-                  </svg>
-                </motion.div>
-              </Link>
-            ))}
-          </motion.section>
-        </div>
-
-        {/* Upcoming Appointments List */}
-        <motion.section
-          variants={itemVariants}
-          className="mt-8 sm:mt-10 bg-white p-6 rounded-xl shadow-xl"
-        >
-          <h2 className="text-xl sm:text-2xl font-semibold text-slate-800 mb-5 border-b border-slate-200 pb-3">
-            Today's Upcoming Appointments
-          </h2>
-          {mockUpcomingAppointments.length > 0 ? (
-            <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
-              {" "}
-              {/* Scrollable list */}
-              {mockUpcomingAppointments.map((apt) => (
-                <motion.div
-                  key={apt.id}
-                  className="p-4 bg-slate-50 rounded-lg border border-slate-200 flex flex-col sm:flex-row justify-between sm:items-center gap-2 hover:border-blue-300 transition-colors"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{
-                    opacity: 1,
-                    x: 0,
-                    transition: {
-                      duration: 0.3,
-                      delay: apt.id.slice(-1) * 0.05,
-                    },
-                  }} // Simple stagger
-                  whileHover="hover"
-                >
-                  <motion.div variants={cardHover}>
-                    <div className="flex items-center mb-1 sm:mb-0">
-                      <UserCircleIcon />
-                      <span className="text-sm font-medium text-slate-700">
-                        {apt.patientName}
-                      </span>
-                    </div>
-                    <div className="flex items-center text-xs text-slate-500 mt-1 sm:mt-0 sm:ml-6">
-                      <ClockIcon /> {apt.time} -
-                      <span
-                        className={`ml-1.5 font-medium ${
-                          apt.type === "DIGITAL"
-                            ? "text-blue-600"
-                            : "text-green-600"
-                        }`}
-                      >
-                        {apt.type}
-                      </span>
-                    </div>
-                  </motion.div>
-                  <div className="flex gap-2 mt-2 sm:mt-0">
-                    <Link
-                      to={`/doctor/patient/${apt.id}/record`}
-                      className="text-xs bg-blue-100 text-blue-600 hover:bg-blue-200 px-3 py-1.5 rounded-md font-medium"
-                    >
-                      View Record
-                    </Link>
-                    {apt.type === "DIGITAL" && (
-                      <Link
-                        to={`/doctor/start-call/${apt.id}`}
-                        className="text-xs bg-green-100 text-green-600 hover:bg-green-200 px-3 py-1.5 rounded-md font-medium"
-                      >
-                        Start Call
-                      </Link>
-                    )}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-slate-500 text-center py-5">
-              No upcoming appointments for today yet.
-            </p>
-          )}
-          <div className="mt-6 text-center">
-            <Link
-              to="/doctor/appointments"
-              className="text-sm font-medium text-blue-600 hover:underline"
-            >
-              View Full Schedule →
-            </Link>
+// ─── QUICK ACTION CARD ────────────────────────────────────────────────────────
+const QuickCard = ({ item, index }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.08 * index, type: "spring", stiffness: 260, damping: 22 }}
+    whileHover={{ y: -6, boxShadow: `0 20px 48px ${item.glow}` }}
+    style={{ background: "white", borderRadius: 20, border: "1px solid #EEF2FF", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", overflow: "hidden", cursor: "pointer" }}
+  >
+    <Link to={item.link} style={{ textDecoration: "none", display: "flex", flexDirection: "column", height: "100%" }}>
+      <div style={{ height: 4, background: item.gradient }} />
+      <div style={{ padding: "22px 22px 20px", display: "flex", flexDirection: "column", flex: 1 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
+          <div style={{ width: 48, height: 48, borderRadius: 14, background: item.iconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Icon d={item.icon} size={22} color={item.iconColor} />
           </div>
-        </motion.section>
-      </motion.div>
-    </div>
+          <span style={{ fontSize: 10, fontWeight: 700, color: item.iconColor, background: item.iconBg, padding: "3px 10px", borderRadius: 20, letterSpacing: "0.07em", textTransform: "uppercase" }}>{item.tag}</span>
+        </div>
+        <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, color: "#0F172A", marginBottom: 6, lineHeight: 1.25 }}>{item.title}</h3>
+        <p style={{ fontSize: 13, color: "#64748B", lineHeight: 1.6, flex: 1 }}>{item.description}</p>
+        <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 16, color: item.iconColor, fontWeight: 700, fontSize: 12 }}>
+          Go to {item.title} <Icon d={ICONS.arrow} size={13} color={item.iconColor} style={{ marginLeft: 2 }} />
+        </div>
+      </div>
+    </Link>
+  </motion.div>
+);
+
+// ─── QUICK LINKS ─────────────────────────────────────────────────────────────
+const quickLinks = [
+  { title: "My Schedule", description: "View today's appointments, manage your calendar and set availability slots.", icon: ICONS.calendar, link: "/doctor/appointments", gradient: "linear-gradient(135deg,#6366F1,#8B5CF6)", glow: "rgba(99,102,241,0.28)", iconBg: "#EEF2FF", iconColor: "#6366F1", tag: "Schedule" },
+  { title: "Patient Queue", description: "Monitor live queue status, call next patient, and manage walk-ins.", icon: ICONS.queue, link: "/doctor/queue-management", gradient: "linear-gradient(135deg,#0EA5E9,#38BDF8)", glow: "rgba(14,165,233,0.25)", iconBg: "#E0F2FE", iconColor: "#0284C7", tag: "Live Queue" },
+  { title: "Teleconsultation", description: "Start or join a secure video consultation with your patient now.", icon: ICONS.video, link: "/doctor/teleconsult", gradient: "linear-gradient(135deg,#10B981,#34D399)", glow: "rgba(16,185,129,0.25)", iconBg: "#ECFDF5", iconColor: "#059669", tag: "Digital" },
+  { title: "Practice Analytics", description: "Track revenue, patient volume, consultation trends and insights.", icon: ICONS.chart, link: "/doctor/analytics", gradient: "linear-gradient(135deg,#F59E0B,#FBBF24)", glow: "rgba(245,158,11,0.25)", iconBg: "#FFFBEB", iconColor: "#D97706", tag: "Insights" },
+  { title: "Set Availability", description: "Define your consultation hours, breaks and holiday schedule.", icon: ICONS.settings, link: "/doctor/availability", gradient: "linear-gradient(135deg,#EC4899,#F472B6)", glow: "rgba(236,72,153,0.25)", iconBg: "#FDF2F8", iconColor: "#DB2777", tag: "Availability" },
+  { title: "All Patients", description: "Browse your full patient roster, medical records and history.", icon: ICONS.users, link: "/doctor/patients", gradient: "linear-gradient(135deg,#8B5CF6,#A78BFA)", glow: "rgba(139,92,246,0.25)", iconBg: "#F5F3FF", iconColor: "#7C3AED", tag: "Records" },
+];
+
+// ─── STATUS BADGE ─────────────────────────────────────────────────────────────
+const StatusBadge = ({ status }) => {
+  const map = {
+    upcoming:  { bg: "#FEF9C3", color: "#A16207", label: "Upcoming" },
+    completed: { bg: "#DCFCE7", color: "#15803D", label: "Completed" },
+    cancelled: { bg: "#FEE2E2", color: "#B91C1C", label: "Cancelled" },
+    "checked-in": { bg: "#DBEAFE", color: "#1D4ED8", label: "Checked In" },
+  };
+  const s = map[status?.toLowerCase()] || { bg: "#F1F5F9", color: "#475569", label: status };
+  return (
+    <span style={{ background: s.bg, color: s.color, fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 20, letterSpacing: "0.05em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
+      {s.label}
+    </span>
   );
 };
 
-export default DoctorDashboardPage;
+// ─── MOCK DATA ────────────────────────────────────────────────────────────────
+const MOCK_APPOINTMENTS = [
+  { id: "apt001", patientName: "Rohan Patel", time: "10:30 AM", type: "DIGITAL", status: "upcoming" },
+  { id: "apt002", patientName: "Priya Kumari", time: "11:00 AM", type: "PHYSICAL", status: "checked-in" },
+  { id: "apt003", patientName: "Amit Singh", time: "11:30 AM", type: "PHYSICAL", status: "upcoming" },
+  { id: "apt004", patientName: "Sunita Rao", time: "12:00 PM", type: "DIGITAL", status: "completed" },
+];
+
+const QUEUE = { currentServing: "A005", patientsWaiting: 7, avgWaitTime: "15 min" };
+
+// ─── DOCTOR DASHBOARD ─────────────────────────────────────────────────────────
+const DoctorDashboard = () => {
+  // Replace with: const { user } = useContext(AuthContext);
+  const doctorName = "Dr. Ananya Sharma";
+  const specialty = "Cardiologist · AIIMS Delhi";
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const t = setInterval(() => setTime(new Date()), 60000);
+    return () => clearInterval(t);
+  }, []);
+
+  const timeStr = time.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+  const dateStr = time.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
+  const greeting = getGreeting();
+
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+      `}</style>
+
+      <div style={{ minHeight: "100vh", background: "linear-gradient(145deg,#F0F4FF 0%,#F8F6FF 40%,#EFF6FF 100%)", fontFamily: "'DM Sans', sans-serif" }}>
+
+        {/* Ambient blobs */}
+        <div style={{ position: "fixed", top: -80, right: -80, width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle,rgba(99,102,241,0.08) 0%,transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
+        <div style={{ position: "fixed", bottom: -60, left: -60, width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle,rgba(139,92,246,0.07) 0%,transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
+
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 24px 80px", position: "relative", zIndex: 1 }}>
+
+          {/* ── HERO ─────────────────────────────────────────────────────────── */}
+          <motion.div initial={{ opacity: 0, y: -24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}
+            style={{ background: "linear-gradient(135deg,#1E3A5F 0%,#2D4E8A 55%,#3B5CB8 100%)", borderRadius: 24, padding: "36px 40px", marginBottom: 32, position: "relative", overflow: "hidden", boxShadow: "0 16px 48px rgba(30,58,95,0.4)" }}>
+
+            {/* Decorative circles */}
+            <div style={{ position: "absolute", top: -50, right: -50, width: 240, height: 240, borderRadius: "50%", background: "rgba(255,255,255,0.05)", pointerEvents: "none" }} />
+            <div style={{ position: "absolute", bottom: -30, right: 140, width: 160, height: 160, borderRadius: "50%", background: "rgba(255,255,255,0.04)", pointerEvents: "none" }} />
+            <div style={{ position: "absolute", top: "50%", right: 40, transform: "translateY(-50%)", width: 2, height: "60%", background: "rgba(255,255,255,0.1)", borderRadius: 2, pointerEvents: "none" }} />
+
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between", gap: 20 }}>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                  <Icon d={greeting.icon} size={15} color="rgba(255,255,255,0.7)" />
+                  <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: 600 }}>{greeting.text}</p>
+                </div>
+                <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 34, fontWeight: 800, color: "white", lineHeight: 1.15 }}>
+                  {doctorName}<span style={{ color: "rgba(255,255,255,0.45)" }}>.</span>
+                </h1>
+                <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, marginTop: 5, fontWeight: 500 }}>{specialty}</p>
+                <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, marginTop: 6 }}>Your practice dashboard is ready.</p>
+              </div>
+
+              {/* Live clock */}
+              <div style={{ background: "rgba(255,255,255,0.12)", borderRadius: 18, padding: "16px 24px", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)", textAlign: "center", flexShrink: 0 }}>
+                <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>{dateStr}</p>
+                <p style={{ color: "white", fontSize: 26, fontWeight: 800, letterSpacing: "0.04em", marginTop: 4 }}>{timeStr}</p>
+              </div>
+            </div>
+
+            {/* Stat pills */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 24 }}>
+              {[
+                { label: "Today's Appointments", value: "15", icon: ICONS.calendar },
+                { label: "Digital Consults", value: "6 Today", icon: ICONS.video },
+                { label: "Patients Waiting", value: `${QUEUE.patientsWaiting} in Queue`, icon: ICONS.queue },
+                { label: "Avg. Wait Time", value: QUEUE.avgWaitTime, icon: ICONS.clock },
+              ].map((s, i) => (
+                <div key={i} style={{ background: "rgba(255,255,255,0.12)", borderRadius: 12, padding: "8px 14px", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", gap: 8 }}>
+                  <Icon d={s.icon} size={14} color="rgba(255,255,255,0.8)" />
+                  <span style={{ fontSize: 12, color: "rgba(255,255,255,0.65)" }}>{s.label}:</span>
+                  <span style={{ fontSize: 12, color: "white", fontWeight: 700 }}>{s.value}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* ── LIVE QUEUE BANNER ─────────────────────────────────────────────── */}
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}
+            style={{ background: "white", borderRadius: 20, border: "1px solid #EEF2FF", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginBottom: 32, overflow: "hidden" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "16px 24px 12px", borderBottom: "1px solid #F1F5F9" }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981", boxShadow: "0 0 0 3px rgba(16,185,129,0.2)", animation: "pulse 2s infinite" }} />
+              <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 700, color: "#0F172A" }}>Live Patient Queue</span>
+              <span style={{ marginLeft: "auto", fontSize: 11, color: "#6366F1", fontWeight: 700, background: "#EEF2FF", padding: "3px 10px", borderRadius: 20 }}>LIVE</span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", padding: "16px 24px" }}>
+              {[
+                { label: "Currently Serving", value: QUEUE.currentServing, bg: "#EEF2FF", color: "#6366F1" },
+                { label: "Patients Waiting", value: QUEUE.patientsWaiting, bg: "#FFFBEB", color: "#D97706" },
+                { label: "Avg. Wait Time", value: QUEUE.avgWaitTime, bg: "#ECFDF5", color: "#059669" },
+              ].map((q, i) => (
+                <div key={i} style={{ textAlign: "center", padding: "12px 0" }}>
+                  <p style={{ fontSize: 11, color: "#94A3B8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{q.label}</p>
+                  <p style={{ fontSize: 28, fontWeight: 800, color: q.color, fontFamily: "'Playfair Display', serif" }}>{q.value}</p>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 12, padding: "0 24px 16px" }}>
+              <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
+                style={{ flex: 1, background: "linear-gradient(135deg,#10B981,#34D399)", color: "white", border: "none", borderRadius: 12, padding: "11px 0", fontWeight: 700, fontSize: 13, cursor: "pointer", boxShadow: "0 4px 14px rgba(16,185,129,0.3)" }}>
+                Call Next Patient
+              </motion.button>
+              <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
+                style={{ flex: 1, background: "linear-gradient(135deg,#F59E0B,#FBBF24)", color: "white", border: "none", borderRadius: 12, padding: "11px 0", fontWeight: 700, fontSize: 13, cursor: "pointer", boxShadow: "0 4px 14px rgba(245,158,11,0.3)" }}>
+                Pause Queue
+              </motion.button>
+              <Link to="/doctor/queue-management" style={{ flex: 1, textDecoration: "none" }}>
+                <motion.div whileHover={{ y: -2 }} style={{ background: "#F8FAFF", border: "1.5px solid #EEF2FF", borderRadius: 12, padding: "11px 0", fontWeight: 700, fontSize: 13, color: "#6366F1", textAlign: "center", cursor: "pointer" }}>
+                  Manage Full Queue
+                </motion.div>
+              </Link>
+            </div>
+          </motion.div>
+
+          {/* ── SECTION LABEL ─────────────────────────────────────────────────── */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.22 }}
+            style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 11, background: "#EEF2FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon d={ICONS.sparkle} size={17} color="#6366F1" />
+            </div>
+            <div>
+              <p style={{ fontSize: 11, color: "#6366F1", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Quick Access</p>
+              <p style={{ fontSize: 13, color: "#64748B", marginTop: 1 }}>Everything you need, one tap away</p>
+            </div>
+          </motion.div>
+
+          {/* ── QUICK LINKS GRID ──────────────────────────────────────────────── */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 20, marginBottom: 40 }}>
+            {quickLinks.map((item, i) => <QuickCard key={i} item={item} index={i} />)}
+          </div>
+
+          {/* ── BOTTOM ROW ────────────────────────────────────────────────────── */}
+          <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: 24 }}>
+
+            {/* Today's Appointments */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
+              style={{ background: "white", borderRadius: 20, border: "1px solid #EEF2FF", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", overflow: "hidden" }}>
+              <div style={{ padding: "20px 24px 14px", borderBottom: "1px solid #F1F5F9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Icon d={ICONS.pulse} size={17} color="#6366F1" />
+                  <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, color: "#0F172A" }}>Today's Appointments</span>
+                </div>
+                <Link to="/doctor/appointments" style={{ fontSize: 12, color: "#6366F1", fontWeight: 600, textDecoration: "none" }}>View all →</Link>
+              </div>
+              <div style={{ padding: "8px 12px" }}>
+                {MOCK_APPOINTMENTS.map((apt, i) => (
+                  <motion.div key={apt.id} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 + i * 0.07 }}>
+                    <Link to={`/doctor/appointment/${apt.id}`} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 14, padding: "12px", borderRadius: 14, transition: "background 0.15s" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "#F8FAFF"}
+                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                      <div style={{ width: 38, height: 38, borderRadius: 12, background: apt.type === "DIGITAL" ? "#E0F2FE" : "#ECFDF5", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <Icon d={apt.type === "DIGITAL" ? ICONS.video : ICONS.building} size={17} color={apt.type === "DIGITAL" ? "#0284C7" : "#059669"} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 13, color: "#1E293B", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{apt.patientName}</p>
+                        <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 2 }}>{apt.time} · {apt.type === "DIGITAL" ? "Video Call" : "In-Person"}</p>
+                      </div>
+                      <StatusBadge status={apt.status} />
+                    </Link>
+                    {i < MOCK_APPOINTMENTS.length - 1 && <div style={{ height: 1, background: "#F1F5F9", margin: "0 12px" }} />}
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Practice tip card */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.42 }}
+              style={{ background: "linear-gradient(145deg,#1E3A5F 0%,#2D4E8A 100%)", borderRadius: 20, padding: "28px 26px", boxShadow: "0 8px 32px rgba(30,58,95,0.35)", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 220 }}>
+              <div>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+                  <Icon d={ICONS.stethoscope} size={20} color="white" />
+                </div>
+                <p style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Clinical Insight</p>
+                <p style={{ color: "white", fontSize: 14, lineHeight: 1.65 }}>Patients who receive appointment reminders show a 34% reduction in no-shows. Your digital consults are up 18% this week — great momentum.</p>
+              </div>
+              <div style={{ marginTop: 20, borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: 14, display: "flex", alignItems: "center", gap: 8 }}>
+                <Icon d={ICONS.sparkle} size={14} color="rgba(255,255,255,0.6)" />
+                <span style={{ fontSize: 11, color: "rgba(255,255,255,0.55)", fontWeight: 600 }}>Excellence in care starts with preparation.</span>
+              </div>
+            </motion.div>
+
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { box-shadow: 0 0 0 3px rgba(16,185,129,0.2); }
+          50% { box-shadow: 0 0 0 6px rgba(16,185,129,0.08); }
+        }
+        @media (max-width: 768px) {
+          .bottom-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
+    </>
+  );
+};
+
+export default DoctorDashboard;
