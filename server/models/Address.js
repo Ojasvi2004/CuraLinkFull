@@ -9,10 +9,18 @@ const Addressmodel = new mongoose.Schema({
     type: String,
     default: "",
   },
-  zip: {
+  pincode: {
     type: Number,
     default: null,
   },
+  country:{
+    type:String,
+    default:""
+  },
+  state:{
+    type:String,
+    default:""
+  }
 });
 
 module.exports = {

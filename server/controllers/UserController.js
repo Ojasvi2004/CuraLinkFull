@@ -308,16 +308,113 @@ const GetProfileData = async (req, res) => {
     }
 }
 
-// const EditUserProfile=async(req,res)=>{
-//     try {
-//         const {}
-        
-//     } catch (error) {
-        
-//     }
-// }
+const EditUserProfile = async (req, res) => {
+    try {
+        const { fullname, phone, dob, gender } = req.body;
+        const _id = req._id;
 
+        if (!fullname || !phone || !dob || !gender) {
+            return res.status(400).json({
+                success: false,
+                message: "All fields are required"
+            });
+        }
 
+        if (!_id) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized access"
+            });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            _id,
+            {
+                fullname,
+                phone,
+                dob,
+                gender
+            },
+            {
+                new: true,          
+                runValidators: true 
+            }
+        );
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Profile updated successfully",
+            user
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
+    }
+};
+
+const EditUserAddress = async (req, res) => {
+    try {
+        const _id = req._id;
+        const { street, city, state, pincode, country } = req.body;
+
+        if (!_id) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized access"
+            });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            _id,
+            {
+                $set: {
+                    "address.street": street,
+                    "address.city": city,
+                    "address.state": state,
+                    "address.country": country,
+                    "address.pincode": pincode
+                }
+            },
+            {
+                new: true,
+                runValidators: true
+            }
+        );
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Address updated successfully",
+            user
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
+    }
+};
 
 
 module.exports = {
@@ -329,5 +426,7 @@ module.exports = {
     GetAvailabilitySlotsForUser,
     BookSlot,
     GetUserData,
-    GetProfileData
+    GetProfileData,
+    EditUserAddress,
+    EditUserProfile
 };

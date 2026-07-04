@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const { Address, Addressmodel } = require("./Address.js");
+const {  Addressmodel } = require("./Address.js");
 
 const Usermodel = new mongoose.Schema(
     {
@@ -47,7 +47,9 @@ const Usermodel = new mongoose.Schema(
             default: {
                 street: "",
                 city: "",
-                zip: null,
+                pincode: null,
+                country:"",
+                state:""
             },
         },
 
