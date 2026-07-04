@@ -2,7 +2,7 @@ import React, { useState, useContext, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import axios from "axios";
-// import { AuthContext } from "../context/AuthContext";
+import { AuthContext } from "../context/AuthContext";
 
 // ─── ICONS ──────────────────────────────────────────────────────────────────────
 const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
@@ -62,14 +62,7 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-// ─── MOCK DATA ────────────────────────────────────────────────────────────────
-const MOCK = [
-  { id: "apt001", patientName: "Rohan Patel",  time: "10:30 AM", type: "DIGITAL",  status: "upcoming",    notesPreview: "Follow-up on ECG results." },
-  { id: "apt002", patientName: "Priya Kumari", time: "11:00 AM", type: "PHYSICAL", status: "checked-in",  notesPreview: "Chest pain evaluation." },
-  { id: "apt003", patientName: "Amit Singh",   time: "11:30 AM", type: "PHYSICAL", status: "upcoming",    notesPreview: null },
-  { id: "apt004", patientName: "Sunita Rao",   time: "12:00 PM", type: "DIGITAL",  status: "completed",   notesPreview: "BP management review." },
-  { id: "apt005", patientName: "Kiran Mehta",  time: "2:00 PM",  type: "PHYSICAL", status: "cancelled",   notesPreview: null },
-];
+
 
 // ─── TAB BUTTON ───────────────────────────────────────────────────────────────
 const TabBtn = ({ label, active, onClick }) => (
@@ -177,34 +170,35 @@ const DoctorAppointmentsPage = () => {
   const [selectedDate, setSelectedDate] = useState(getISODate(new Date()));
   const [activeTab, setActiveTab] = useState("ALL");
   const [filterType, setFilterType] = useState("all");
-  const [appointments, setAppointments] = useState(MOCK);
+  const [appointments, setAppointments] = useState([]);
+  const {token,settoken}=useContext(AuthContext);
 
-  // Uncomment and adapt for real API:
-  // useEffect(() => {
-  //   const fetchAppointments = async () => {
-  //     try {
-  //       const res = await axios.post("http://localhost:8000/api/doctors/gettodayAppointment",
-  //         { dateISO: selectedDate + "T00:00:00.000+00:00" },
-  //         { headers: { Authorization: `Bearer ${token}` } }
-  //       );
-  //       if (res.data.success) {
-  //         setAppointments(res.data.DayAppointment.map(el => ({
-  //           id: el._id, patientName: el.patientName, time: el.time.start,
-  //           date: el.date, type: el.consultationType, status: el.status,
-  //           notesPreview: el.notes, clinicName: el.clinicId,
-  //         })));
-  //       }
-  //     } catch (e) { console.error(e); }
-  //   };
-  //   fetchAppointments();
-  //   setActiveTab("ALL");
-  // }, [selectedDate]);
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const res = await axios.post("http://localhost:8000/api/doctors/gettodayAppointment",
+          { dateISO: selectedDate + "T00:00:00.000+00:00" },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+            console.log(res);
+        if (res.data.success) {
+          setAppointments(res.data.DayAppointment.map(el => ({
+            id: el._id, patientName: el.patientName, time: el.time.start,
+            date: el.date, type: el.consultationType, status: el.status,
+            notesPreview: el.notes, clinicName: el.clinicId,
+          })));
+        }
+      } catch (e) { console.error(e); }
+    };
+    fetchAppointments();
+    setActiveTab("ALL");
+  }, [selectedDate]);
 
-  const handleDateOffset = (offset) => {
-    const d = new Date(selectedDate + "T00:00:00");
-    d.setDate(d.getDate() + offset);
-    setSelectedDate(getISODate(d));
-  };
+const handleDateOffset = (offset) => {
+  const d = new Date(selectedDate + "T00:00:00Z"); 
+  d.setUTCDate(d.getUTCDate() + offset);
+  setSelectedDate(d.toISOString().split("T")[0]);
+};
 
   const today = isToday(selectedDate);
 
@@ -290,7 +284,7 @@ const DoctorAppointmentsPage = () => {
                   style={{ padding: "8px 14px", border: "1.5px solid #EEF2FF", borderRadius: 12, fontSize: 13, fontWeight: 600, color: "#1E293B", background: "#F8FAFF", outline: "none", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }} />
               </div>
 
-              <motion.button whileTap={{ scale: 0.9 }} onClick={() => handleDateOffset(1)}
+              <motion.button whileTap={{ scale: 0.9 }} onClick={() => handleDateOffset(+1)}
                 style={{ width: 36, height: 36, borderRadius: 10, border: "1.5px solid #EEF2FF", background: "#F8FAFF", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <Icon d={ICONS.chevronR} size={16} color="#6366F1" />
               </motion.button>

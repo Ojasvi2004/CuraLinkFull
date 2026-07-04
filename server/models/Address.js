@@ -1,20 +1,20 @@
-const mongoose=require("mongoose");
+const mongoose = require("mongoose");
 
-const Addressmodel=new mongoose.Schema({
-    street: {
-        type: String,
-        required: true,
-      },
-    city: {
-        type: String,
-        required: true,
-      },
-    zip:{
-        type: Number,
-        required: true,
-      },
-})
+const Addressmodel = new mongoose.Schema({
+  street: {
+    type: String,
+    default: "",
+  },
+  city: {
+    type: String,
+    default: "",
+  },
+  zip: {
+    type: Number,
+    default: null,
+  },
+});
 
-const Address=mongoose.model("Address",Addressmodel);
-
-module.exports={Address,Addressmodel};
+module.exports = {
+  Addressmodel,
+};

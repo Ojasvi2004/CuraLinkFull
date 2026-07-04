@@ -19,6 +19,7 @@ import ProtectedRouteForDoctors from './components/ProtectedRoute'
 import SettingsPage from './pages/ProfileSettings'
 import DoctorPatientRecordPage from './pages/DoctorPatientRecordPage'
 import DoctorAddPatientPage from './pages/AddPatientPage'
+import DoctorPatientDataAccessPage from './pages/DoctorPatientDataAccessPage'
 
 
 
@@ -37,7 +38,7 @@ function App() {
       <NavbarBeforeLogin/>
      }
     <Routes>
-      <Route path='/doctor/features' element={<DoctorLandingPage/>}></Route>
+      <Route path='/doctor/' element={<DoctorLandingPage/>}></Route>
       <Route path='/doctor/how-it-works' element={<DoctorHowItWorksPage/>}></Route>
       <Route path='/doctor/faq' element={<DoctorFaqPage/>}></Route>
       <Route path='/doctor/register' element={<DoctorRegistrationPage/>}></Route>
@@ -53,6 +54,7 @@ function App() {
       <Route path='/doctor/queue-management' element={<ProtectedRouteForDoctors><DoctorLiveQueuePage/></ProtectedRouteForDoctors>} ></Route>
       <Route path='/doctor/availability' element={<ProtectedRouteForDoctors><DoctorSetAvailabilityPage/></ProtectedRouteForDoctors>} ></Route>
       <Route path='/doctor/settings' element={<ProtectedRouteForDoctors><SettingsPage/></ProtectedRouteForDoctors>} ></Route>
+      <Route path='/doctor/permissions' element={<DoctorPatientDataAccessPage></DoctorPatientDataAccessPage>}></Route>
     </Routes>
    
      

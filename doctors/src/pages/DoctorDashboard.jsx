@@ -69,7 +69,17 @@ const quickLinks = [
   { title: "My Schedule", description: "View today's appointments, manage your calendar and set availability slots.", icon: ICONS.calendar, link: "/doctor/appointments", gradient: "linear-gradient(135deg,#6366F1,#8B5CF6)", glow: "rgba(99,102,241,0.28)", iconBg: "#EEF2FF", iconColor: "#6366F1", tag: "Schedule" },
   { title: "Patient Queue", description: "Monitor live queue status, call next patient, and manage walk-ins.", icon: ICONS.queue, link: "/doctor/queue-management", gradient: "linear-gradient(135deg,#0EA5E9,#38BDF8)", glow: "rgba(14,165,233,0.25)", iconBg: "#E0F2FE", iconColor: "#0284C7", tag: "Live Queue" },
   { title: "Teleconsultation", description: "Start or join a secure video consultation with your patient now.", icon: ICONS.video, link: "/doctor/teleconsult", gradient: "linear-gradient(135deg,#10B981,#34D399)", glow: "rgba(16,185,129,0.25)", iconBg: "#ECFDF5", iconColor: "#059669", tag: "Digital" },
-  { title: "Practice Analytics", description: "Track revenue, patient volume, consultation trends and insights.", icon: ICONS.chart, link: "/doctor/analytics", gradient: "linear-gradient(135deg,#F59E0B,#FBBF24)", glow: "rgba(245,158,11,0.25)", iconBg: "#FFFBEB", iconColor: "#D97706", tag: "Insights" },
+  {
+  title: "Patient Data Access",
+  description: "Request secure access to patient health records for better diagnosis and AI-powered insights. Supports individual and today's appointments.",
+  icon: ICONS.lock,
+  link: "/doctor/permissions",
+  gradient: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+  glow: "rgba(99,102,241,0.25)",
+  iconBg: "#EEF2FF",
+  iconColor: "#4F46E5",
+  tag: "Permissions"
+},
   { title: "Set Availability", description: "Define your consultation hours, breaks and holiday schedule.", icon: ICONS.settings, link: "/doctor/availability", gradient: "linear-gradient(135deg,#EC4899,#F472B6)", glow: "rgba(236,72,153,0.25)", iconBg: "#FDF2F8", iconColor: "#DB2777", tag: "Availability" },
   { title: "All Patients", description: "Browse your full patient roster, medical records and history.", icon: ICONS.users, link: "/doctor/patients", gradient: "linear-gradient(135deg,#8B5CF6,#A78BFA)", glow: "rgba(139,92,246,0.25)", iconBg: "#F5F3FF", iconColor: "#7C3AED", tag: "Records" },
 ];
@@ -176,8 +186,8 @@ const DoctorDashboard = () => {
               ))}
             </div>
           </motion.div>
-
-          {/* ── LIVE QUEUE BANNER ─────────────────────────────────────────────── */}
+ 
+          {/* ── LIVE QUEUE BANNER ─────────────────────────────────────────────── 
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}
             style={{ background: "white", borderRadius: 20, border: "1px solid #EEF2FF", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginBottom: 32, overflow: "hidden" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "16px 24px 12px", borderBottom: "1px solid #F1F5F9" }}>
@@ -212,7 +222,7 @@ const DoctorDashboard = () => {
                 </motion.div>
               </Link>
             </div>
-          </motion.div>
+          </motion.div> */}
 
           {/* ── SECTION LABEL ─────────────────────────────────────────────────── */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.22 }}

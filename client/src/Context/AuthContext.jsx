@@ -7,7 +7,7 @@ const Authcontext=createContext();
 const AuthProvider=({children})=>{
 
     const [token, settoken] = useState(() => localStorage.getItem('token') || null);
-    const [user,setuser]=useState({});
+    const [user,setuser]=useState(()=> localStorage.getItem('user') || {});
 
     const getUserData= async()=>{
       try {
@@ -18,7 +18,7 @@ const AuthProvider=({children})=>{
         }) 
         if (response.data.success) 
         {
-          // console.log(response.data.data);
+        //    console.log(response.data.data);
           setuser(response.data.data);
         }
         
@@ -33,6 +33,13 @@ const AuthProvider=({children})=>{
       localStorage.setItem("token", token);
     } else {
       localStorage.removeItem("token");
+    }
+    if(user)
+    {
+        localStorage.setItem("user",user);
+    }
+    else{
+        localStorage.removeItem("user");
     }
   }, [token]);
 

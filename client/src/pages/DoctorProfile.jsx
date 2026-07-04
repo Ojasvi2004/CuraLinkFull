@@ -212,10 +212,10 @@ const DoctorProfile = () => {
 
               {/* CTA */}
               <div style={{ display:"flex", flexDirection:"column", gap:8, alignItems:"flex-end", flexShrink:0 }}>
-                <Link to={`/start-chat/${doctor._id}`}
+                {/* <Link to={`/start-chat/${doctor._id}`}
                   style={{ display:"flex", alignItems:"center", gap:8, background:"linear-gradient(135deg,#6366F1,#8B5CF6)", color:"white", fontWeight:700, fontSize:13, padding:"12px 22px", borderRadius:14, textDecoration:"none", boxShadow:"0 6px 20px rgba(99,102,241,0.32)", whiteSpace:"nowrap" }}>
                   <Icon d={ICONS.video} size={16} color="white" /> Chat with Doctor
-                </Link>
+                </Link> */}
                 {doctor.DigitalConsultationFees && (
                   <div style={{ display:"flex", alignItems:"center", gap:5, fontSize:12, color:"#64748B", background:"#F8FAFF", borderRadius:10, padding:"6px 12px", border:"1px solid #EEF2FF" }}>
                     <Icon d={ICONS.rupee} size={13} color="#94A3B8" />

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 
 // ─── ICONS ──────────────────────────────────────────────────────────────────────
 const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
@@ -46,8 +48,10 @@ const Avatar = ({ imageUrl, name, size = 36 }) => {
     );
 };
 
+
 // ─── NAVBAR ──────────────────────────────────────────────────────────────────
 const DoctorNavbar = ({ doctorName = "Dr. Ananya Sharma", doctorProfilePic = "", onLogout }) => {
+  const {token,settoken}=useContext(AuthContext);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);

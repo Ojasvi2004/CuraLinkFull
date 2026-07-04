@@ -8,10 +8,13 @@ const {
   GetAvailabilitySlotsForUser,
   BookSlot,
   GetUserData,
-  uploadHealthRecord,
+} = require("../controllers/UserController.js");
+
+const {
+      uploadHealthRecord,
   GetHealthRecoordsOfUser,
   DeleteHealthRecord,
-} = require("../controllers/UserController.js");
+}=require("../controllers/HealthRecords.js")
 const UserAuth = require("../middlewares/UserAuth.js");
 const { FetchAppointmentsForPatient } = require("../controllers/FetchAppointments.js");
 const upload = require("../middlewares/multer.js");

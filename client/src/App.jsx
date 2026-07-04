@@ -27,7 +27,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import MyPrescriptionsPage from './pages/MyPrescriptions'
 import PrescriptionDetailsPage from './pages/PrescriptionDetailsPage'
 import MyHealthRecordsPage from './pages/MyHealthRecordPage'
-import PatientMessagesPage from './pages/PatientMessagePage'
+import Notifications from './pages/NotificationPage'
 
 
 
@@ -67,7 +67,7 @@ const App = () => {
     <Route path='/prescriptions' element={<ProtectedRoute><MyPrescriptionsPage/></ProtectedRoute>} ></Route>
     <Route path="/prescriptions/:prescriptionId" element={<ProtectedRoute><PrescriptionDetailsPage/></ProtectedRoute>} />
     <Route path='/health-records' element={<ProtectedRoute><MyHealthRecordsPage/></ProtectedRoute>} ></Route>
-    <Route path='/messages' element={<ProtectedRoute><PatientMessagesPage/></ProtectedRoute>} ></Route>
+    <Route path='/notifications' element={<ProtectedRoute><Notifications/></ProtectedRoute>} ></Route>
 
     
 
