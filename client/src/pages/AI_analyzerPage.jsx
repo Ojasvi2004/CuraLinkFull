@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { Authcontext } from "../Context/AuthContext";
 const Dr_bot_api_url=import.meta.env.VITE_DR_BOT_ORIGIN
+const server=import.meta.env.VITE_SERVER
 
 // ─── ICONS ─────────────────────────────────────────────────────────────────────
 const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
@@ -195,7 +196,7 @@ const AiAnalyzerPage = () => {
     useEffect(() => {
         const fetchRecords = async () => {
             try {
-                const res = await axios.get("http://localhost:8000/api/user/getHealthRecordsForUser", {
+                const res = await axios.get(`${server}/api/user/getHealthRecordsForUser`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 if (res.data.success) setRecords(res.data.records);

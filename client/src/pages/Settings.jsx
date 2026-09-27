@@ -1,7 +1,12 @@
 // src/pages/SettingsPage.js
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Form, Link, useNavigate } from "react-router-dom";
+const server=import.meta.env.VITE_SERVER;
+import axios from 'axios'
+import { useContext } from "react";
+import { Authcontext } from "../Context/AuthContext";
+
 
 // ─── ICONS ─────────────────────────────────────────────────────────────────────
 const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
@@ -116,15 +121,33 @@ const SettingsPage = () => {
   const [smsReminders, setSmsReminders] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [saved, setSaved] = useState(false);
+  const {token}=useContext(Authcontext);
+  const navigate=useNavigate();
 
   const fadeUp = {
     hidden: { opacity: 0, y: 20 },
     visible: (i = 0) => ({ opacity: 1, y: 0, transition: { duration: 0.5, delay: 0.08 * i, ease: "easeOut" } }),
   };
 
-  const handleDeleteAccount = () => {
+  const handleDeleteAccount = async(e) => {
+    e.preventDefault();
     if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
-      alert("Delete Account Initiated (UI Only)");
+      try {
+        const response= await axios.delete(`${server}/api/user/deleteUser`,{
+            headers:{
+                Authorization:`Bearer ${token}`
+            }
+        });
+        if(response.data.success)
+        {
+            localStorage.clear();
+            navigate('/login');
+           
+        }
+      } catch (error) {
+         console.log("Error deleting account:", error);
+      }
+
     }
   };
 
@@ -188,8 +211,8 @@ const SettingsPage = () => {
             {sectionHeader(ICONS.lock, "#FEF2F2", "#DC2626", "Security & Privacy", "Keep your account safe")}
             <div>
               <NavLinkRow to="/change-password" icon={ICONS.key} label="Change Your Password" />
-              <NavLinkRow to="/privacy-settings" icon={ICONS.shield} label="Manage Privacy Settings" />
-              <NavLinkRow to="/account-activity" icon={ICONS.activity} label="View Account Activity" isLast />
+              {/* <NavLinkRow to="/privacy-settings" icon={ICONS.shield} label="Manage Privacy Settings" />
+              <NavLinkRow to="/account-activity" icon={ICONS.activity} label="View Account Activity" isLast /> */}
             </div>
           </motion.section>
 
@@ -206,19 +229,19 @@ const SettingsPage = () => {
                   style={{ width: "100%", padding: "10px 14px", borderRadius: 12, border: "1.5px solid #E2E8F0", fontFamily: "'DM Sans', sans-serif", fontSize: 13.5, color: "#1E293B", background: "white", outline: "none" }}
                 >
                   <option value="en-US">English (United States)</option>
-                  <option value="hi-IN">हिन्दी (भारत)</option>
+                  {/* <option value="hi-IN">हिन्दी (भारत)</option> */}
                 </select>
               </div>
-              <SettingRow
+              {/* <SettingRow
                 labelId="dark-mode-label"
                 label="Dark Mode"
                 description="Toggle dark theme for the application."
                 control={<ToggleSwitch enabled={darkMode} setEnabled={setDarkMode} labelId="dark-mode-label" />}
-              />
+              /> */}
             </div>
           </motion.section>
 
-          {/* ── ACCOUNT MANAGEMENT / DANGER ZONE ── */}
+
           <motion.section custom={3} initial="hidden" animate="visible" variants={fadeUp}
             style={{ ...cardStyle, background: "#FFF7F7", border: "1px solid #FECACA" }}>
             <div className="flex items-center gap-3" style={{ marginBottom: 14 }}>

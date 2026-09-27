@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { Authcontext } from "../Context/AuthContext";
+const server=import.meta.env.VITE_SERVER;
 
 // ─── ICONS ─────────────────────────────────────────────────────────────────────
 const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
@@ -81,7 +82,7 @@ const DoctorProfile = () => {
   useEffect(() => {
     const fetch = async () => {
       try {
-        const res = await axios.get(`http://localhost:8000/api/user/getDoctorProfile/${doctorId}`);
+        const res = await axios.get(`${server}/api/user/getDoctorProfile/${doctorId}`);
         if (res.data.success) setDoctor(res.data.doctorProfile);
       } catch (e) { console.error(e); }
       finally { setPageLoading(false); }
@@ -93,7 +94,7 @@ const DoctorProfile = () => {
   useEffect(() => {
     const fetch = async () => {
       try {
-        const res = await axios.post("http://localhost:8000/api/user/getSlotsOfDoctor",
+        const res = await axios.post(`${server}/api/user/getSlotsOfDoctor`,
           { doctorId, date: selectedDate },
           { headers: { authorization: `Bearer ${token}` } }
         );
@@ -108,7 +109,7 @@ const DoctorProfile = () => {
     if (!selectedSlot) return;
     setIsLoading(true);
     try {
-      const res = await axios.post("http://localhost:8000/api/user/bookSlot",
+      const res = await axios.post(`${server}/api/user/bookSlot`,
         { id: selectedSlot._id },
         { headers: { authorization: `Bearer ${token}` } }
       );
@@ -119,7 +120,7 @@ const DoctorProfile = () => {
         setToast(`Appointment confirmed for ${selectedSlot.Time.Start} on ${selectedDate}!`);
         setTimeout(() => setToast(""), 4000);
         setSelectedSlot(null);
-        const r = await axios.post("http://localhost:8000/api/user/getSlotsOfDoctor",
+        const r = await axios.post(`${server}/api/user/getSlotsOfDoctor`,
           { doctorId, date: selectedDate },
           { headers: { authorization: `Bearer ${token}` } }
         );

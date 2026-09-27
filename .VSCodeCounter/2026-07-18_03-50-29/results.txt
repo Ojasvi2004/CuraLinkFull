@@ -1,0 +1,153 @@
+Date : 2026-07-18 03:50:29
+Directory : c:\Essesntial\WEB_DEV\Projects\CuraLink
+Total : 97 files,  26616 codes, 681 comments, 2200 blanks, all 29497 lines
+
+Languages
++----------------+------------+------------+------------+------------+------------+
+| language       | files      | code       | comment    | blank      | total      |
++----------------+------------+------------+------------+------------+------------+
+| JavaScript JSX |         52 |     12,654 |        666 |      1,225 |     14,545 |
+| JSON           |          6 |     10,092 |          0 |          6 |     10,098 |
+| JavaScript     |         30 |      1,983 |         15 |        408 |      2,406 |
+| Markdown       |          4 |      1,851 |          0 |        557 |      2,408 |
+| HTML           |          2 |         30 |          0 |          3 |         33 |
+| PostCSS        |          2 |          5 |          0 |          1 |          6 |
+| Dotenv         |          1 |          1 |          0 |          0 |          1 |
++----------------+------------+------------+------------+------------+------------+
+
+Directories
++-------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                      | files      | code       | comment    | blank      | total      |
++-------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                         |         97 |     26,616 |        681 |      2,200 |     29,497 |
+| . (Files)                                                                                 |          2 |      1,837 |          0 |        545 |      2,382 |
+| client                                                                                    |         39 |     11,237 |        355 |        721 |     12,313 |
+| client (Files)                                                                            |          7 |      4,491 |          1 |         14 |      4,506 |
+| client\src                                                                                |         32 |      6,746 |        354 |        707 |      7,807 |
+| client\src (Files)                                                                        |          3 |         81 |          0 |         29 |        110 |
+| client\src\Context                                                                        |          1 |         44 |          1 |         10 |         55 |
+| client\src\components                                                                     |          9 |      1,636 |         84 |        160 |      1,880 |
+| client\src\components (Files)                                                             |          8 |      1,592 |         84 |        155 |      1,831 |
+| client\src\components\Layout                                                              |          1 |         44 |          0 |          5 |         49 |
+| client\src\pages                                                                          |         19 |      4,985 |        269 |        508 |      5,762 |
+| doctors                                                                                   |         28 |      9,699 |        313 |        532 |     10,544 |
+| doctors (Files)                                                                           |          6 |      3,786 |          1 |         13 |      3,800 |
+| doctors\src                                                                               |         22 |      5,913 |        312 |        519 |      6,744 |
+| doctors\src (Files)                                                                       |          3 |         69 |          0 |         17 |         86 |
+| doctors\src\components                                                                    |          4 |        509 |         26 |         55 |        590 |
+| doctors\src\components (Files)                                                            |          3 |        452 |         23 |         49 |        524 |
+| doctors\src\components\Layout                                                             |          1 |         57 |          3 |          6 |         66 |
+| doctors\src\context                                                                       |          1 |         20 |          0 |          6 |         26 |
+| doctors\src\pages                                                                         |         14 |      5,315 |        286 |        441 |      6,042 |
+| server                                                                                    |         28 |      3,843 |         13 |        402 |      4,258 |
+| server (Files)                                                                            |          3 |      1,960 |         10 |         19 |      1,989 |
+| server\config                                                                             |          2 |         19 |          0 |          6 |         25 |
+| server\controllers                                                                        |          6 |      1,216 |          0 |        247 |      1,463 |
+| server\middlewares                                                                        |          3 |         49 |          0 |         21 |         70 |
+| server\models                                                                             |         10 |        482 |          3 |         75 |        560 |
+| server\routes                                                                             |          4 |        117 |          0 |         34 |        151 |
++-------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++-------------------------------------------------------------------------------------------+----------------+------------+------------+------------+------------+
+| filename                                                                                  | language       | code       | comment    | blank      | total      |
++-------------------------------------------------------------------------------------------+----------------+------------+------------+------------+------------+
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\README.md                                         | Markdown       |        359 |          0 |        103 |        462 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\.env                                       | Dotenv         |          1 |          0 |          0 |          1 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\README.md                                  | Markdown       |          7 |          0 |          6 |         13 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\eslint.config.js                           | JavaScript     |         32 |          0 |          2 |         34 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\index.html                                 | HTML           |         17 |          0 |          2 |         19 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\package-lock.json                          | JSON           |      4,396 |          0 |          1 |      4,397 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\package.json                               | JSON           |         32 |          0 |          1 |         33 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\App.jsx                                | JavaScript JSX |         65 |          0 |         22 |         87 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\Context\AuthContext.jsx                | JavaScript JSX |         44 |          1 |         10 |         55 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\components\DoctorPromisesSection.jsx   | JavaScript JSX |        199 |         13 |         26 |        238 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\components\FeaturesSection.jsx         | JavaScript JSX |        176 |          7 |         15 |        198 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\components\Footer.jsx                  | JavaScript JSX |        237 |         17 |         28 |        282 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\components\Header.jsx                  | JavaScript JSX |        158 |          9 |         20 |        187 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\components\Layout\PageLayout.jsx       | JavaScript JSX |         44 |          0 |          5 |         49 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\components\Navbar.jsx                  | JavaScript JSX |        379 |         15 |         21 |        415 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\components\ProtectedRoute.jsx          | JavaScript JSX |         13 |          0 |          5 |         18 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\components\ScrollToTop.jsx             | JavaScript JSX |         10 |          0 |          3 |         13 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\components\UserNavbar.jsx              | JavaScript JSX |        420 |         23 |         37 |        480 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\index.css                              | PostCSS        |          4 |          0 |          1 |          5 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\main.jsx                               | JavaScript JSX |         12 |          0 |          6 |         18 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\pages\AI_analyzerPage.jsx              | JavaScript JSX |        394 |         21 |         42 |        457 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\pages\AboutUsPage.jsx                  | JavaScript JSX |        309 |         27 |         39 |        375 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\pages\Appointments.jsx                 | JavaScript JSX |        304 |         20 |         31 |        355 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\pages\Contact.jsx                      | JavaScript JSX |        315 |         11 |         28 |        354 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\pages\Dashboard.jsx                    | JavaScript JSX |        367 |         32 |         36 |        435 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\pages\DoctorProfile.jsx                | JavaScript JSX |        346 |         29 |         36 |        411 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\pages\Doctor_List.jsx                  | JavaScript JSX |          8 |          0 |          3 |         11 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\pages\FindDoctors.jsx                  | JavaScript JSX |        260 |         26 |         33 |        319 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\pages\Landing.jsx                      | JavaScript JSX |         14 |          0 |          2 |         16 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\pages\LoginPage.jsx                    | JavaScript JSX |        186 |          3 |         25 |        214 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\pages\MyAppointments.jsx               | JavaScript JSX |          0 |          0 |          1 |          1 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\pages\MyHealthRecordPage.jsx           | JavaScript JSX |        400 |         23 |         38 |        461 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\pages\MyPrescriptions.jsx              | JavaScript JSX |        561 |         13 |         48 |        622 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\pages\NotificationPage.jsx             | JavaScript JSX |        235 |         10 |         29 |        274 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\pages\PrescriptionDetailsPage.jsx      | JavaScript JSX |        441 |         12 |         16 |        469 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\pages\ProfilePage.jsx                  | JavaScript JSX |        308 |          9 |         33 |        350 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\pages\RegisterPage.jsx                 | JavaScript JSX |        303 |         21 |         39 |        363 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\pages\Settings.jsx                     | JavaScript JSX |        226 |         12 |         25 |        263 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\src\pages\Team.jsx                         | JavaScript JSX |          8 |          0 |          4 |         12 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\client\vite.config.js                             | JavaScript     |          6 |          1 |          2 |          9 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\curalink_scale.md                                 | Markdown       |      1,478 |          0 |        442 |      1,920 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\README.md                                 | Markdown       |          7 |          0 |          6 |         13 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\eslint.config.js                          | JavaScript     |         32 |          0 |          2 |         34 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\index.html                                | HTML           |         13 |          0 |          1 |         14 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\package-lock.json                         | JSON           |      3,696 |          0 |          1 |      3,697 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\package.json                              | JSON           |         32 |          0 |          1 |         33 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\src\App.jsx                               | JavaScript JSX |         53 |          0 |         13 |         66 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\src\components\Layout\PageLayout.jsx      | JavaScript JSX |         57 |          3 |          6 |         66 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\src\components\NavbarAfterLogin.jsx       | JavaScript JSX |        234 |         18 |         27 |        279 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\src\components\NavbarBeforeLogin.jsx      | JavaScript JSX |        206 |          5 |         15 |        226 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\src\components\ProtectedRoute.jsx         | JavaScript JSX |         12 |          0 |          7 |         19 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\src\context\AuthContext.jsx               | JavaScript JSX |         20 |          0 |          6 |         26 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\src\index.css                             | PostCSS        |          1 |          0 |          0 |          1 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\src\main.jsx                              | JavaScript JSX |         15 |          0 |          4 |         19 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\src\pages\AddPatientPage.jsx              | JavaScript JSX |        361 |         12 |         28 |        401 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\src\pages\DoctorAppointmentsPage.jsx      | JavaScript JSX |        279 |         22 |         42 |        343 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\src\pages\DoctorDashboard.jsx             | JavaScript JSX |        229 |         53 |         29 |        311 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\src\pages\DoctorFaqPage.jsx               | JavaScript JSX |        165 |          6 |         15 |        186 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\src\pages\DoctorHowItWorksPage.jsx        | JavaScript JSX |        392 |         17 |         23 |        432 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\src\pages\DoctorLiveQueuePage.jsx         | JavaScript JSX |        272 |         15 |         31 |        318 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\src\pages\DoctorLoginPage.jsx             | JavaScript JSX |        193 |          3 |         28 |        224 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\src\pages\DoctorMyPatientsPage.jsx        | JavaScript JSX |        346 |         18 |         29 |        393 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\src\pages\DoctorPatientDataAccessPage.jsx | JavaScript JSX |        920 |         39 |         63 |      1,022 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\src\pages\DoctorPatientRecordPage.jsx     | JavaScript JSX |        435 |         15 |         15 |        465 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\src\pages\DoctorSetAvailabilityPage.jsx   | JavaScript JSX |        332 |         18 |         46 |        396 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\src\pages\HomeFeatures.jsx                | JavaScript JSX |        422 |         20 |         35 |        477 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\src\pages\ProfileSettings.jsx             | JavaScript JSX |        327 |         16 |         22 |        365 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\src\pages\RegistrationPage.jsx            | JavaScript JSX |        642 |         32 |         35 |        709 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\doctors\vite.config.js                            | JavaScript     |          6 |          1 |          2 |          9 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\config\cloudinary.js                       | JavaScript     |          8 |          0 |          3 |         11 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\config\mongoConfig.js                      | JavaScript     |         11 |          0 |          3 |         14 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\controllers\DoctorController.js            | JavaScript     |        402 |          0 |         59 |        461 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\controllers\FetchAppointments.js           | JavaScript     |         65 |          0 |         30 |         95 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\controllers\HealthRecords.js               | JavaScript     |        177 |          0 |         41 |        218 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\controllers\Notifications.js               | JavaScript     |          0 |          0 |          1 |          1 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\controllers\PrescriptionController.js      | JavaScript     |        203 |          0 |         52 |        255 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\controllers\UserController.js              | JavaScript     |        369 |          0 |         64 |        433 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\middlewares\DoctorAuth.js                  | JavaScript     |         24 |          0 |          8 |         32 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\middlewares\UserAuth.js                    | JavaScript     |         16 |          0 |         10 |         26 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\middlewares\multer.js                      | JavaScript     |          9 |          0 |          3 |         12 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\models\AccessPermission.js                 | JavaScript     |         61 |          0 |         14 |         75 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\models\Address.js                          | JavaScript     |         26 |          0 |          2 |         28 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\models\Appointment.js                      | JavaScript     |         88 |          0 |          8 |         96 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\models\AvailabililitySlots.js              | JavaScript     |         44 |          0 |          6 |         50 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\models\Clinic.js                           | JavaScript     |         29 |          0 |          4 |         33 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\models\Doctor.js                           | JavaScript     |         74 |          0 |         10 |         84 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\models\Notifications.js                    | JavaScript     |          0 |          0 |          1 |          1 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\models\PatientRecord.js                    | JavaScript     |         43 |          3 |          4 |         50 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\models\User.js                             | JavaScript     |         60 |          0 |         11 |         71 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\models\prescriptions.js                    | JavaScript     |         57 |          0 |         15 |         72 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\package-lock.json                          | JSON           |      1,906 |          0 |          1 |      1,907 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\package.json                               | JSON           |         30 |          0 |          1 |         31 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\routes\DoctorRoute.js                      | JavaScript     |         59 |          0 |         13 |         72 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\routes\Notifications.js                    | JavaScript     |          0 |          0 |          1 |          1 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\routes\Prescriptionroutes.js               | JavaScript     |         18 |          0 |         17 |         35 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\routes\UserRoute.js                        | JavaScript     |         40 |          0 |          3 |         43 |
+| c:\Essesntial\WEB_DEV\Projects\CuraLink\server\server.js                                  | JavaScript     |         24 |         10 |         17 |         51 |
+| Total                                                                                     |                |     26,616 |        681 |      2,200 |     29,497 |
++-------------------------------------------------------------------------------------------+----------------+------------+------------+------------+------------+

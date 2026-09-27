@@ -165,6 +165,27 @@ const GetAvailabilitySlotsForUser = async (req, res) => {
     }
 };
 
+const DeleteUser = async (req, res) => {
+    try {
+        const id = req._id;
+
+        const deletedSlot = await User.deleteOne({ _id: id });
+        if (!deletedSlot) {
+            return res
+                .status(404)
+                .json({ success: false, message: 'Account not found' });
+        }
+        return res.status(200).json({
+            success: true,
+            message: "Account deleted"
+        })
+    } catch (error) {
+        return res
+            .status(404)
+            .json({ success: false, message: 'Account can not be deleted' });
+    }
+}
+
 const BookSlot = async (req, res) => {
     try {
         const { id } = req.body;
@@ -237,7 +258,7 @@ const GetUserData = async (req, res) => {
             const user = await User.findById(_id);
             const data = {
                 name: user.name,
-                email: user.email,
+                email: user.email
 
             };
             if (user) {
@@ -273,40 +294,46 @@ const GetUserData = async (req, res) => {
 const GetProfileData = async (req, res) => {
     try {
         const _id = req._id;
-        if (_id) {
-            const user = User.findById({ _id });
-            if (user) {
-                return res.status(200).json({
-                    success: true,
-                    userData: user
-                })
-            }
-            else {
-                return res.status(401).json({
-                    success: true,
-                    message: "User profile not found"
-                })
-            }
-        }
-        else {
+
+        if (!_id) {
             return res.status(401).json({
-                success: true,
+                success: false,
                 message: "Unauthorized access"
-            })
+            });
         }
 
+        const user = await User.findById(_id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User profile not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            userData: {
+                fullName: user.name,
+                email: user.email,
+                phone:user.phoneNumber,
+                dob: user.dateOfBirth,
+                gender: user.gender,
+                profilePictureUrl: user.profilePictureUrl,
+                address: user.address,
+                appointments: user.Appointments
+            }
+        });
 
     } catch (error) {
-        console.error(" ERROR:", error);
+        console.error("ERROR:", error);
 
-        return res.status(400).json({
+        return res.status(500).json({
             success: false,
-            message: "Error ",
-            error: error.message,
-            stack: error.stack
+            message: "Internal server error"
         });
     }
-}
+};
 
 const EditUserProfile = async (req, res) => {
     try {
@@ -330,14 +357,14 @@ const EditUserProfile = async (req, res) => {
         const user = await User.findByIdAndUpdate(
             _id,
             {
-                fullname,
-                phone,
-                dob,
-                gender
+                name: fullname,
+                phoneNumber: phone,
+                dateOfBirth: dob,
+                gender: gender
             },
             {
-                new: true,          
-                runValidators: true 
+                new: true,
+                runValidators: true
             }
         );
 
@@ -428,5 +455,6 @@ module.exports = {
     GetUserData,
     GetProfileData,
     EditUserAddress,
-    EditUserProfile
+    EditUserProfile,
+    DeleteUser
 };

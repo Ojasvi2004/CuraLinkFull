@@ -2,8 +2,9 @@ import { useState, useMemo, useEffect, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { Authcontext } from "../Context/AuthContext";
+const server=import.meta.env.VITE_SERVER;
 
-// ─── ICONS ─────────────────────────────────────────────────────────────────────
+
 const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
     strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={style}>
@@ -33,7 +34,7 @@ const ICONS = {
   check:    ["M22 11.08V12a10 10 0 1 1-5.93-9.14", "m9 11 3 3L22 4"],
 };
 
-// ─── RECORD TYPE CONFIG ─────────────────────────────────────────────────────────
+
 const TYPE_CONFIG = {
   "Lab Report":       { icon: ICONS.lab,       color: "#2563EB", bg: "#EFF6FF",  dot: "#3B82F6",  gradient: "linear-gradient(135deg,#3B82F6,#60A5FA)" },
   "Discharge Summary":{ icon: ICONS.discharge,  color: "#7C3AED", bg: "#F5F3FF",  dot: "#8B5CF6",  gradient: "linear-gradient(135deg,#8B5CF6,#A78BFA)" },
@@ -53,7 +54,7 @@ const fmtDate = (d) => {
 
 const getISODate = (date) => date.toISOString().split("T")[0];
 
-// ─── UPLOAD MODAL ──────────────────────────────────────────────────────────────
+
 const UploadModal = ({ onClose, onSubmit }) => {
   const [recordType, setRecordType] = useState("");
   const [file, setFile] = useState(null);
@@ -140,7 +141,7 @@ const UploadModal = ({ onClose, onSubmit }) => {
   );
 };
 
-// ─── DELETE CONFIRM MODAL ──────────────────────────────────────────────────────
+
 const DeleteModal = ({ record, onClose, onConfirm }) => (
   <motion.div
     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -170,7 +171,7 @@ const DeleteModal = ({ record, onClose, onConfirm }) => (
   </motion.div>
 );
 
-// ─── RECORD CARD ───────────────────────────────────────────────────────────────
+
 const RecordCard = ({ record, onDelete, onEdit }) => {
   const cfg = getTypeConfig(record.recordType);
 
@@ -182,12 +183,12 @@ const RecordCard = ({ record, onDelete, onEdit }) => {
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
       style={{ background: "white", borderRadius: 20, border: "1px solid #EEF2FF", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", overflow: "hidden" }}
     >
-      {/* Color top bar */}
+
       <div style={{ height: 4, background: cfg.gradient }} />
 
       <div style={{ padding: "20px 22px" }}>
         <div className="flex items-start gap-4">
-          {/* Icon bubble */}
+   
           <div style={{ width: 48, height: 48, borderRadius: 14, background: cfg.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <Icon d={cfg.icon} size={22} color={cfg.color} />
           </div>
@@ -209,7 +210,7 @@ const RecordCard = ({ record, onDelete, onEdit }) => {
               </div>
             </div>
 
-            {/* Tags */}
+        
             {record.tags?.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-3">
                 {record.tags.map((tag, i) => (
@@ -220,14 +221,14 @@ const RecordCard = ({ record, onDelete, onEdit }) => {
               </div>
             )}
 
-            {/* Metadata */}
+      
             {record.metadata && (
               <p style={{ fontSize: 12, color: "#94A3B8", marginTop: 8, fontStyle: "italic", lineHeight: 1.5 }}>{record.metadata}</p>
             )}
           </div>
         </div>
 
-        {/* Action row */}
+
         <div className="flex flex-wrap gap-2 mt-4 pt-4" style={{ borderTop: "1px solid #F1F5F9" }}>
           {record.fileUrl && (
             <a href={record.fileUrl} target="_blank" rel="noopener noreferrer"
@@ -255,7 +256,7 @@ const RecordCard = ({ record, onDelete, onEdit }) => {
   );
 };
 
-// ─── MAIN PAGE ──────────────────────────────────────────────────────────────────
+
 const MyHealthRecordsPage = () => {
   const { token } = useContext(Authcontext);
   const [records, setRecords] = useState([]);
@@ -268,7 +269,7 @@ const MyHealthRecordsPage = () => {
   const fetchRecords = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:8000/api/user/getHealthRecordsForUser", {
+      const res = await axios.get(`${server}/api/user/getHealthRecordsForUser`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.success) setRecords(res.data.records);
@@ -283,7 +284,7 @@ const MyHealthRecordsPage = () => {
 
   const handleDelete = async (id) => {
     try {
-      const res = await axios.delete(`http://localhost:8000/api/user/deleteUserRecord/${id}`, {
+      const res = await axios.delete(`${server}/api/user/deleteUserRecord/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.success) setRecords(prev => prev.filter(r => r._id !== id));
@@ -302,7 +303,7 @@ const MyHealthRecordsPage = () => {
     ));
     fd.append("file", e.target.uploadFile.files[0]);
     try {
-      const res = await axios.post("http://localhost:8000/api/user/uploadHealthRecord", fd, {
+      const res = await axios.post(`${server}/api/user/uploadHealthRecord`, fd, {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
       });
       if (res.data.success) { fetchRecords(); setShowUpload(false); }

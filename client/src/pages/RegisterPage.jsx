@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Authcontext } from "../Context/AuthContext";
+const server=import.meta.env.VITE_SERVER;
 
-// ─── ICON PRIMITIVE ──────────────────────────────────────────────────────────
+
 const Icon = ({ d, size = 18, color = "currentColor", style = {} }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
     strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={style}>
@@ -37,7 +38,7 @@ const GoogleIcon = () => (
   </svg>
 );
 
-// ─── FLOATING INPUT FIELD ────────────────────────────────────────────────────
+
 const Field = ({ label, name, type = "text", placeholder, value, onChange, icon, rightEl, required = true }) => {
   const [focused, setFocused] = useState(false);
   const active = focused || value?.length > 0;
@@ -90,7 +91,7 @@ const Field = ({ label, name, type = "text", placeholder, value, onChange, icon,
   );
 };
 
-// ─── PASSWORD STRENGTH ───────────────────────────────────────────────────────
+
 const getStrength = (pw) => {
   if (!pw) return { score: 0, label: "", color: "" };
   let score = 0;
@@ -108,14 +109,12 @@ const getStrength = (pw) => {
   return { score, ...map[score] };
 };
 
-// ─── TRUST BADGES ────────────────────────────────────────────────────────────
 const TRUST = [
   { icon: ICONS.shield,   color: "#6366F1", bg: "#EEF2FF", text: "256-bit SSL encryption" },
   { icon: ICONS.heart,    color: "#EC4899", bg: "#FDF2F8", text: "HIPAA compliant" },
   { icon: ICONS.calendar, color: "#059669", bg: "#ECFDF5", text: "Free to join" },
 ];
 
-// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 const RegisterPage = () => {
   const { settoken } = useContext(Authcontext);
   const navigate = useNavigate();
@@ -140,7 +139,7 @@ const RegisterPage = () => {
     if (!terms) { setError("Please accept the Terms and Conditions."); return; }
     setLoading(true);
     try {
-      const response = await axios.post("http://localhost:8000/api/user/register", formData);
+      const response = await axios.post(`${server}/api/user/register`, formData);
       if (response.data.success) { navigate("/login"); }
       else { setError("Registration failed. Please try again."); }
     } catch (err) {

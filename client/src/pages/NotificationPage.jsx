@@ -49,15 +49,15 @@ const TYPE_META = {
 };
 
 const MOCK_NOTIFICATIONS = [
-  { id: 1,  type: "appointment",  title: "Appointment confirmed with Dr. Priya Reddy",  detail: "Tomorrow, 10:00 AM · Dermatology · Video Consultation", time: "12m ago",   group: "Today",     unread: true,  link: "/my-appointments" },
-  { id: 2,  type: "alert",        title: "Action needed: reschedule with Dr. Verma",     detail: "Your 3:30 PM slot today has been cancelled by the clinic.", time: "1h ago", group: "Today",     unread: true,  link: "/my-appointments" },
-  { id: 3,  type: "lab",          title: "Lab results are ready",                        detail: "Complete Blood Count (CBC) — reviewed by Dr. Anand Rao", time: "3h ago",   group: "Today",     unread: true,  link: "/health-records" },
-  { id: 4,  type: "message",      title: "New message from Dr. Priya Reddy",             detail: "\u201cPlease continue the ointment for 5 more days...\u201d", time: "5h ago", group: "Today",     unread: false, link: "/messages" },
-  { id: 5,  type: "prescription", title: "Prescription uploaded — Dermatology",          detail: "Added to your Health Vault automatically after visit", time: "Yesterday, 6:40 PM", group: "Yesterday", unread: false, link: "/prescriptions" },
-  { id: 6,  type: "ai",           title: "AI Symptom report generated",                  detail: "Mild seasonal allergy pattern detected — no urgent action needed", time: "Yesterday, 11:02 AM", group: "Yesterday", unread: false, link: "/symptom-analyzer" },
-  { id: 7,  type: "appointment",  title: "Reminder: annual health check-up due",         detail: "It's been 11 months since your last full check-up", time: "2 days ago", group: "Earlier",  unread: false, link: "/find-doctors" },
-  { id: 8,  type: "message",      title: "New message from Dr. Kabir Malhotra",          detail: "Shared your updated diet plan and follow-up notes", time: "4 days ago", group: "Earlier",  unread: false, link: "/messages" },
-  { id: 9,  type: "prescription", title: "Prescription expiring soon",                   detail: "Your Cetirizine 10mg prescription expires in 3 days", time: "5 days ago", group: "Earlier",  unread: false, link: "/prescriptions" },
+//   { id: 1,  type: "appointment",  title: "Appointment confirmed with Dr. Priya Reddy",  detail: "Tomorrow, 10:00 AM · Dermatology · Video Consultation", time: "12m ago",   group: "Today",     unread: true,  link: "/my-appointments" },
+//   { id: 2,  type: "alert",        title: "Action needed: reschedule with Dr. Verma",     detail: "Your 3:30 PM slot today has been cancelled by the clinic.", time: "1h ago", group: "Today",     unread: true,  link: "/my-appointments" },
+//   { id: 3,  type: "lab",          title: "Lab results are ready",                        detail: "Complete Blood Count (CBC) — reviewed by Dr. Anand Rao", time: "3h ago",   group: "Today",     unread: true,  link: "/health-records" },
+//   { id: 4,  type: "message",      title: "New message from Dr. Priya Reddy",             detail: "\u201cPlease continue the ointment for 5 more days...\u201d", time: "5h ago", group: "Today",     unread: false, link: "/messages" },
+//   { id: 5,  type: "prescription", title: "Prescription uploaded — Dermatology",          detail: "Added to your Health Vault automatically after visit", time: "Yesterday, 6:40 PM", group: "Yesterday", unread: false, link: "/prescriptions" },
+//   { id: 6,  type: "ai",           title: "AI Symptom report generated",                  detail: "Mild seasonal allergy pattern detected — no urgent action needed", time: "Yesterday, 11:02 AM", group: "Yesterday", unread: false, link: "/symptom-analyzer" },
+//   { id: 7,  type: "appointment",  title: "Reminder: annual health check-up due",         detail: "It's been 11 months since your last full check-up", time: "2 days ago", group: "Earlier",  unread: false, link: "/find-doctors" },
+//   { id: 8,  type: "message",      title: "New message from Dr. Kabir Malhotra",          detail: "Shared your updated diet plan and follow-up notes", time: "4 days ago", group: "Earlier",  unread: false, link: "/messages" },
+//   { id: 9,  type: "prescription", title: "Prescription expiring soon",                   detail: "Your Cetirizine 10mg prescription expires in 3 days", time: "5 days ago", group: "Earlier",  unread: false, link: "/prescriptions" },
 ];
 
 // ─── HELPERS ───────────────────────────────────────────────────────────────────

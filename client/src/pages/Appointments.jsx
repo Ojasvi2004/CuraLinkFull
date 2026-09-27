@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { Authcontext } from "../Context/AuthContext";
+const server=import.meta.env.VITE_SERVER;
 
 // ─── ICONS ─────────────────────────────────────────────────────────────────────
 const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
@@ -188,7 +189,7 @@ const Appointments = () => {
   const fetchAppointments = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:8000/api/user/getAppointmentsAll", {
+      const res = await axios.get(`${server}/api/user/getAppointmentsAll`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.success) {

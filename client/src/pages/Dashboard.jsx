@@ -100,9 +100,7 @@ const quickLinks = [
 
 // ─── RECENT ACTIVITY (mock — wire to your API) ─────────────────────────────────
 const MOCK_ACTIVITY = [
-    { id: 1, label: "Appointment booked with Dr. Priya Reddy", time: "2h ago", type: "appointment", icon: ICONS.calendar, color: "#6366F1", bg: "#EEF2FF", link: "/my-appointments" },
-    { id: 2, label: "Prescription uploaded — Dermatology", time: "Yesterday", type: "prescription", icon: ICONS.pill, color: "#D97706", bg: "#FFFBEB", link: "/prescriptions" },
-    { id: 3, label: "AI Symptom report generated", time: "3 days ago", type: "ai", icon: ICONS.ai, color: "#059669", bg: "#ECFDF5", link: "/symptom-analyzer" },
+
 ];
 
 const HEALTH_TIP = "Staying hydrated is one of the simplest ways to support your energy, focus, and immunity. Aim for 8 glasses of water a day — your body will thank you.";

@@ -8,6 +8,10 @@ const {
   GetAvailabilitySlotsForUser,
   BookSlot,
   GetUserData,
+  EditUserAddress,
+  EditUserProfile,
+  DeleteUser,
+  GetProfileData
 } = require("../controllers/UserController.js");
 
 const {
@@ -18,6 +22,7 @@ const {
 const UserAuth = require("../middlewares/UserAuth.js");
 const { FetchAppointmentsForPatient } = require("../controllers/FetchAppointments.js");
 const upload = require("../middlewares/multer.js");
+const { User } = require("../models/User.js");
 
 UserRoute.post("/register", RegisterUser);
 UserRoute.get("/getAppointmentsAll", UserAuth, FetchAppointmentsForPatient);
@@ -33,5 +38,9 @@ UserRoute.post("/uploadHealthRecord", UserAuth, upload.fields([
   }
 ]), uploadHealthRecord);
 UserRoute.get("/getHealthRecordsForUser",UserAuth, GetHealthRecoordsOfUser);
-UserRoute.delete("/deleteUserRecord/:id",UserAuth,DeleteHealthRecord)
+UserRoute.delete("/deleteUserRecord/:id",UserAuth,DeleteHealthRecord);
+UserRoute.post("/editPersonalInfo",UserAuth,EditUserProfile);
+UserRoute.post("/editUserAddress",UserAuth,EditUserAddress);
+UserRoute.delete("/deleteUser",UserAuth,DeleteUser);
+UserRoute.get("/getProfile",UserAuth,GetProfileData);
 module.exports = UserRoute;

@@ -2,19 +2,19 @@ import React, { useState, useMemo, useEffect, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Authcontext } from "../Context/AuthContext";
 
-const API_BASE_URL = "http://localhost:8000";
+const server = import.meta.env.VITE_SERVER;
 
 
 const buildApi = (token) => ({
   getPrescriptions: async (patientId) => {
-    const res = await fetch(`${API_BASE_URL}/api/prescription/patient/${patientId}`, {
+    const res = await fetch(`${server}/api/prescription/patient/${patientId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) throw new Error("Failed to fetch prescriptions");
     return res.json();
   },
   uploadPrescription: async (formData) => {
-    const res = await fetch(`${API_BASE_URL}/api/prescription`, {
+    const res = await fetch(`${server}/api/prescription`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: formData,
@@ -23,7 +23,7 @@ const buildApi = (token) => ({
     return res.json();
   },
   deletePrescription: async (id) => {
-    const res = await fetch(`${API_BASE_URL}/api/prescription/${id}`, {
+    const res = await fetch(`${server}/api/prescription/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -32,7 +32,7 @@ const buildApi = (token) => ({
   },
 });
 
-// ─── MOCK DATA ─────────────────────────────────────────────────────────────────
+
 const MOCK = [
   {
     _id: "pres001",
@@ -70,7 +70,7 @@ const MOCK = [
   },
 ];
 
-// ─── ICONS ─────────────────────────────────────────────────────────────────────
+
 const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
     strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={style}>
@@ -114,13 +114,13 @@ const STAT_CFG = {
   archived: { label: "Archived", color: "#6B7280", bg: "#F9FAFB" },
 };
 
-// ─── SHARED INPUT STYLE ────────────────────────────────────────────────────────
+
 const iS = {
   width: "100%", background: "#F8FAFF", border: "1px solid #E2E8F0",
   borderRadius: 12, padding: "10px 14px", fontSize: 13, color: "#1E293B", outline: "none",
 };
 
-// ─── UPLOAD MODAL ──────────────────────────────────────────────────────────────
+
 const UploadModal = ({ onClose, onSuccess, api }) => {
   const [form, setForm] = useState({
     prescribedByName: "", prescribedBySpec: "", prescribedByHospital: "",
@@ -226,7 +226,7 @@ const UploadModal = ({ onClose, onSuccess, api }) => {
   );
 };
 
-// ─── DETAIL MODAL ──────────────────────────────────────────────────────────────
+
 const DetailModal = ({ rx, onClose, onDelete }) => {
   const cat = CAT_COLOR[rx.category] || CAT_COLOR.Other;
   const stat = STAT_CFG[rx.status] || STAT_CFG.active;
@@ -358,7 +358,7 @@ const DetailModal = ({ rx, onClose, onDelete }) => {
   );
 };
 
-// ─── CARD ──────────────────────────────────────────────────────────────────────
+
 const RxCard = ({ rx, onView }) => {
   const cat = CAT_COLOR[rx.category] || CAT_COLOR.Other;
   const stat = STAT_CFG[rx.status] || STAT_CFG.active;
@@ -422,7 +422,7 @@ const RxCard = ({ rx, onView }) => {
   );
 };
 
-// ─── MAIN PAGE ──────────────────────────────────────────────────────────────────
+
 export default function MyPrescriptionsPage() {
   const { token, user } = useContext(Authcontext);
   const api = useMemo(() => buildApi(token), [token]);

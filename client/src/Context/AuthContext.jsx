@@ -1,55 +1,70 @@
-import { useEffect } from "react";
-import axios from 'axios'
-import { createContext, Children, useState }  from "react"
+import { useEffect, createContext, useState } from "react";
+import axios from "axios";
 
-const Authcontext=createContext();
+const server = import.meta.env.VITE_SERVER;
 
-const AuthProvider=({children})=>{
+export const AuthContext = createContext();
+// Alias export so lowercase imports also work without breaking
+export const Authcontext = AuthContext;
 
-    const [token, settoken] = useState(() => localStorage.getItem('token') || null);
-    const [user,setuser]=useState(()=> localStorage.getItem('user') || {});
+export const AuthProvider = ({ children }) => {
+  const [token, settoken] = useState(() => localStorage.getItem("token") || null);
+  const [user, setuser] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem("user");
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
+  });
 
-    const getUserData= async()=>{
-      try {
-        const response=await axios.get("http://localhost:8000/api/user/getUserData",{
-          headers:{
-            Authorization:`Bearer ${token}`
-          }
-        }) 
-        if (response.data.success) 
-        {
-        //    console.log(response.data.data);
-          setuser(response.data.data);
-        }
-        
-      } catch (error) {
-       console.log(`Error in authContext: ${error}`);
-      }
+  const getUserData = async (currentToken) => {
+    if (!currentToken) {
+      setuser(null);
+      return;
     }
 
-     useEffect(() => {
-      getUserData();
+    try {
+      const response = await axios.get(`${server}/api/user/getUserData`, {
+        headers: {
+          Authorization: `Bearer ${currentToken}`,
+        },
+      });
+
+      if (response.data.success) {
+        setuser(response.data.data);
+        localStorage.setItem("user", JSON.stringify(response.data.data));
+      } else {
+        logout();
+      }
+    } catch (error) {
+      console.log(`Error in authContext: ${error}`);
+      logout();
+    }
+  };
+
+  const logout = () => {
+    settoken(null);
+    setuser(null);
+    localStorage.removeItem("token");
+    localStorage.removeItem("doctorToken");
+    localStorage.removeItem("user");
+  };
+
+  useEffect(() => {
     if (token) {
       localStorage.setItem("token", token);
+      getUserData(token);
     } else {
-      localStorage.removeItem("token");
-    }
-    if(user)
-    {
-        localStorage.setItem("user",user);
-    }
-    else{
-        localStorage.removeItem("user");
+      logout();
     }
   }, [token]);
 
+  return (
+    <AuthContext.Provider value={{ token, settoken, user, setuser, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
 
-
-    return(
-        <Authcontext.Provider value={{token,settoken,user,setuser}}>
-            {children}
-        </Authcontext.Provider>
-    )
-}
-
-export  {Authcontext,AuthProvider};
+export default Authcontext;

@@ -1,13 +1,26 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Authcontext } from "../Context/AuthContext";
 
 // ─── ICONS ──────────────────────────────────────────────────────────────────
 const Icon = ({ d, size = 18, color = "currentColor", style = {} }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
-    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={style}>
-    {Array.isArray(d) ? d.map((p, i) => <path key={i} d={p} />) : <path d={d} />}
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={style}
+  >
+    {Array.isArray(d) ? (
+      d.map((p, i) => <path key={i} d={p} />)
+    ) : (
+      <path d={d} />
+    )}
   </svg>
 );
 
@@ -15,14 +28,15 @@ const ICONS = {
   home:     ["M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", "M9 22V12h6v10"],
   about:    ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M12 8v4M12 16h.01"],
   contact:  ["M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"],
-  menu:     "M4 6h16M4 12h16M4 18h16",
-  close:    "M18 6L6 18M6 6l12 12",
+  menu:     ["M4 6h16", "M4 12h16", "M4 18h16"],
+  close:    ["M18 6L6 18", "M6 6l12 12"],
   arrow:    "M17 8l4 4m0 0l-4 4m4-4H3",
   cross:    ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M8 12h8M12 8v8"],
   heart:    ["M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"],
   sparkle:  ["M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"],
   user:     ["M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2", "M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"],
   logout:   ["M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4", "M16 17l5-5-5-5", "M21 12H9"],
+  chevronD: "M6 9l6 6 6-6",
 };
 
 const NAV_LINKS = [
@@ -37,15 +51,37 @@ const Navbar = () => {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [profileDropdown, setProfileDropdown] = useState(false);
+  const profileRef = useRef(null);
 
-  // Optional: consume auth context if available
-  let user = null;
-  let token = null;
-  try {
-    const ctx = useContext(Authcontext);
-    user = ctx?.user;
-    token = ctx?.token;
-  } catch (_) {}
+  // Consume Auth Context safely
+  const authContext = useContext(Authcontext);
+  const user = authContext?.user || null;
+  const token = authContext?.token || null;
+  const logout = authContext?.logout;
+
+  const handleSignOut = () => {
+    setProfileDropdown(false);
+    setIsOpen(false);
+    if (typeof logout === "function") {
+      logout();
+    } else {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    }
+    navigate("/login");
+  };
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setProfileDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -53,7 +89,12 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => { setIsOpen(false); }, [location]);
+  useEffect(() => {
+    setIsOpen(false);
+    setProfileDropdown(false);
+  }, [location.pathname]);
+
+  const firstName = user?.name ? user.name.split(" ")[0] : "Account";
 
   return (
     <>
@@ -68,7 +109,6 @@ const Navbar = () => {
           transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
         }
 
-        /* Thin gradient accent line at very top */
         .nav-root::before {
           content: '';
           display: block;
@@ -194,14 +234,6 @@ const Navbar = () => {
           position: relative;
           overflow: hidden;
         }
-        .drawer-header::before {
-          content: '';
-          position: absolute;
-          top: -30px; right: -30px;
-          width: 120px; height: 120px;
-          border-radius: 50%;
-          background: rgba(255,255,255,0.08);
-        }
         .drawer-links {
           padding: 16px 16px;
           flex: 1;
@@ -244,6 +276,23 @@ const Navbar = () => {
           flex-direction: column;
           gap: 8px;
         }
+
+        .desktop-nav {
+          display: flex;
+          align-items: center;
+        }
+        .mobile-toggle {
+          display: none;
+        }
+
+        @media (max-width: 868px) {
+          .desktop-nav {
+            display: none !important;
+          }
+          .mobile-toggle {
+            display: flex !important;
+          }
+        }
       `}</style>
 
       {/* ── MAIN NAV ── */}
@@ -265,7 +314,7 @@ const Navbar = () => {
             </NavLink>
 
             {/* ── CENTER NAV LINKS (desktop) ── */}
-            <nav style={{ display: "flex", alignItems: "center", gap: 2, flex: 1, justifyContent: "center" }} className="hidden lg:flex">
+            <nav style={{ gap: 4, flex: 1, justifyContent: "center" }} className="desktop-nav">
               {NAV_LINKS.map(({ to, label, icon }) => (
                 <NavLink
                   key={to}
@@ -280,14 +329,64 @@ const Navbar = () => {
             </nav>
 
             {/* ── RIGHT SIDE (desktop) ── */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }} className="hidden lg:flex">
+            <div style={{ gap: 10, flexShrink: 0 }} className="desktop-nav">
               {token && user ? (
-                /* Logged in: avatar chip */
-                <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#EEF2FF", borderRadius: 12, padding: "6px 14px 6px 8px", border: "1px solid #C7D2FE" }}>
-                  <div style={{ width: 30, height: 30, borderRadius: 9, background: "linear-gradient(135deg,#6366F1,#8B5CF6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Icon d={ICONS.user} size={15} color="white" />
-                  </div>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "#3730A3" }}>{user.name?.split(" ")[0]}</span>
+                /* Logged in: Profile Chip with Dropdown */
+                <div ref={profileRef} style={{ position: "relative" }}>
+                  <button
+                    onClick={() => setProfileDropdown(o => !o)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 8,
+                      background: "#EEF2FF", borderRadius: 12, padding: "5px 12px 5px 6px",
+                      border: "1px solid #C7D2FE", cursor: "pointer",
+                    }}
+                  >
+                    <div style={{ width: 30, height: 30, borderRadius: 9, background: "linear-gradient(135deg,#6366F1,#8B5CF6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Icon d={ICONS.user} size={15} color="white" />
+                    </div>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "#3730A3" }}>
+                      {firstName}
+                    </span>
+                    <Icon d={ICONS.chevronD} size={14} color="#6366F1" />
+                  </button>
+
+                  <AnimatePresence>
+                    {profileDropdown && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                        transition={{ duration: 0.15 }}
+                        style={{
+                          position: "absolute", right: 0, top: "calc(100% + 8px)",
+                          width: 200, background: "white", borderRadius: 14,
+                          boxShadow: "0 16px 40px rgba(0,0,0,0.12)", border: "1px solid #EEF2FF",
+                          overflow: "hidden", zIndex: 1001,
+                        }}
+                      >
+                        <div style={{ padding: "12px 16px", borderBottom: "1px solid #F1F5F9" }}>
+                          <p style={{ fontSize: 13, fontWeight: 700, color: "#0F172A" }}>{user.name || "User"}</p>
+                          <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis" }}>{user.email || ""}</p>
+                        </div>
+                        <div style={{ padding: "6px" }}>
+                          <button
+                            onClick={handleSignOut}
+                            style={{
+                              width: "100%", display: "flex", alignItems: "center", gap: 10,
+                              padding: "9px 12px", border: "none", background: "transparent",
+                              borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 600,
+                              color: "#EF4444", textAlign: "left",
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = "#FEF2F2"}
+                            onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                          >
+                            <Icon d={ICONS.logout} size={15} color="#EF4444" />
+                            Sign Out
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               ) : (
                 <>
@@ -302,8 +401,8 @@ const Navbar = () => {
             {/* ── HAMBURGER (mobile) ── */}
             <button
               onClick={() => setIsOpen(true)}
-              style={{ width: 40, height: 40, borderRadius: 11, background: "#EEF2FF", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
-              className="lg:hidden"
+              style={{ width: 40, height: 40, borderRadius: 11, background: "#EEF2FF", border: "none", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
+              className="mobile-toggle"
               aria-label="Open menu"
             >
               <Icon d={ICONS.menu} size={18} color="#6366F1" />
@@ -356,8 +455,8 @@ const Navbar = () => {
                       <Icon d={ICONS.user} size={16} color="white" />
                     </div>
                     <div>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: "white" }}>{user.name}</p>
-                      <p style={{ fontSize: 11, color: "rgba(255,255,255,0.65)" }}>{user.email}</p>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "white" }}>{user.name || "User"}</p>
+                      <p style={{ fontSize: 11, color: "rgba(255,255,255,0.65)" }}>{user.email || ""}</p>
                     </div>
                   </div>
                 )}
@@ -397,7 +496,7 @@ const Navbar = () => {
                 <div className="drawer-footer">
                   <button
                     style={{ width: "100%", padding: "11px 20px", fontSize: 13, fontWeight: 700, color: "#EF4444", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 10, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-                    onClick={() => { /* call logout */ }}
+                    onClick={handleSignOut}
                   >
                     <Icon d={ICONS.logout} size={15} color="#EF4444" />
                     Sign Out

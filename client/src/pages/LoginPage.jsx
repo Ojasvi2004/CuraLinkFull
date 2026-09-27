@@ -3,8 +3,9 @@ import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Authcontext } from "../Context/AuthContext";
+const server=import.meta.env.VITE_SERVER;
 
-/* ─── ICON SYSTEM (same as register) ─── */
+
 const Icon = ({ d, size = 18, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
     strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -20,7 +21,7 @@ const ICONS = {
   arrow: "M17 8l4 4m0 0l-4 4m4-4H3",
 };
 
-/* ─── FLOATING FIELD ─── */
+
 const Field = ({ label, name, type, value, onChange, icon, rightEl }) => {
   const [focused, setFocused] = useState(false);
   const active = focused || value?.length > 0;
@@ -96,12 +97,12 @@ const LoginPage = () => {
     setLoading(true);
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/user/login",
+        `${server}/api/user/login`,
         formData
       );
 
       if (response.data.success) {
-        const token = response.data.token;
+        const token = response.data.token;                                                                                                                                                                                                                                                                              
         settoken(token);
         localStorage.setItem("token", token);
         navigate("/dashboard");

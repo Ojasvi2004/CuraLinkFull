@@ -38,9 +38,7 @@ const NAV_LINKS = [
 
 // Notification mock data
 const MOCK_NOTIFS = [
-  { id: 1, text: "Dr. Priya Reddy confirmed your appointment", time: "2h ago", unread: true,  color: "#6366F1", bg: "#EEF2FF", icon: ICONS.appts  },
-  { id: 2, text: "New prescription uploaded successfully",      time: "Yesterday", unread: true,  color: "#D97706", bg: "#FFFBEB", icon: ICONS.cross  },
-  { id: 3, text: "AI symptom report is ready to view",         time: "3d ago",  unread: false, color: "#059669", bg: "#ECFDF5", icon: ICONS.ai     },
+
 ];
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import axios from "axios";
+const server=import.meta.env.VITE_SERVER;
 
 // ─── ICONS ─────────────────────────────────────────────────────────────────────
 const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
@@ -156,7 +157,7 @@ const FindDoctors = () => {
   const fetchDoctors = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:8000/api/user/getDoctorList");
+      const res = await axios.get(`${server}/api/user/getDoctorList`);
       if (res.data.success) setDoctors(res.data.doctorList);
     } catch (e) {
       console.error("Error fetching doctors", e);
