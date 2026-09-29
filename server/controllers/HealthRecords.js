@@ -1,6 +1,7 @@
 const { User } = require('../models/User');
 const { PatientRecord } = require('../models/PatientRecord');
-const axios = require('axios')
+const axios = require('axios');
+const curalink_ai=process.env.CURALINK_AI;
 const bcrypt = require('bcrypt');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
@@ -113,10 +114,11 @@ const processOCRInBackground = async (recordId, imageUrl) => {
     console.error("BACKGROUND OCR ERROR:", error.message);
   }
 };
+
 const get_ocr_data = async (image_url) => {
   try {
     const response = await axios.post(
-      "http://127.0.0.1:5000/ocr",
+      `${curalink_ai}/ocr`,
       { image_url },
       { timeout: 900000 }
     );

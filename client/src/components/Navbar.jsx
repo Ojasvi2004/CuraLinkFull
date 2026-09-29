@@ -3,7 +3,7 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Authcontext } from "../Context/AuthContext";
 
-// ─── ICONS ──────────────────────────────────────────────────────────────────
+
 const Icon = ({ d, size = 18, color = "currentColor", style = {} }) => (
   <svg
     width={size}
@@ -45,7 +45,6 @@ const NAV_LINKS = [
   { to: "/contact", label: "Contact", icon: ICONS.contact },
 ];
 
-// ─── NAVBAR ──────────────────────────────────────────────────────────────────
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,7 +53,7 @@ const Navbar = () => {
   const [profileDropdown, setProfileDropdown] = useState(false);
   const profileRef = useRef(null);
 
-  // Consume Auth Context safely
+
   const authContext = useContext(Authcontext);
   const user = authContext?.user || null;
   const token = authContext?.token || null;
@@ -72,7 +71,6 @@ const Navbar = () => {
     navigate("/login");
   };
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (profileRef.current && !profileRef.current.contains(e.target)) {
