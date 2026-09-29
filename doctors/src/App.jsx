@@ -38,12 +38,14 @@ function App() {
       <NavbarBeforeLogin/>
      }
     <Routes>
-      <Route path='/doctor/' element={<DoctorLandingPage/>}></Route>
+        <Route path='/' element={<DoctorLandingPage />} />
+        <Route path='/doctor' element={<DoctorLandingPage />} />
+        <Route path='/doctor/' element={<DoctorLandingPage />} />
+         <Route path='/doctor/features' element={<DoctorLandingPage />} />
       <Route path='/doctor/how-it-works' element={<DoctorHowItWorksPage/>}></Route>
       <Route path='/doctor/faq' element={<DoctorFaqPage/>}></Route>
       <Route path='/doctor/register' element={<DoctorRegistrationPage/>}></Route>
       <Route path='/doctor/login' element={<DoctorLoginPage/>}></Route>
-
 
 
       <Route path='/doctor/patient-record/pat002' element={<ProtectedRouteForDoctors><DoctorPatientRecordPage/></ProtectedRouteForDoctors>}></Route>
