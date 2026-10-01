@@ -115,7 +115,6 @@ const processOCRInBackground = async (recordId, imageUrl) => {
   }
 };
 
-import axios from "axios";
 
 
 const waitForAiService = async (baseUrl, maxAttempts = 15, delayMs = 4000) => {
