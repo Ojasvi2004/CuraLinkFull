@@ -115,31 +115,50 @@ const processOCRInBackground = async (recordId, imageUrl) => {
   }
 };
 
+import axios from "axios";
+
+
+const waitForAiService = async (baseUrl, maxAttempts = 15, delayMs = 4000) => {
+  console.log("Checking if AI service is awake...");
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const res = await axios.get(`${baseUrl}/health`, { timeout: 5000 });
+      if (res.status === 200) {
+        console.log("AI service is online.");
+        return true;
+      }
+    } catch (err) {
+      console.log(`AI service warming up... (Attempt ${attempt}/${maxAttempts})`);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  throw new Error("AI service failed to wake up within expected timeframe.");
+};
+
+
 const get_ocr_data = async (image_url) => {
   try {
+  
+    await waitForAiService(curalink_ai);
+
     const response = await axios.post(
       `${curalink_ai}/ocr`,
       { image_url },
-      { timeout: 900000 }
+      { timeout: 180000 } 
     );
 
-    
     console.log("OCR RAW RESPONSE:", JSON.stringify(response.data, null, 2));
 
     if (response.data.success) {
       return response.data.data;
     }
 
-
     throw new Error(`FastAPI returned failure: ${JSON.stringify(response.data)}`);
-
   } catch (error) {
     if (error.response) {
-  
       console.error("OCR HTTP ERROR:", error.response.status, JSON.stringify(error.response.data));
     } else if (error.request) {
-     
-      console.error("OCR NO RESPONSE - is FastAPI running on port 5000?");
+      console.error("OCR NO RESPONSE - AI service unreachable");
     } else {
       console.error("OCR ERROR:", error.message);
     }

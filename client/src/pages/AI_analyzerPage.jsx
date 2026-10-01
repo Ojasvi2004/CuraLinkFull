@@ -1,458 +1,982 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  useSpring,
+  useMotionValue,
+  useTransform,
+} from "framer-motion";
 import axios from "axios";
 import { Authcontext } from "../Context/AuthContext";
-const Dr_bot_api_url=import.meta.env.VITE_DR_BOT_ORIGIN
-const server=import.meta.env.VITE_SERVER
 
-// ─── ICONS ─────────────────────────────────────────────────────────────────────
-const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
-        strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={style}>
-        {Array.isArray(d) ? d.map((p, i) => <path key={i} d={p} />) : <path d={d} />}
-    </svg>
-);
-const SvgRaw = ({ children, size = 20, style = {} }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={style}>
-        {children}
-    </svg>
+const Dr_bot_api_url = import.meta.env.VITE_DR_BOT_ORIGIN;
+const server = import.meta.env.VITE_SERVER;
+
+// ─── THEME TOKENS ─────────────────────────────────────────────────────────────
+const T = {
+  ink:      "#0C0A09",
+  body:     "#57534E",
+  muted:    "#A8A29E",
+  line:     "#ECEAE6",
+  surface:  "#F5F4F2",
+  surface2: "#FAFAF9",
+  white:    "#FFFFFF",
+};
+
+const EASE = [0.22, 1, 0.36, 1];
+
+// Iridescent gradient orbs
+const ORBS = {
+  violet: "radial-gradient(circle at 30% 28%, #FFFFFF 0%, #C9B8FF 22%, #7C8CFF 48%, #F6A5D8 78%, #FFD9B8 100%)",
+  sun:    "radial-gradient(circle at 32% 26%, #FFF3D6 0%, #FFB36B 28%, #FF5E3A 58%, #7A2BFF 100%)",
+  sky:    "radial-gradient(circle at 34% 30%, #FFFFFF 0%, #A5D8FF 26%, #5B8CFF 56%, #C2A6FF 100%)",
+  mint:   "radial-gradient(circle at 30% 28%, #FFFFFF 0%, #BDEFD8 26%, #5FD0A5 56%, #8EC5FF 100%)",
+};
+
+// ─── ICON PRIMITIVE ──────────────────────────────────────────────────────────
+const Icon = ({ d, size = 18, color = "currentColor", style = {} }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="1.6"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={style}
+  >
+    {Array.isArray(d) ? d.map((p, i) => <path key={i} d={p} />) : <path d={d} />}
+  </svg>
 );
 
 const ICONS = {
-    send: ["M22 2L11 13", "M22 2L15 22 11 13 2 9 22 2"],
-    trash: ["M3 6h18", "M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6", "M10 11v6M14 11v6", "M9 3h6a1 1 0 0 1 1 1v2H8V4a1 1 0 0 1 1-1z"],
-    close: "M18 6 6 18M6 6l12 12",
-    records: ["M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z", "M14 2v6h6", "M9 13h6M9 17h4"],
-    check: "m9 11 3 3L22 4",
-    sparkle: ["M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z", "M5 3v3M3 5h3M19 18v3M17 20h3"],
-    user: ["M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2", "M12 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"],
-    wand: ["M15 4V2", "M15 16v-2", "M8 9h2", "M20 9h2", "M17.8 11.8L19.2 13.2", "M15 9h.01", "M17.8 6.2L19.2 4.8", "M3 21l9-9", "M12.2 6.2L10.8 4.8"],
+  send:    ["M22 2L11 13", "M22 2L15 22 11 13 2 9 22 2"],
+  trash:   ["M3 6h18", "M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6", "M10 11v6M14 11v6", "M9 3h6a1 1 0 0 1 1 1v2H8V4a1 1 0 0 1 1-1z"],
+  close:   "M18 6 6 18M6 6l12 12",
+  records: ["M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z", "M14 2v6h6", "M9 13h6M9 17h4"],
+  check:   "m9 11 3 3L22 4",
+  sparkle: ["M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z", "M5 3v4M3 5h4M19 17v4M17 19h4"],
+  user:    ["M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2", "M12 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"],
+  arrow:   "M17 8l4 4m0 0l-4 4m4-4H3",
 };
 
-// Bot SVG (custom shape — not icon system)
-const BotAvatar = ({ size = 32 }) => (
-    <div style={{ width: size, height: size, borderRadius: size * 0.3, background: "linear-gradient(135deg,#6366F1,#8B5CF6)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 14px rgba(99,102,241,0.4)", flexShrink: 0 }}>
-        <SvgRaw size={size * 0.55} style={{ color: "white" }}>
-            <rect x="3" y="8" width="18" height="12" rx="2" stroke="white" fill="none" />
-            <path d="M9 8V6a3 3 0 016 0v2" stroke="white" fill="none" />
-            <circle cx="9" cy="14" r="1.5" fill="white" stroke="none" />
-            <circle cx="15" cy="14" r="1.5" fill="white" stroke="none" />
-        </SvgRaw>
-    </div>
+// ─── AVATAR PRIMITIVES ───────────────────────────────────────────────────────
+const BotAvatar = ({ size = 34 }) => (
+  <div
+    style={{
+      width: size,
+      height: size,
+      borderRadius: "50%",
+      background: ORBS.violet,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      boxShadow: "0 6px 18px rgba(12,10,9,0.12)",
+      flexShrink: 0,
+      border: `1.5px solid ${T.white}`,
+    }}
+  >
+    <Icon d={ICONS.sparkle} size={size * 0.48} color="white" />
+  </div>
 );
 
-const UserAvatar = ({ size = 32 }) => (
-    <div style={{ width: size, height: size, borderRadius: "50%", background: "linear-gradient(135deg,#0F172A,#334155)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <Icon d={ICONS.user} size={size * 0.5} color="white" />
-    </div>
+const UserAvatar = ({ size = 34 }) => (
+  <div
+    style={{
+      width: size,
+      height: size,
+      borderRadius: "50%",
+      background: T.ink,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+    }}
+  >
+    <Icon d={ICONS.user} size={size * 0.46} color="white" />
+  </div>
 );
 
-// ─── HELPERS ───────────────────────────────────────────────────────────────────
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
 const toStr = (v) => (!v ? null : typeof v === "string" ? v : JSON.stringify(v, null, 2));
 
 const extractReplyText = (data) => {
-    const payload = data?.result ?? data;
-    if (typeof payload === "string") return payload;
-    const blocks = payload?.raw_output ?? payload?.raw_ouput;
-    if (Array.isArray(blocks)) {
-        const text = blocks.filter(b => b?.type === "text").map(b => b.text).join("\n\n");
-        if (text) return text;
-    }
-    return JSON.stringify(payload, null, 2);
+  const payload = data?.result ?? data;
+  if (typeof payload === "string") return payload;
+  const blocks = payload?.raw_output ?? payload?.raw_ouput;
+  if (Array.isArray(blocks)) {
+    const text = blocks
+      .filter((b) => b?.type === "text")
+      .map((b) => b.text)
+      .join("\n\n");
+    if (text) return text;
+  }
+  return JSON.stringify(payload, null, 2);
 };
 
-// ─── RICH TEXT RENDERER ────────────────────────────────────────────────────────
+// ─── RICH TEXT MARKDOWN RENDERER ─────────────────────────────────────────────
 const RichText = ({ text }) => {
-    if (!text) return null;
-    const lines = text.split("\n");
-    return (
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            {lines.map((line, i) => {
-                if (/^###\s/.test(line))
-                    return <p key={i} style={{ fontWeight: 700, color: "#0F172A", fontSize: 14, marginTop: 10, marginBottom: 2, fontFamily: "'Playfair Display', serif" }}>{line.replace(/^###\s/, "")}</p>;
-                if (/^\*\*(.+)\*\*$/.test(line.trim()))
-                    return <p key={i} style={{ fontWeight: 700, color: "#1E293B", fontSize: 13 }}>{line.replace(/\*\*/g, "")}</p>;
-                if (/^[\*\-]\s/.test(line))
-                    return (
-                        <div key={i} style={{ display: "flex", gap: 8, fontSize: 13, color: "#334155" }}>
-                            <span style={{ color: "#6366F1", marginTop: 2, flexShrink: 0 }}>•</span>
-                            <span dangerouslySetInnerHTML={{ __html: line.replace(/^[\*\-]\s/, "").replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>") }} />
-                        </div>
-                    );
-                if (/^\d+\.\s/.test(line))
-                    return (
-                        <div key={i} style={{ display: "flex", gap: 8, fontSize: 13, color: "#334155" }}>
-                            <span style={{ color: "#6366F1", flexShrink: 0, fontWeight: 600 }}>{line.match(/^\d+/)[0]}.</span>
-                            <span dangerouslySetInnerHTML={{ __html: line.replace(/^\d+\.\s/, "").replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>") }} />
-                        </div>
-                    );
-                if (line.trim() === "") return <div key={i} style={{ height: 4 }} />;
-                return (
-                    <p key={i} style={{ fontSize: 13, color: "#334155", lineHeight: 1.65 }}
-                        dangerouslySetInnerHTML={{ __html: line.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>") }} />
-                );
-            })}
-        </div>
-    );
+  if (!text) return null;
+  const lines = text.split("\n");
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+      {lines.map((line, i) => {
+        if (/^###\s/.test(line))
+          return (
+            <p
+              key={i}
+              style={{
+                fontWeight: 500,
+                color: T.ink,
+                fontSize: 14.5,
+                marginTop: 10,
+                marginBottom: 2,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              {line.replace(/^###\s/, "")}
+            </p>
+          );
+        if (/^\*\*(.+)\*\*$/.test(line.trim()))
+          return (
+            <p key={i} style={{ fontWeight: 500, color: T.ink, fontSize: 13.5 }}>
+              {line.replace(/\*\*/g, "")}
+            </p>
+          );
+        if (/^[\*\-]\s/.test(line))
+          return (
+            <div key={i} style={{ display: "flex", gap: 8, fontSize: 13.5, color: T.body }}>
+              <span style={{ color: T.ink, flexShrink: 0, marginTop: 1 }}>•</span>
+              <span
+                dangerouslySetInnerHTML={{
+                  __html: line
+                    .replace(/^[\*\-]\s/, "")
+                    .replace(/\*\*(.+?)\*\*/g, `<strong style="color:${T.ink}; font-weight:500;">$1</strong>`),
+                }}
+              />
+            </div>
+          );
+        if (/^\d+\.\s/.test(line))
+          return (
+            <div key={i} style={{ display: "flex", gap: 8, fontSize: 13.5, color: T.body }}>
+              <span style={{ color: T.ink, flexShrink: 0, fontWeight: 500 }}>
+                {line.match(/^\d+/)[0]}.
+              </span>
+              <span
+                dangerouslySetInnerHTML={{
+                  __html: line
+                    .replace(/^\d+\.\s/, "")
+                    .replace(/\*\*(.+?)\*\*/g, `<strong style="color:${T.ink}; font-weight:500;">$1</strong>`),
+                }}
+              />
+            </div>
+          );
+        if (line.trim() === "") return <div key={i} style={{ height: 4 }} />;
+        return (
+          <p
+            key={i}
+            style={{ fontSize: 13.5, color: T.body, lineHeight: 1.68 }}
+            dangerouslySetInnerHTML={{
+              __html: line.replace(
+                /\*\*(.+?)\*\*/g,
+                `<strong style="color:${T.ink}; font-weight:500;">$1</strong>`
+              ),
+            }}
+          />
+        );
+      })}
+    </div>
+  );
 };
 
-// ─── RECORD SELECTOR MODAL ──────────────────────────────────────────────────────
-const RecordSelectorModal = ({ records, selectedRecords, onToggle, onClose }) => (
-    <motion.div
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4"
-        style={{ background: "rgba(15,23,42,0.65)", backdropFilter: "blur(8px)" }}
-        onClick={onClose}
+// ─── 3D TILT PROMPT CARD ──────────────────────────────────────────────────────
+const TiltPromptCard = ({ children, onClick, max = 5 }) => {
+  const ref = useRef(null);
+  const rx = useMotionValue(0);
+  const ry = useMotionValue(0);
+  const srx = useSpring(rx, { stiffness: 180, damping: 18 });
+  const sry = useSpring(ry, { stiffness: 180, damping: 18 });
+
+  return (
+    <motion.button
+      ref={ref}
+      onClick={onClick}
+      className="prompt-card"
+      onMouseMove={(e) => {
+        const r = ref.current.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width;
+        const py = (e.clientY - r.top) / r.height;
+        ry.set((px - 0.5) * max * 2);
+        rx.set(-(py - 0.5) * max * 2);
+        ref.current.style.setProperty("--mx", `${px * 100}%`);
+        ref.current.style.setProperty("--my", `${py * 100}%`);
+      }}
+      onMouseLeave={() => {
+        rx.set(0);
+        ry.set(0);
+      }}
+      style={{ rotateX: srx, rotateY: sry, transformPerspective: 900 }}
     >
-        <motion.div
-            initial={{ scale: 0.92, y: 24, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }}
-            exit={{ scale: 0.92, y: 16, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 350, damping: 28 }}
-            style={{ background: "white", borderRadius: 22, width: "100%", maxWidth: 460, overflow: "hidden", boxShadow: "0 25px 60px rgba(0,0,0,0.2)" }}
-            onClick={e => e.stopPropagation()}
-        >
-            {/* Header */}
-            <div style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)", padding: "20px 24px" }}>
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "white" }}>Health Records</h2>
-                        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", marginTop: 2 }}>Select records to give Dr. Bot context</p>
-                    </div>
-                    <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.2)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-                        <Icon d={ICONS.close} size={14} color="white" />
-                    </button>
+      {children}
+    </motion.button>
+  );
+};
+
+// ─── RECORD CONTEXT SELECTOR MODAL ───────────────────────────────────────────
+const RecordSelectorModal = ({ records, selectedRecords, onToggle, onClose }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 z-50 flex items-center justify-center p-4"
+    style={{ background: "rgba(12,10,9,0.45)", backdropFilter: "blur(12px)" }}
+    onClick={onClose}
+  >
+    <motion.div
+      initial={{ scale: 0.94, y: 20, opacity: 0 }}
+      animate={{ scale: 1, y: 0, opacity: 1 }}
+      exit={{ scale: 0.94, y: 15, opacity: 0 }}
+      transition={{ type: "spring", stiffness: 350, damping: 28 }}
+      style={{
+        background: T.white,
+        borderRadius: 28,
+        width: "100%",
+        maxWidth: 480,
+        overflow: "hidden",
+        border: `1px solid ${T.line}`,
+        boxShadow: "0 25px 60px rgba(12,10,9,0.15)",
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Header */}
+      <div style={{ padding: "24px 28px 18px", borderBottom: `1px solid ${T.line}`, background: T.surface2 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <h2 style={{ fontSize: 18, fontWeight: 400, color: T.ink, letterSpacing: "-0.015em" }}>
+              Medical Records Context
+            </h2>
+            <p style={{ fontSize: 12.5, color: T.muted, marginTop: 2 }}>
+              Select repository reports to inform clinical AI triage
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: "50%",
+              background: T.white,
+              border: `1px solid ${T.line}`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+            }}
+          >
+            <Icon d={ICONS.close} size={13} color={T.ink} />
+          </button>
+        </div>
+      </div>
+
+      {/* List */}
+      <div style={{ maxHeight: 320, overflowY: "auto" }}>
+        {records.length === 0 ? (
+          <p style={{ textAlign: "center", color: T.muted, fontSize: 13.5, padding: "40px 24px" }}>
+            No records in your vault.
+          </p>
+        ) : (
+          records.map((record) => {
+            const isSelected = !!selectedRecords.find((r) => r._id === record._id);
+            const hasAI = !!record.aiProcessing?.aiStandardizedSummary;
+            return (
+              <div
+                key={record._id}
+                onClick={() => onToggle(record)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 14,
+                  padding: "14px 24px",
+                  cursor: "pointer",
+                  borderBottom: `1px solid ${T.line}`,
+                  background: isSelected ? T.surface : "white",
+                  transition: "background 0.15s ease",
+                }}
+              >
+                <div
+                  style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: 6,
+                    border: `1px solid ${isSelected ? T.ink : T.line}`,
+                    background: isSelected ? T.ink : "white",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  {isSelected && <Icon d={ICONS.check} size={11} color="white" />}
                 </div>
-            </div>
 
-            <div style={{ maxHeight: 300, overflowY: "auto" }}>
-                {records.length === 0 ? (
-                    <p style={{ textAlign: "center", color: "#94A3B8", fontSize: 13, padding: "40px 24px" }}>No health records found.</p>
-                ) : records.map(record => {
-                    const isSelected = !!selectedRecords.find(r => r._id === record._id);
-                    const hasAI = !!record.aiProcessing?.aiStandardizedSummary;
-                    return (
-                        <div key={record._id} onClick={() => onToggle(record)}
-                            style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 24px", cursor: "pointer", borderBottom: "1px solid #F1F5F9", background: isSelected ? "#F0F0FF" : "white", transition: "background 0.15s" }}>
-                            <div style={{ width: 20, height: 20, borderRadius: 6, border: `2px solid ${isSelected ? "#6366F1" : "#CBD5E1"}`, background: isSelected ? "#6366F1" : "white", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
-                                {isSelected && <Icon d={ICONS.check} size={11} color="white" />}
-                            </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                                <p style={{ fontSize: 13, fontWeight: 600, color: "#1E293B", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{record.fileName}</p>
-                                <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 1 }}>{record.recordType}</p>
-                            </div>
-                            <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 20, background: hasAI ? "#F0FDF4" : "#FFFBEB", color: hasAI ? "#16A34A" : "#D97706", flexShrink: 0 }}>
-                                {hasAI ? "Ready" : "Processing"}
-                            </span>
-                        </div>
-                    );
-                })}
-            </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 13.5, fontWeight: 500, color: T.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {record.fileName}
+                  </p>
+                  <p style={{ fontSize: 11.5, color: T.muted, marginTop: 1 }}>{record.recordType}</p>
+                </div>
 
-            <div style={{ padding: "14px 24px", borderTop: "1px solid #F1F5F9", display: "flex", alignItems: "center", justifyContent: "space-between", background: "#FAFBFF" }}>
-                <span style={{ fontSize: 12, color: "#94A3B8" }}>{selectedRecords.length} record{selectedRecords.length !== 1 ? "s" : ""} selected</span>
-                <button onClick={onClose} style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)", color: "white", fontWeight: 700, fontSize: 13, padding: "9px 22px", borderRadius: 12, border: "none", cursor: "pointer", boxShadow: "0 4px 12px rgba(99,102,241,0.3)" }}>
-                    Done
-                </button>
-            </div>
-        </motion.div>
+                <span
+                  style={{
+                    fontSize: 10.5,
+                    fontWeight: 500,
+                    padding: "3px 8px",
+                    borderRadius: 20,
+                    background: hasAI ? T.white : T.surface2,
+                    border: `1px solid ${T.line}`,
+                    color: hasAI ? T.ink : T.muted,
+                    flexShrink: 0,
+                  }}
+                >
+                  {hasAI ? "Standardized" : "Raw"}
+                </span>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Footer */}
+      <div
+        style={{
+          padding: "16px 24px",
+          borderTop: `1px solid ${T.line}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          background: T.surface2,
+        }}
+      >
+        <span style={{ fontSize: 12.5, color: T.muted }}>
+          {selectedRecords.length} record{selectedRecords.length !== 1 ? "s" : ""} active
+        </span>
+        <button
+          onClick={onClose}
+          style={{
+            background: T.ink,
+            color: "white",
+            fontWeight: 500,
+            fontSize: 13,
+            padding: "8px 20px",
+            borderRadius: 999,
+            border: "none",
+            cursor: "pointer",
+          }}
+        >
+          Confirm Context
+        </button>
+      </div>
     </motion.div>
+  </motion.div>
 );
 
-// ─── SUGGESTION PILL ───────────────────────────────────────────────────────────
 const SUGGESTIONS = [
-    "What are normal blood pressure ranges?",
-    "How can I improve my sleep quality?",
-    "Analyze my latest lab results",
-    "Tips for a heart-healthy diet",
-    "What does my diagnosis mean?",
-    "How to manage stress effectively?",
+  "What are normal clinical blood pressure parameters?",
+  "How can I improve REM sleep architecture?",
+  "Analyze my most recent laboratory findings",
+  "Evidence-based guidelines for cardiovascular diet",
+  "What does my diagnosis signify clinically?",
+  "Non-pharmacological strategies to mitigate cortisol",
 ];
 
-// ─── MAIN PAGE ──────────────────────────────────────────────────────────────────
+// ─── MAIN AI ANALYZER PAGE ───────────────────────────────────────────────────
 const AiAnalyzerPage = () => {
-    const { token } = useContext(Authcontext);
-    const [input, setInput] = useState("");
-    const [messages, setMessages] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState("");
-    const [showRecordSelector, setShowRecordSelector] = useState(false);
-    const [records, setRecords] = useState([]);
-    const [selectedRecords, setSelectedRecords] = useState([]);
-    const messagesEndRef = useRef(null);
-    const textareaRef = useRef(null);
+  const { token } = useContext(Authcontext);
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showRecordSelector, setShowRecordSelector] = useState(false);
+  const [records, setRecords] = useState([]);
+  const [selectedRecords, setSelectedRecords] = useState([]);
 
-    useEffect(() => {
-        if (messages.length > 0) messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages, isLoading]);
+  const messagesEndRef = useRef(null);
+  const textareaRef = useRef(null);
+  const [sessionId] = useState(() => crypto.randomUUID());
 
-    useEffect(() => {
-        if (textareaRef.current) {
-            textareaRef.current.style.height = "auto";
-            textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 140) + "px";
-        }
-    }, [input]);
+  // Mouse parallax for ambient aura
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const smx = useSpring(mx, { stiffness: 45, damping: 20 });
+  const smy = useSpring(my, { stiffness: 45, damping: 20 });
+  const mouseOrbX = useTransform(smx, [-0.5, 0.5], [-35, 35]);
+  const mouseOrbY = useTransform(smy, [-0.5, 0.5], [-25, 25]);
 
-    useEffect(() => {
-        const fetchRecords = async () => {
-            try {
-                const res = await axios.get(`${server}/api/user/getHealthRecordsForUser`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                if (res.data.success) setRecords(res.data.records);
-            } catch (e) { console.error("Records fetch error", e); }
-        };
-        fetchRecords();
-        console.log(Dr_bot_api_url);
-    }, []);
+  useEffect(() => {
+    if (messages.length > 0) messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isLoading]);
 
-    const toggleSelect = (record) =>
-        setSelectedRecords(prev =>
-            prev.find(r => r._id === record._id) ? prev.filter(r => r._id !== record._id) : [...prev, record]
-        );
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 140) + "px";
+    }
+  }, [input]);
 
-
-    const [sessionId] = useState(() => crypto.randomUUID());
-
-    const handleSend = async (e) => {
-        e?.preventDefault();
-        const question = input.trim();
-        if (!question || isLoading) return;
-        setError("");
-        const updatedMessages = [...messages, { role: "user", content: question }];
-        setMessages(updatedMessages);
-        setInput("");
-        setIsLoading(true);
-        try {
-            const summaries = selectedRecords.map(r => toStr(r.aiProcessing?.aiStandardizedSummary)).filter(Boolean);
-            const payload = {
-                question,
-                patient: {
-                    recordSummaries: summaries.join("\n\n---\n\n") || "No medical records provided. Answer as general health assistant.",
-                    conversationHistory: updatedMessages.slice(0, -1).map(m => `${m.role === "user" ? "Patient" : "Doctor"}: ${m.content}`).join("\n"),
-                },
-                session_id: sessionId
-            };
-            const res = await axios.post(Dr_bot_api_url, payload);
-            setMessages(prev => [...prev, { role: "assistant", content: extractReplyText(res.data) }]);
-        } catch (err) {
-            console.log(err);
-
-            if (err.response) {
-                console.log("Status:", err.response.status);
-                console.log("Response:", err.response.data);
-            } else if (err.request) {
-                console.log("No response received");
-            } else {
-                console.log(err.message);
-            }
-
-            setMessages(prev => [
-                ...prev,
-                {
-                    role: "assistant",
-                    content:
-                        err.response?.data?.detail ||
-                        err.message ||
-                        "Something went wrong.",
-                    isError: true,
-                },
-            ]);
-        } finally {
-            setIsLoading(false);
-        }
+  useEffect(() => {
+    const fetchRecords = async () => {
+      try {
+        const res = await axios.get(`${server}/api/user/getHealthRecordsForUser`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.data.success) setRecords(res.data.records);
+      } catch (e) {
+        console.error("Records fetch error", e);
+      }
     };
+    fetchRecords();
+  }, [token]);
 
-    const handleKeyDown = (e) => {
-        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
-    };
-
-    const hasStarted = messages.length > 0;
-
-    return (
-        <>
-            <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap');`}</style>
-
-            <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "linear-gradient(145deg,#F0F4FF 0%,#F8F6FF 40%,#EFF6FF 100%)", fontFamily: "'DM Sans', sans-serif", position: "relative", overflow: "hidden" }}>
-
-                {/* Background blobs */}
-                <div style={{ position: "fixed", top: -80, right: -80, width: 360, height: 360, borderRadius: "50%", background: "radial-gradient(circle,rgba(99,102,241,0.09) 0%,transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
-                <div style={{ position: "fixed", bottom: -60, left: -60, width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle,rgba(139,92,246,0.07) 0%,transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
-
-                {/* ── TOP BAR ── */}
-                <div style={{ flexShrink: 0, background: "rgba(255,255,255,0.85)", backdropFilter: "blur(16px)", borderBottom: "1px solid #EEF2FF", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", zIndex: 10, boxShadow: "0 2px 16px rgba(99,102,241,0.07)" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <BotAvatar size={40} />
-                        <div>
-                            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                                <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, color: "#0F172A" }}>Dr. Bot</p>
-                                <span style={{ background: "#F0FDF4", color: "#16A34A", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, border: "1px solid #BBF7D0" }}>● Online</span>
-                            </div>
-                            <p style={{ fontSize: 11, color: "#6366F1", fontWeight: 600, marginTop: 1 }}>AI Health Assistant · Powered by CuraLink</p>
-                        </div>
-                    </div>
-
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <button onClick={() => setShowRecordSelector(true)}
-                            style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 12, border: `1px solid ${selectedRecords.length > 0 ? "#6366F1" : "#E2E8F0"}`, background: selectedRecords.length > 0 ? "#EEF2FF" : "white", color: selectedRecords.length > 0 ? "#4338CA" : "#64748B", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.15s" }}>
-                            <Icon d={ICONS.records} size={14} color={selectedRecords.length > 0 ? "#6366F1" : "#94A3B8"} />
-                            {selectedRecords.length > 0 ? `${selectedRecords.length} Record${selectedRecords.length > 1 ? "s" : ""}` : "Add Records"}
-                        </button>
-                        {hasStarted && (
-                            <button onClick={() => setMessages([])}
-                                style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 12, border: "1px solid #E2E8F0", background: "white", color: "#94A3B8", fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.15s" }}>
-                                <Icon d={ICONS.trash} size={13} color="#94A3B8" /> Clear
-                            </button>
-                        )}
-                    </div>
-                </div>
-
-                {/* ── CONTEXT CHIPS ── */}
-                <AnimatePresence>
-                    {selectedRecords.length > 0 && (
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                            style={{ flexShrink: 0, background: "rgba(255,255,255,0.7)", borderBottom: "1px solid #EEF2FF", overflow: "hidden", zIndex: 9 }}>
-                            <div style={{ padding: "8px 24px", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                                <span style={{ fontSize: 11, color: "#6366F1", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase" }}>Context:</span>
-                                {selectedRecords.map(r => (
-                                    <span key={r._id} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 20, background: r.aiProcessing?.aiStandardizedSummary ? "#EEF2FF" : "#FFFBEB", color: r.aiProcessing?.aiStandardizedSummary ? "#4338CA" : "#D97706", border: `1px solid ${r.aiProcessing?.aiStandardizedSummary ? "#C7D2FE" : "#FDE68A"}` }}>
-                                        {r.fileName}
-                                        <button onClick={() => toggleSelect(r)} style={{ border: "none", background: "none", cursor: "pointer", padding: 0, display: "flex", opacity: 0.7 }}>
-                                            <Icon d={ICONS.close} size={11} color="currentColor" />
-                                        </button>
-                                    </span>
-                                ))}
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* ── MESSAGES ── */}
-                <div style={{ flex: 1, overflowY: "auto", zIndex: 1 }}>
-                    <div style={{ maxWidth: 760, margin: "0 auto", padding: "28px 24px", display: "flex", flexDirection: "column", gap: 20 }}>
-
-                        {/* Empty state */}
-                        {!hasStarted && (
-                            <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-                                style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "55vh", textAlign: "center", gap: 20 }}>
-                                <div style={{ position: "relative" }}>
-                                    <BotAvatar size={72} />
-                                    <div style={{ position: "absolute", top: -4, right: -4, width: 24, height: 24, borderRadius: "50%", background: "linear-gradient(135deg,#F59E0B,#FBBF24)", border: "3px solid white", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                        <Icon d={ICONS.sparkle} size={11} color="white" />
-                                    </div>
-                                </div>
-                                <div>
-                                    <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 800, color: "#0F172A" }}>How can I help you today?</h2>
-                                    <p style={{ color: "#64748B", fontSize: 14, marginTop: 8, maxWidth: 440 }}>Ask me any health question. Select your health records above for personalised, context-aware answers.</p>
-                                </div>
-
-                                {/* Suggestion grid */}
-                                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10, width: "100%", maxWidth: 560, marginTop: 8 }}>
-                                    {SUGGESTIONS.map(s => (
-                                        <motion.button key={s} whileHover={{ y: -2, boxShadow: "0 8px 20px rgba(99,102,241,0.12)" }}
-                                            onClick={() => setInput(s)}
-                                            style={{ textAlign: "left", fontSize: 12, color: "#475569", background: "white", border: "1px solid #E2E8F0", borderRadius: 14, padding: "12px 14px", cursor: "pointer", lineHeight: 1.5, transition: "all 0.15s", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
-                                            {s}
-                                        </motion.button>
-                                    ))}
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {/* Message bubbles */}
-                        <AnimatePresence initial={false}>
-                            {messages.map((msg, i) => (
-                                <motion.div key={i}
-                                    initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.25 }}
-                                    style={{ display: "flex", gap: 12, flexDirection: msg.role === "user" ? "row-reverse" : "row", alignItems: "flex-end" }}>
-
-                                    {msg.role === "user" ? <UserAvatar size={34} /> : <BotAvatar size={34} />}
-
-                                    <div style={{
-                                        maxWidth: "78%", borderRadius: msg.role === "user" ? "18px 4px 18px 18px" : "4px 18px 18px 18px",
-                                        padding: "13px 16px",
-                                        background: msg.role === "user"
-                                            ? "linear-gradient(135deg,#6366F1,#8B5CF6)"
-                                            : msg.isError ? "#FEF2F2" : "white",
-                                        border: msg.role === "user" ? "none" : msg.isError ? "1px solid #FECACA" : "1px solid #EEF2FF",
-                                        boxShadow: msg.role === "user" ? "0 4px 16px rgba(99,102,241,0.3)" : "0 2px 12px rgba(0,0,0,0.06)",
-                                    }}>
-                                        {msg.role === "user"
-                                            ? <p style={{ fontSize: 13, color: "white", lineHeight: 1.6 }}>{msg.content}</p>
-                                            : <RichText text={msg.content} />}
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </AnimatePresence>
-
-                        {/* Typing indicator */}
-                        {isLoading && (
-                            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                                style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
-                                <BotAvatar size={34} />
-                                <div style={{ background: "white", border: "1px solid #EEF2FF", borderRadius: "4px 18px 18px 18px", padding: "14px 18px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-                                    <div style={{ display: "flex", gap: 5, alignItems: "center", height: 18 }}>
-                                        {[0, 1, 2].map(i => (
-                                            <motion.div key={i} style={{ width: 7, height: 7, borderRadius: "50%", background: "#6366F1" }}
-                                                animate={{ y: [0, -5, 0] }} transition={{ duration: 0.55, repeat: Infinity, delay: i * 0.14 }} />
-                                        ))}
-                                    </div>
-                                </div>
-                            </motion.div>
-                        )}
-
-                        <div ref={messagesEndRef} />
-                    </div>
-                </div>
-
-                {/* ── ERROR BAR ── */}
-                <AnimatePresence>
-                    {error && (
-                        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                            style={{ flexShrink: 0, maxWidth: 760, margin: "0 auto", width: "100%", padding: "0 24px 8px", zIndex: 10 }}>
-                            <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", color: "#DC2626", fontSize: 12, padding: "10px 16px", borderRadius: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                {error}
-                                <button onClick={() => setError("")} style={{ border: "none", background: "none", cursor: "pointer" }}><Icon d={ICONS.close} size={13} color="#DC2626" /></button>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* ── INPUT BAR ── */}
-                <div style={{ flexShrink: 0, background: "rgba(255,255,255,0.85)", backdropFilter: "blur(16px)", borderTop: "1px solid #EEF2FF", padding: "16px 24px 20px", zIndex: 10, boxShadow: "0 -4px 24px rgba(99,102,241,0.06)" }}>
-                    <div style={{ maxWidth: 760, margin: "0 auto" }}>
-                        <form onSubmit={handleSend} style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
-                            {/* Textarea wrapper */}
-                            <div style={{ flex: 1, background: "white", border: "1.5px solid #E2E8F0", borderRadius: 18, padding: "12px 16px", boxShadow: "0 2px 12px rgba(0,0,0,0.05)", transition: "border-color 0.15s, box-shadow 0.15s" }}
-                                onFocus={e => { e.currentTarget.style.borderColor = "#6366F1"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99,102,241,0.12)"; }}
-                                onBlur={e => { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.05)"; }}>
-                                <textarea ref={textareaRef} rows={1} value={input}
-                                    onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown}
-                                    placeholder={hasStarted ? "Ask a follow-up question…" : "Ask Dr. Bot anything about your health…"}
-                                    style={{ width: "100%", background: "transparent", border: "none", outline: "none", resize: "none", fontSize: 13, color: "#1E293B", lineHeight: 1.6, maxHeight: 140, fontFamily: "'DM Sans', sans-serif" }} />
-                            </div>
-
-                            {/* Send button */}
-                            <motion.button type="submit" disabled={isLoading || !input.trim()}
-                                whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
-                                style={{ width: 46, height: 46, borderRadius: 14, background: input.trim() ? "linear-gradient(135deg,#6366F1,#8B5CF6)" : "#F1F5F9", border: "none", cursor: input.trim() ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: input.trim() ? "0 4px 14px rgba(99,102,241,0.35)" : "none", transition: "all 0.2s" }}>
-                                <Icon d={ICONS.send} size={18} color={input.trim() ? "white" : "#CBD5E1"} />
-                            </motion.button>
-                        </form>
-                        <p style={{ textAlign: "center", fontSize: 11, color: "#94A3B8", marginTop: 8 }}>Enter to send · Shift+Enter for new line · Not a substitute for professional medical advice</p>
-                    </div>
-                </div>
-
-                {/* ── MODALS ── */}
-                <AnimatePresence>
-                    {showRecordSelector && (
-                        <RecordSelectorModal records={records} selectedRecords={selectedRecords} onToggle={toggleSelect} onClose={() => setShowRecordSelector(false)} />
-                    )}
-                </AnimatePresence>
-            </div>
-        </>
+  const toggleSelect = (record) =>
+    setSelectedRecords((prev) =>
+      prev.find((r) => r._id === record._id) ? prev.filter((r) => r._id !== record._id) : [...prev, record]
     );
+
+  const handleSend = async (e) => {
+    e?.preventDefault();
+    const question = input.trim();
+    if (!question || isLoading) return;
+    setError("");
+
+    const updatedMessages = [...messages, { role: "user", content: question }];
+    setMessages(updatedMessages);
+    setInput("");
+    setIsLoading(true);
+
+    try {
+      const summaries = selectedRecords
+        .map((r) => toStr(r.aiProcessing?.aiStandardizedSummary))
+        .filter(Boolean);
+
+      const payload = {
+        question,
+        patient: {
+          recordSummaries:
+            summaries.join("\n\n---\n\n") ||
+            "No medical records provided. Answer as general health assistant.",
+          conversationHistory: updatedMessages
+            .slice(0, -1)
+            .map((m) => `${m.role === "user" ? "Patient" : "Doctor"}: ${m.content}`)
+            .join("\n"),
+        },
+        session_id: sessionId,
+      };
+
+      const res = await axios.post(Dr_bot_api_url, payload);
+      setMessages((prev) => [...prev, { role: "assistant", content: extractReplyText(res.data) }]);
+    } catch (err) {
+      console.error(err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content:
+            err.response?.data?.detail ||
+            err.message ||
+            "An error occurred while connecting with Dr. Bot.",
+          isError: true,
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const hasStarted = messages.length > 0;
+
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        .chat-root {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+          background: ${T.white};
+          color: ${T.body};
+          -webkit-font-smoothing: antialiased;
+          height: 100vh;
+          display: flex;
+          flex-direction: column;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .prompt-card {
+          position: relative;
+          isolation: isolate;
+          background: ${T.surface};
+          border: 1px solid ${T.line};
+          border-radius: 18px;
+          padding: 16px 18px;
+          text-align: left;
+          font-size: 13px;
+          color: ${T.body};
+          cursor: pointer;
+          line-height: 1.5;
+          transition: border-color 0.25s, box-shadow 0.25s;
+          will-change: transform;
+          font-family: 'Inter', sans-serif;
+        }
+        .prompt-card::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          z-index: -1;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.3s;
+          background: radial-gradient(320px circle at var(--mx,50%) var(--my,50%), rgba(255,255,255,0.92), rgba(255,255,255,0) 60%);
+        }
+        .prompt-card:hover {
+          border-color: #D6D3D1;
+          box-shadow: 0 10px 24px rgba(12,10,9,0.04);
+        }
+        .prompt-card:hover::before {
+          opacity: 1;
+        }
+
+        .chat-textarea-box {
+          flex: 1;
+          background: ${T.surface};
+          border: 1px solid ${T.line};
+          border-radius: 20px;
+          padding: 14px 18px;
+          transition: border-color 0.2s, background 0.2s;
+        }
+        .chat-textarea-box:focus-within {
+          border-color: ${T.ink};
+          background: ${T.white};
+        }
+
+        .chat-textarea {
+          width: 100%;
+          background: transparent;
+          border: none;
+          outline: none;
+          resize: none;
+          font-size: 14px;
+          color: ${T.ink};
+          line-height: 1.6;
+          max-height: 140px;
+          font-family: 'Inter', sans-serif;
+        }
+        .chat-textarea::placeholder {
+          color: ${T.muted};
+        }
+
+        .send-btn {
+          width: 46px;
+          height: 46px;
+          border-radius: 50%;
+          border: none;
+          background: ${T.ink};
+          color: white;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: opacity 0.2s, transform 0.2s;
+        }
+        .send-btn:disabled {
+          opacity: 0.35;
+          cursor: not-allowed;
+        }
+        .send-btn:not(:disabled):hover {
+          transform: translateY(-1px);
+        }
+      `}</style>
+
+      <div
+        className="chat-root"
+        onMouseMove={(e) => {
+          mx.set(e.clientX / window.innerWidth - 0.5);
+          my.set(e.clientY / window.innerHeight - 0.5);
+        }}
+      >
+        {/* Ambient Iridescent Background Orbs */}
+        <motion.div
+          style={{
+            position: "fixed",
+            top: -100,
+            right: -100,
+            width: 480,
+            height: 480,
+            borderRadius: "50%",
+            background: ORBS.violet,
+            opacity: 0.28,
+            filter: "blur(70px)",
+            pointerEvents: "none",
+            x: mouseOrbX,
+            y: mouseOrbY,
+          }}
+        />
+        <motion.div
+          style={{
+            position: "fixed",
+            bottom: -80,
+            left: -80,
+            width: 420,
+            height: 420,
+            borderRadius: "50%",
+            background: ORBS.sky,
+            opacity: 0.22,
+            filter: "blur(65px)",
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* ──────────────── 1. OBSERVATORY TOP BAR ──────────────── */}
+        <div
+          style={{
+            flexShrink: 0,
+            background: "rgba(255,255,255,0.85)",
+            backdropFilter: "blur(16px)",
+            borderBottom: `1px solid ${T.line}`,
+            padding: "14px 24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            zIndex: 10,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <BotAvatar size={38} />
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                <span style={{ fontSize: 16, fontWeight: 500, color: T.ink, letterSpacing: "-0.01em" }}>
+                  Dr. Bot
+                </span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: T.surface2, border: `1px solid ${T.line}`, padding: "2px 8px", borderRadius: 20, fontSize: 11, color: T.ink }}>
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }} /> Online
+                </span>
+              </div>
+              <p style={{ fontSize: 11.5, color: T.muted, marginTop: 1 }}>
+                Clinical Diagnostic Assistant · CuraLink Engine
+              </p>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {/* Context Selector Trigger */}
+            <button
+              onClick={() => setShowRecordSelector(true)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+                padding: "7px 16px",
+                borderRadius: 999,
+                border: `1px solid ${selectedRecords.length > 0 ? T.ink : T.line}`,
+                background: selectedRecords.length > 0 ? T.ink : T.white,
+                color: selectedRecords.length > 0 ? "white" : T.body,
+                fontSize: 12.5,
+                fontWeight: 500,
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+            >
+              <Icon d={ICONS.records} size={13} color={selectedRecords.length > 0 ? "white" : T.muted} />
+              {selectedRecords.length > 0
+                ? `${selectedRecords.length} Context File${selectedRecords.length > 1 ? "s" : ""}`
+                : "Add Records Context"}
+            </button>
+
+            {hasStarted && (
+              <button
+                onClick={() => setMessages([])}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "7px 14px",
+                  borderRadius: 999,
+                  border: `1px solid ${T.line}`,
+                  background: T.white,
+                  color: T.muted,
+                  fontSize: 12.5,
+                  cursor: "pointer",
+                }}
+              >
+                <Icon d={ICONS.trash} size={12} color={T.muted} /> Clear Session
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* ──────────────── 2. CONTEXT CHIPS STRIP ──────────────── */}
+        <AnimatePresence>
+          {selectedRecords.length > 0 && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              style={{
+                flexShrink: 0,
+                background: T.surface2,
+                borderBottom: `1px solid ${T.line}`,
+                overflow: "hidden",
+                zIndex: 9,
+              }}
+            >
+              <div style={{ padding: "8px 24px", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 11, color: T.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                  Active Context:
+                </span>
+                {selectedRecords.map((r) => (
+                  <span
+                    key={r._id}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      fontSize: 11.5,
+                      fontWeight: 400,
+                      padding: "3px 10px",
+                      borderRadius: 20,
+                      background: T.white,
+                      color: T.ink,
+                      border: `1px solid ${T.line}`,
+                    }}
+                  >
+                    {r.fileName}
+                    <button
+                      onClick={() => toggleSelect(r)}
+                      style={{ border: "none", background: "none", cursor: "pointer", padding: 0, display: "flex", color: T.muted }}
+                    >
+                      <Icon d={ICONS.close} size={11} color="currentColor" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ──────────────── 3. MESSAGES CHAT STREAM ──────────────── */}
+        <div style={{ flex: 1, overflowY: "auto", zIndex: 1 }}>
+          <div style={{ maxWidth: 780, margin: "0 auto", padding: "36px 24px", display: "flex", flexDirection: "column", gap: 24 }}>
+            
+            {/* Empty State / Welcome Canvas */}
+            {!hasStarted && (
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: EASE }}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minHeight: "55vh",
+                  textAlign: "center",
+                  gap: 18,
+                }}
+              >
+                <div style={{ position: "relative" }}>
+                  <BotAvatar size={68} />
+                </div>
+
+                <div>
+                  <h2 style={{ fontSize: "clamp(24px, 3.5vw, 32px)", fontWeight: 300, color: T.ink, letterSpacing: "-0.03em" }}>
+                    How can I assist your health journey today?
+                  </h2>
+                  <p style={{ color: T.body, fontSize: 14.5, marginTop: 8, maxWidth: 460 }}>
+                    Inquire about clinical symptoms, lab findings, or medical guidance. Attach records above for personalized, context-aware analysis.
+                  </p>
+                </div>
+
+                {/* Prompt Suggestions Grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10, width: "100%", maxWidth: 620, marginTop: 14 }}>
+                  {SUGGESTIONS.map((s) => (
+                    <TiltPromptCard key={s} onClick={() => setInput(s)}>
+                      {s}
+                    </TiltPromptCard>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Render Messages */}
+            <AnimatePresence initial={false}>
+              {messages.map((msg, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.28, ease: EASE }}
+                  style={{
+                    display: "flex",
+                    gap: 12,
+                    flexDirection: msg.role === "user" ? "row-reverse" : "row",
+                    alignItems: "flex-start",
+                  }}
+                >
+                  {msg.role === "user" ? <UserAvatar size={34} /> : <BotAvatar size={34} />}
+
+                  <div
+                    style={{
+                      maxWidth: "80%",
+                      borderRadius: 20,
+                      padding: "14px 18px",
+                      background: msg.role === "user" ? T.ink : msg.isError ? "#FEF2F2" : T.surface,
+                      color: msg.role === "user" ? "white" : T.body,
+                      border: msg.role === "user" ? "none" : `1px solid ${msg.isError ? "#FECACA" : T.line}`,
+                      boxShadow: msg.role === "user" ? "0 8px 24px rgba(12,10,9,0.15)" : "none",
+                    }}
+                  >
+                    {msg.role === "user" ? (
+                      <p style={{ fontSize: 13.5, color: "white", lineHeight: 1.6 }}>{msg.content}</p>
+                    ) : (
+                      <RichText text={msg.content} />
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+
+            {/* Real-time Typing Pulse Indicator */}
+            {isLoading && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={{ display: "flex", gap: 12, alignItems: "center" }}
+              >
+                <BotAvatar size={34} />
+                <div
+                  style={{
+                    background: T.surface,
+                    border: `1px solid ${T.line}`,
+                    borderRadius: 20,
+                    padding: "12px 18px",
+                    display: "flex",
+                    gap: 6,
+                    alignItems: "center",
+                  }}
+                >
+                  {[0, 1, 2].map((i) => (
+                    <motion.div
+                      key={i}
+                      style={{ width: 6, height: 6, borderRadius: "50%", background: T.ink }}
+                      animate={{ opacity: [0.3, 1, 0.3], y: [0, -3, 0] }}
+                      transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.18 }}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+
+        {/* ──────────────── 4. ERROR NOTICE BAR ──────────────── */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              style={{ flexShrink: 0, maxWidth: 780, margin: "0 auto", width: "100%", padding: "0 24px 8px", zIndex: 10 }}
+            >
+              <div
+                style={{
+                  background: "#FEF2F2",
+                  border: "1px solid #FECACA",
+                  color: "#DC2626",
+                  fontSize: 12.5,
+                  padding: "10px 16px",
+                  borderRadius: 14,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <span>{error}</span>
+                <button onClick={() => setError("")} style={{ border: "none", background: "none", cursor: "pointer" }}>
+                  <Icon d={ICONS.close} size={13} color="#DC2626" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ──────────────── 5. CONVERSATION INPUT BAR ──────────────── */}
+        <div
+          style={{
+            flexShrink: 0,
+            background: "rgba(255,255,255,0.85)",
+            backdropFilter: "blur(16px)",
+            borderTop: `1px solid ${T.line}`,
+            padding: "16px 24px 20px",
+            zIndex: 10,
+          }}
+        >
+          <div style={{ maxWidth: 780, margin: "0 auto" }}>
+            <form onSubmit={handleSend} style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
+              
+              {/* Textarea Console */}
+              <div className="chat-textarea-box">
+                <textarea
+                  ref={textareaRef}
+                  rows={1}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={hasStarted ? "Inquire further about your health…" : "Ask Dr. Bot clinical or symptom questions…"}
+                  className="chat-textarea"
+                />
+              </div>
+
+              {/* Send Button */}
+              <button
+                type="submit"
+                disabled={isLoading || !input.trim()}
+                className="send-btn"
+                aria-label="Send Message"
+              >
+                <Icon d={ICONS.send} size={16} color="white" />
+              </button>
+            </form>
+
+            <p style={{ textAlign: "center", fontSize: 11.5, color: T.muted, marginTop: 10 }}>
+              Return to dispatch · Shift + Return for line breaks · Informational support only, not an emergency diagnostic service
+            </p>
+          </div>
+        </div>
+
+        {/* ──────────────── MODAL ──────────────── */}
+        <AnimatePresence>
+          {showRecordSelector && (
+            <RecordSelectorModal
+              records={records}
+              selectedRecords={selectedRecords}
+              onToggle={toggleSelect}
+              onClose={() => setShowRecordSelector(false)}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+    </>
+  );
 };
 
 export default AiAnalyzerPage;

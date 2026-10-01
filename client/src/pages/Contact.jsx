@@ -1,10 +1,39 @@
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useRef } from "react";
+import {
+  motion,
+  AnimatePresence,
+  useScroll,
+  useSpring,
+  useTransform,
+  useMotionValue,
+  useReducedMotion,
+} from "framer-motion";
+
+// ─── THEME TOKENS ─────────────────────────────────────────────────────────────
+const T = {
+  ink:      "#0C0A09",
+  body:     "#57534E",
+  muted:    "#A8A29E",
+  line:     "#ECEAE6",
+  surface:  "#F5F4F2",
+  surface2: "#FAFAF9",
+  white:    "#FFFFFF",
+};
+
+const EASE = [0.22, 1, 0.36, 1];
+
+// Iridescent orb gradients
+const ORBS = {
+  violet: "radial-gradient(circle at 30% 28%, #FFFFFF 0%, #C9B8FF 22%, #7C8CFF 48%, #F6A5D8 78%, #FFD9B8 100%)",
+  sun:    "radial-gradient(circle at 32% 26%, #FFF3D6 0%, #FFB36B 28%, #FF5E3A 58%, #7A2BFF 100%)",
+  sky:    "radial-gradient(circle at 34% 30%, #FFFFFF 0%, #A5D8FF 26%, #5B8CFF 56%, #C2A6FF 100%)",
+  mint:   "radial-gradient(circle at 30% 28%, #FFFFFF 0%, #BDEFD8 26%, #5FD0A5 56%, #8EC5FF 100%)",
+};
 
 // ─── ICON PRIMITIVE ──────────────────────────────────────────────────────────
-const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
+const Icon = ({ d, size = 18, color = "currentColor", style = {} }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
-    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={style}>
     {Array.isArray(d) ? d.map((p, i) => <path key={i} d={p} />) : <path d={d} />}
   </svg>
 );
@@ -15,237 +44,622 @@ const ICONS = {
   location: ["M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z", "M12 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"],
   faq:      ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3", "M12 17h.01"],
   cross:    ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M8 12h8M12 8v8"],
-  sparkle:  ["M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"],
+  sparkle:  ["M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z", "M5 3v4M3 5h4M19 17v4M17 19h4"],
   arrow:    "M17 8l4 4m0 0l-4 4m4-4H3",
   check:    ["M22 11.08V12a10 10 0 1 1-5.93-9.14", "m9 11 3 3L22 4"],
   user:     ["M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2", "M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"],
   subject:  ["M4 6h16M4 12h16M4 18h8"],
   msg:      ["M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"],
   clock:    ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M12 6v6l4 2"],
-  eye:      ["M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z", "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"],
 };
 
 const CONTACT_CARDS = [
   {
-    icon: ICONS.mail,     color: "#6366F1", bg: "#EEF2FF", gradient: "linear-gradient(135deg,#6366F1,#8B5CF6)",
-    title: "Email Us",    sub: "General inquiries, support or feedback.",
-    value: "support@curalink.com", href: "mailto:support@curalink.com",
+    icon: ICONS.mail,
+    title: "Email Us",
+    sub: "General inquiries, support or feedback.",
+    value: "support@curalink.com",
+    href: "mailto:support@curalink.com",
     detail: "We reply within 24 hours",
   },
   {
-    icon: ICONS.phone,    color: "#059669", bg: "#ECFDF5", gradient: "linear-gradient(135deg,#10B981,#34D399)",
-    title: "Call Us",     sub: "Speak with our support team directly.",
-    value: "(123) 456-7890", href: "tel:+1234567890",
+    icon: ICONS.phone,
+    title: "Call Us",
+    sub: "Speak with our support team directly.",
+    value: "(123) 456-7890",
+    href: "tel:+1234567890",
     detail: "Mon – Fri, 9 AM – 6 PM",
   },
   {
-    icon: ICONS.location, color: "#8B5CF6", bg: "#F5F3FF", gradient: "linear-gradient(135deg,#8B5CF6,#A78BFA)",
-    title: "Our Office",  sub: "Visit us at our main headquarters.",
-    value: "123 Health St, Wellness City", href: "#map",
+    icon: ICONS.location,
+    title: "Our Office",
+    sub: "Visit us at our main headquarters.",
+    value: "123 Health St, Wellness City",
+    href: "#map",
     detail: "Get directions →",
   },
   {
-    icon: ICONS.faq,      color: "#D97706", bg: "#FFFBEB", gradient: "linear-gradient(135deg,#F59E0B,#FBBF24)",
-    title: "FAQ",         sub: "Quick answers to common questions.",
-    value: "Visit FAQ Page", href: "/faq",
+    icon: ICONS.faq,
+    title: "FAQ",
+    sub: "Quick answers to common questions.",
+    value: "Visit FAQ Page",
+    href: "/faq",
     detail: "50+ articles available",
   },
 ];
 
+// ─── ANIMATION VARIANTS ───────────────────────────────────────────────────────
+const fadeUp = {
+  hidden:  { opacity: 0, y: 32 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: EASE } },
+};
+const stagger = {
+  hidden:  {},
+  visible: { transition: { staggerChildren: 0.1 } },
+};
+const wordParent = {
+  hidden:  {},
+  visible: { transition: { staggerChildren: 0.06 } },
+};
+const wordChild = {
+  hidden:  { y: "115%", rotate: 4 },
+  visible: { y: 0, rotate: 0, transition: { duration: 0.85, ease: EASE } },
+};
+
+// ─── HOOKS & HELPERS ─────────────────────────────────────────────────────────
+const useParallax = (progress, from, to) => {
+  const reduce = useReducedMotion();
+  return useTransform(progress, [0, 1], reduce ? [from, from] : [from, to]);
+};
+
+// Mask Word Reveal
+const WordReveal = ({ text, as = "h2", style = {}, ...rest }) => {
+  const Tag = motion[as];
+  const lines = text.split("\n");
+  return (
+    <Tag variants={wordParent} style={style} {...rest}>
+      {lines.map((line, li) => (
+        <React.Fragment key={li}>
+          {line.split(" ").map((w, i) => (
+            <span key={i} style={{ display: "inline-block", overflow: "hidden", verticalAlign: "top", paddingBottom: "0.14em", marginBottom: "-0.14em", marginRight: "0.26em" }}>
+              <motion.span variants={wordChild} style={{ display: "inline-block", transformOrigin: "0% 100%" }}>{w}</motion.span>
+            </span>
+          ))}
+          {li < lines.length - 1 && <br />}
+        </React.Fragment>
+      ))}
+    </Tag>
+  );
+};
+
+// Pill with rotating sparkle
+const Pill = ({ children }) => (
+  <motion.span
+    variants={fadeUp}
+    style={{
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 6,
+      fontSize: 12.5,
+      fontWeight: 500,
+      color: T.muted,
+      marginBottom: 16,
+      letterSpacing: "-0.01em",
+    }}
+  >
+    <motion.span
+      animate={{ rotate: [0, 90, 0], scale: [1, 1.2, 1] }}
+      transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+      style={{ display: "inline-flex" }}
+    >
+      <Icon d={ICONS.sparkle} size={12} color={T.muted} />
+    </motion.span>
+    {children}
+  </motion.span>
+);
+
+// Magnetic wrapper
+const Magnetic = ({ children, strength = 0.28 }) => {
+  const ref = useRef(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const sx = useSpring(x, { stiffness: 220, damping: 16, mass: 0.4 });
+  const sy = useSpring(y, { stiffness: 220, damping: 16, mass: 0.4 });
+  return (
+    <motion.div
+      ref={ref}
+      onMouseMove={(e) => {
+        const r = ref.current.getBoundingClientRect();
+        x.set((e.clientX - (r.left + r.width / 2)) * strength);
+        y.set((e.clientY - (r.top + r.height / 2)) * strength);
+      }}
+      onMouseLeave={() => { x.set(0); y.set(0); }}
+      style={{ x: sx, y: sy, display: "inline-block" }}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+// 3D Tilt Card with cursor radial spotlight
+const TiltCard = ({ children, style = {}, max = 5, ...rest }) => {
+  const ref = useRef(null);
+  const rx = useMotionValue(0);
+  const ry = useMotionValue(0);
+  const srx = useSpring(rx, { stiffness: 180, damping: 18 });
+  const sry = useSpring(ry, { stiffness: 180, damping: 18 });
+
+  return (
+    <motion.div
+      ref={ref}
+      variants={fadeUp}
+      className="about-card"
+      onMouseMove={(e) => {
+        const r = ref.current.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width;
+        const py = (e.clientY - r.top) / r.height;
+        ry.set((px - 0.5) * max * 2);
+        rx.set(-(py - 0.5) * max * 2);
+        ref.current.style.setProperty("--mx", `${px * 100}%`);
+        ref.current.style.setProperty("--my", `${py * 100}%`);
+      }}
+      onMouseLeave={() => { rx.set(0); ry.set(0); }}
+      style={{ rotateX: srx, rotateY: sry, transformPerspective: 900, ...style }}
+      {...rest}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
 // ─── FLOATING INPUT ───────────────────────────────────────────────────────────
-const Field = ({ label, name, type = "text", placeholder, icon, textarea = false, rows = 5 }) => {
+const Field = ({ label, name, type = "text", icon, textarea = false, rows = 5 }) => {
   const [focused, setFocused] = useState(false);
   const [val, setVal] = useState("");
   const active = focused || val.length > 0;
 
-  const base = {
-    width: "100%", background: focused ? "#FAFBFF" : "#F8FAFC",
-    border: `1.5px solid ${focused ? "#6366F1" : "#E2E8F0"}`,
-    borderRadius: 14, outline: "none",
-    fontSize: 14, fontWeight: 500, color: "#0F172A",
-    transition: "all 0.18s",
-    boxShadow: focused ? "0 0 0 4px rgba(99,102,241,0.08)" : "none",
-    fontFamily: "'DM Sans', sans-serif",
+  const baseStyle = {
+    width: "100%",
+    background: focused ? T.white : T.surface2,
+    border: `1px solid ${focused ? T.ink : T.line}`,
+    borderRadius: 16,
+    outline: "none",
+    fontSize: 14,
+    fontWeight: 400,
+    color: T.ink,
+    transition: "all 0.22s ease",
+    boxShadow: focused ? "0 4px 18px rgba(12,10,9,0.04)" : "none",
+    fontFamily: "'Inter', sans-serif",
     boxSizing: "border-box",
   };
 
   return (
     <div style={{ position: "relative" }}>
-      <label style={{
-        position: "absolute", left: 44, top: active ? 8 : textarea ? 18 : "50%",
-        transform: active ? "none" : textarea ? "none" : "translateY(-50%)",
-        fontSize: active ? 10 : 13.5, fontWeight: active ? 800 : 500,
-        color: focused ? "#6366F1" : "#94A3B8",
-        transition: "all 0.18s cubic-bezier(0.4,0,0.2,1)",
-        pointerEvents: "none", letterSpacing: active ? "0.06em" : 0,
-        textTransform: active ? "uppercase" : "none", zIndex: 2,
-      }}>
+      <label
+        style={{
+          position: "absolute",
+          left: 44,
+          top: active ? 9 : textarea ? 20 : "50%",
+          transform: active ? "none" : textarea ? "none" : "translateY(-50%)",
+          fontSize: active ? 10.5 : 13.5,
+          fontWeight: active ? 500 : 400,
+          color: focused ? T.ink : T.muted,
+          transition: "all 0.2s cubic-bezier(0.22, 1, 0.36, 1)",
+          pointerEvents: "none",
+          letterSpacing: active ? "0.02em" : 0,
+          textTransform: active ? "uppercase" : "none",
+          zIndex: 2,
+        }}
+      >
         {label}
       </label>
-      <div style={{ position: "absolute", left: 14, top: textarea ? 18 : "50%", transform: textarea ? "none" : "translateY(-50%)", zIndex: 2 }}>
-        <Icon d={icon} size={16} color={focused ? "#6366F1" : "#94A3B8"} />
+
+      <div style={{ position: "absolute", left: 16, top: textarea ? 20 : "50%", transform: textarea ? "none" : "translateY(-50%)", zIndex: 2 }}>
+        <Icon d={icon} size={16} color={focused ? T.ink : T.muted} />
       </div>
-      {textarea
-        ? <textarea name={name} rows={rows} required value={val} onChange={e => setVal(e.target.value)}
-            onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-            style={{ ...base, padding: "28px 14px 14px 44px", resize: "vertical", minHeight: 130 }} />
-        : <input name={name} type={type} required value={val} onChange={e => setVal(e.target.value)}
-            onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-            style={{ ...base, height: 58, paddingTop: active ? 22 : 0, paddingBottom: active ? 6 : 0, paddingLeft: 44, paddingRight: 14 }} />
-      }
+
+      {textarea ? (
+        <textarea
+          name={name}
+          rows={rows}
+          required
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          style={{
+            ...baseStyle,
+            padding: "30px 16px 14px 44px",
+            resize: "vertical",
+            minHeight: 130,
+          }}
+        />
+      ) : (
+        <input
+          name={name}
+          type={type}
+          required
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          style={{
+            ...baseStyle,
+            height: 56,
+            paddingTop: active ? 20 : 0,
+            paddingBottom: active ? 4 : 0,
+            paddingLeft: 44,
+            paddingRight: 16,
+          }}
+        />
+      )}
     </div>
   );
 };
 
-// ─── ANIMATION PRESETS ────────────────────────────────────────────────────────
-const fadeUp  = { hidden: { opacity: 0, y: 32 }, visible: { opacity: 1, y: 0, transition: { duration: 0.62, ease: [0.22, 1, 0.36, 1] } } };
-const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.1 } } };
-const scaleIn = { hidden: { opacity: 0, scale: 0.92 }, visible: { opacity: 1, scale: 1, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } } };
-
-// ─── MAIN PAGE ────────────────────────────────────────────────────────────────
+// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 const Contact = () => {
   const [submitted, setSubmitted] = useState(false);
   const [loading,   setLoading]   = useState(false);
 
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end end"] });
+
+  // Parallax Orbs
+  const orbY1 = useParallax(scrollYProgress, 0, -180);
+  const orbY2 = useParallax(scrollYProgress, 0, 160);
+  const orbY3 = useParallax(scrollYProgress, 0, -110);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => { setLoading(false); setSubmitted(true); }, 1400);
+    setTimeout(() => {
+      setLoading(false);
+      setSubmitted(true);
+    }, 1400);
   };
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap');
-        .ct-root { font-family:'DM Sans',sans-serif; background:linear-gradient(145deg,#F0F4FF 0%,#F8F6FF 40%,#EFF6FF 100%); }
-        .ct-card {
-          background:white; border-radius:20px; border:1px solid #EEF2FF;
-          box-shadow:0 2px 12px rgba(0,0,0,0.055); overflow:hidden;
-          transition:transform 0.25s, box-shadow 0.25s;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        .ct-root {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+          background: ${T.white};
+          color: ${T.body};
+          -webkit-font-smoothing: antialiased;
+          overflow-x: clip;
+          position: relative;
         }
-        .ct-card:hover { transform:translateY(-5px); box-shadow:0 14px 40px rgba(99,102,241,0.13); }
-        .ct-submit {
-          width:100%; height:52px; border:none; border-radius:14px;
-          background:linear-gradient(135deg,#6366F1,#8B5CF6);
-          color:white; font-size:14px; font-weight:800; cursor:pointer;
-          display:flex; align-items:center; justify-content:center; gap:8px;
-          box-shadow:0 8px 24px rgba(99,102,241,0.35);
-          transition:all 0.2s; font-family:'DM Sans',sans-serif;
+
+        .about-card {
+          position: relative;
+          isolation: isolate;
+          background: ${T.surface};
+          border-radius: 24px;
+          border: 1px solid ${T.line};
+          transition: box-shadow 0.3s, border-color 0.3s;
+          will-change: transform;
         }
-        .ct-submit:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 14px 32px rgba(99,102,241,0.42); }
-        .ct-submit:disabled { opacity:.65; cursor:not-allowed; }
-        .ct-map-placeholder {
-          width:100%; height:340px; border-radius:22px;
-          background:linear-gradient(135deg,#EEF2FF 0%,#F5F3FF 100%);
-          border:1px solid #C7D2FE;
-          display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+        .about-card::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          z-index: -1;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.3s;
+          background: radial-gradient(420px circle at var(--mx,50%) var(--my,50%), rgba(255,255,255,0.95), rgba(255,255,255,0) 60%);
+        }
+        .about-card:hover {
+          border-color: #D6D3D1;
+          box-shadow: 0 18px 50px rgba(12,10,9,0.06);
+        }
+        .about-card:hover::before {
+          opacity: 1;
+        }
+
+        .btn-ink {
+          width: 100%;
+          height: 52px;
+          border-radius: 999px;
+          border: none;
+          background: ${T.ink};
+          color: white;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          transition: box-shadow 0.25s, transform 0.25s;
+          font-family: 'Inter', sans-serif;
+        }
+        .btn-ink:hover:not(:disabled) {
+          box-shadow: 0 14px 34px rgba(12,10,9,0.22);
+          transform: translateY(-1px);
+        }
+        .btn-ink:disabled {
+          opacity: 0.65;
+          cursor: not-allowed;
+        }
+        .btn-ink svg {
+          transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .btn-ink:hover:not(:disabled) svg {
+          transform: translateX(4px);
+        }
+
+        .ct-map-card {
+          width: 100%;
+          height: 340px;
+          border-radius: 24px;
+          background: ${T.surface};
+          border: 1px solid ${T.line};
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          position: relative;
+          overflow: hidden;
         }
       `}</style>
 
-      <div className="ct-root">
+      <div ref={containerRef} className="ct-root">
+
+        {/* Ambient Scroll Parallax Orbs */}
+        <motion.div
+          style={{
+            position: "absolute",
+            top: -100,
+            right: -100,
+            width: 480,
+            height: 480,
+            borderRadius: "50%",
+            background: ORBS.violet,
+            opacity: 0.32,
+            filter: "blur(60px)",
+            pointerEvents: "none",
+            y: orbY1,
+          }}
+        />
+        <motion.div
+          style={{
+            position: "absolute",
+            top: "35%",
+            left: -80,
+            width: 380,
+            height: 380,
+            borderRadius: "50%",
+            background: ORBS.sky,
+            opacity: 0.28,
+            filter: "blur(55px)",
+            pointerEvents: "none",
+            y: orbY2,
+          }}
+        />
+        <motion.div
+          style={{
+            position: "absolute",
+            bottom: "10%",
+            right: -60,
+            width: 340,
+            height: 340,
+            borderRadius: "50%",
+            background: ORBS.sun,
+            opacity: 0.24,
+            filter: "blur(50px)",
+            pointerEvents: "none",
+            y: orbY3,
+          }}
+        />
 
         {/* ──────────────── HERO ──────────────── */}
-        <section style={{ position: "relative", minHeight: "52vh", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: "120px 24px 80px" }}>
-          <div style={{ position: "absolute", top: -100, right: -100, width: 440, height: 440, borderRadius: "50%", background: "radial-gradient(circle,rgba(99,102,241,0.11) 0%,transparent 70%)", pointerEvents: "none" }} />
-          <div style={{ position: "absolute", bottom: -60, left: -60, width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle,rgba(139,92,246,0.09) 0%,transparent 70%)", pointerEvents: "none" }} />
+        <section style={{ position: "relative", minHeight: "48vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "120px 24px 60px" }}>
+          <div style={{ position: "relative", zIndex: 1, textAlign: "center", maxWidth: 680, margin: "0 auto" }}>
+            <Pill>We'd Love to Hear From You</Pill>
+            
+            <WordReveal
+              as="h1"
+              text={"Get In Touch"}
+              style={{
+                fontSize: "clamp(40px, 6.5vw, 76px)",
+                fontWeight: 300,
+                color: T.ink,
+                lineHeight: 1.08,
+                letterSpacing: "-0.04em",
+                marginBottom: 20,
+              }}
+            />
 
-          <div style={{ position: "relative", zIndex: 1, textAlign: "center", maxWidth: 640, margin: "0 auto" }}>
-            <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} style={{ marginBottom: 22 }}>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "rgba(255,255,255,0.85)", backdropFilter: "blur(12px)", border: "1px solid #C7D2FE", borderRadius: 40, padding: "6px 16px 6px 10px" }}>
-                <div style={{ width: 26, height: 26, borderRadius: "50%", background: "linear-gradient(135deg,#6366F1,#8B5CF6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Icon d={ICONS.sparkle} size={13} color="white" />
-                </div>
-                <span style={{ fontSize: 11, fontWeight: 800, color: "#6366F1", letterSpacing: "0.07em" }}>WE'D LOVE TO HEAR FROM YOU</span>
-              </span>
-            </motion.div>
-
-            <motion.h1 initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.65, type: "spring", stiffness: 100 }}
-              style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(38px,6vw,64px)", fontWeight: 800, color: "#0F172A", lineHeight: 1.1, marginBottom: 18, letterSpacing: "-0.02em" }}>
-              Get In{" "}
-              <span style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6,#A78BFA)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Touch</span>
-            </motion.h1>
-
-            <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.6 }}
-              style={{ fontSize: "clamp(14px,1.8vw,17px)", color: "#64748B", lineHeight: 1.75, maxWidth: 480, margin: "0 auto" }}>
-              We're here to help with any question you might have. Our team typically responds within 24 hours.
+            <motion.p
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              style={{
+                fontSize: "clamp(15px, 2vw, 17px)",
+                color: T.body,
+                lineHeight: 1.75,
+                maxWidth: 520,
+                margin: "0 auto",
+              }}
+            >
+              We're here to help with any question you might have. Our dedicated team typically responds within 24 hours.
             </motion.p>
           </div>
         </section>
 
         {/* ──────────────── CONTACT CARDS ──────────────── */}
-        <section style={{ padding: "0 24px 72px" }}>
+        <section style={{ padding: "0 24px 80px", position: "relative", zIndex: 1 }}>
           <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.15 }} variants={stagger}
-              style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(230px,1fr))", gap: 18 }}>
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.15 }}
+              variants={stagger}
+              style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20 }}
+            >
               {CONTACT_CARDS.map((c, i) => (
-                <motion.div key={i} variants={fadeUp} className="ct-card">
-                  <div style={{ height: 4, background: c.gradient }} />
-                  <div style={{ padding: "22px 22px 20px" }}>
-                    <div style={{ width: 48, height: 48, borderRadius: 14, background: c.bg, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
-                      <Icon d={c.icon} size={22} color={c.color} />
-                    </div>
-                    <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 700, color: "#0F172A", marginBottom: 5 }}>{c.title}</h4>
-                    <p style={{ fontSize: 12.5, color: "#94A3B8", marginBottom: 10, lineHeight: 1.55 }}>{c.sub}</p>
-                    <a href={c.href} style={{ fontSize: 13.5, fontWeight: 700, color: c.color, textDecoration: "none", display: "block", marginBottom: 6, transition: "opacity 0.18s" }}
-                      onMouseEnter={e => e.currentTarget.style.opacity = "0.75"}
-                      onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
-                      {c.value}
-                    </a>
-                    <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                      <Icon d={ICONS.clock} size={11} color="#94A3B8" />
-                      <span style={{ fontSize: 11, color: "#94A3B8", fontWeight: 600 }}>{c.detail}</span>
-                    </div>
+                <TiltCard key={i} style={{ padding: "28px 24px" }}>
+                  <div
+                    style={{
+                      width: 46,
+                      height: 46,
+                      borderRadius: 14,
+                      background: T.white,
+                      border: `1px solid ${T.line}`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: 18,
+                    }}
+                  >
+                    <Icon d={c.icon} size={20} color={T.ink} />
                   </div>
-                </motion.div>
+
+                  <h4 style={{ fontSize: 18, fontWeight: 400, color: T.ink, letterSpacing: "-0.02em", marginBottom: 6 }}>
+                    {c.title}
+                  </h4>
+
+                  <p style={{ fontSize: 13.5, color: T.muted, marginBottom: 14, lineHeight: 1.55 }}>
+                    {c.sub}
+                  </p>
+
+                  <a
+                    href={c.href}
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: T.ink,
+                      textDecoration: "none",
+                      display: "block",
+                      marginBottom: 8,
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
+                    {c.value}
+                  </a>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, color: T.muted }}>
+                    <Icon d={ICONS.clock} size={12} color={T.muted} />
+                    <span style={{ fontSize: 12, fontWeight: 400 }}>{c.detail}</span>
+                  </div>
+                </TiltCard>
               ))}
             </motion.div>
           </div>
         </section>
 
         {/* ──────────────── FORM + INFO ──────────────── */}
-        <section style={{ padding: "0 24px 96px" }}>
-          <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: 32, alignItems: "start" }}>
+        <section style={{ padding: "0 24px 100px", position: "relative", zIndex: 1 }}>
+          <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 36, alignItems: "start" }}>
 
             {/* ── FORM CARD ── */}
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.15 }} variants={scaleIn}
-              style={{ background: "white", borderRadius: 24, border: "1px solid #EEF2FF", boxShadow: "0 8px 40px rgba(99,102,241,0.10)", overflow: "hidden" }}>
-              <div style={{ height: 4, background: "linear-gradient(90deg,#6366F1,#8B5CF6,#A78BFA)" }} />
-              <div style={{ padding: "36px 34px 32px" }}>
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.15 }}
+              variants={fadeUp}
+              style={{
+                background: T.surface,
+                borderRadius: 28,
+                border: `1px solid ${T.line}`,
+                padding: "clamp(30px, 4vw, 42px)",
+                overflow: "hidden",
+              }}
+            >
+              <div style={{ marginBottom: 28 }}>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontSize: 11.5,
+                    fontWeight: 500,
+                    color: T.ink,
+                    background: T.white,
+                    border: `1px solid ${T.line}`,
+                    padding: "3px 12px",
+                    borderRadius: 20,
+                    letterSpacing: "-0.01em",
+                    marginBottom: 12,
+                  }}
+                >
+                  <Icon d={ICONS.sparkle} size={11} color={T.ink} />
+                  Direct Message
+                </span>
+                <h2 style={{ fontSize: "clamp(24px, 3vw, 30px)", fontWeight: 300, color: T.ink, letterSpacing: "-0.025em" }}>
+                  Send Us a Message
+                </h2>
+              </div>
 
-                <div style={{ marginBottom: 28 }}>
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 10, fontWeight: 800, color: "#6366F1", background: "#EEF2FF", padding: "4px 12px", borderRadius: 20, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>
-                    <Icon d={ICONS.sparkle} size={10} color="#6366F1" />
-                    Direct Message
-                  </span>
-                  <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 800, color: "#0F172A", lineHeight: 1.2 }}>Send Us a Message</h2>
-                </div>
+              <AnimatePresence mode="wait">
+                {submitted ? (
+                  <motion.div
+                    key="success"
+                    initial={{ opacity: 0, scale: 0.94 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.45, ease: EASE }}
+                    style={{ textAlign: "center", padding: "50px 20px" }}
+                  >
+                    <div
+                      style={{
+                        width: 60,
+                        height: 60,
+                        borderRadius: "50%",
+                        background: T.ink,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        margin: "0 auto 20px",
+                        boxShadow: "0 10px 24px rgba(12,10,9,0.15)",
+                      }}
+                    >
+                      <Icon d={ICONS.check} size={26} color="white" />
+                    </div>
+                    <h3 style={{ fontSize: 22, fontWeight: 300, color: T.ink, letterSpacing: "-0.02em", marginBottom: 8 }}>
+                      Message Sent!
+                    </h3>
+                    <p style={{ fontSize: 14.5, color: T.body, lineHeight: 1.7 }}>
+                      Thanks for reaching out. Our team will get back to you within 24 hours.
+                    </p>
+                    <button
+                      onClick={() => setSubmitted(false)}
+                      style={{
+                        marginTop: 24,
+                        padding: "10px 24px",
+                        borderRadius: 999,
+                        border: `1px solid ${T.line}`,
+                        background: T.white,
+                        color: T.ink,
+                        fontWeight: 500,
+                        fontSize: 13,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Send Another
+                    </button>
+                  </motion.div>
+                ) : (
+                  <motion.form
+                    key="form"
+                    onSubmit={handleSubmit}
+                    style={{ display: "flex", flexDirection: "column", gap: 14 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                      <Field label="Full Name" name="name" icon={ICONS.user} />
+                      <Field label="Email Address" name="email" icon={ICONS.mail} type="email" />
+                    </div>
+                    <Field label="Subject" name="subject" icon={ICONS.subject} />
+                    <Field label="Your Message" name="message" icon={ICONS.msg} textarea rows={5} />
 
-                <AnimatePresence mode="wait">
-                  {submitted ? (
-                    <motion.div key="success"
-                      initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.45 }}
-                      style={{ textAlign: "center", padding: "40px 20px" }}>
-                      <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#10B981,#34D399)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 18px", boxShadow: "0 8px 24px rgba(16,185,129,0.35)" }}>
-                        <Icon d={ICONS.check} size={28} color="white" />
-                      </div>
-                      <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 800, color: "#0F172A", marginBottom: 8 }}>Message Sent!</h3>
-                      <p style={{ fontSize: 14, color: "#64748B", lineHeight: 1.7 }}>Thanks for reaching out. Our team will get back to you within 24 hours.</p>
-                      <button onClick={() => setSubmitted(false)} style={{ marginTop: 20, padding: "9px 22px", borderRadius: 11, border: "1.5px solid #C7D2FE", background: "transparent", color: "#6366F1", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
-                        Send Another
-                      </button>
-                    </motion.div>
-                  ) : (
-                    <motion.form key="form" onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}
-                      initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                        <Field label="Full Name"      name="name"    icon={ICONS.user}    />
-                        <Field label="Email Address"  name="email"   icon={ICONS.mail}    type="email" />
-                      </div>
-                      <Field label="Subject"          name="subject" icon={ICONS.subject} />
-                      <Field label="Your Message"     name="message" icon={ICONS.msg}     textarea rows={5} />
-
-                      <motion.button type="submit" className="ct-submit" disabled={loading}
-                        whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
+                    <div style={{ marginTop: 6 }}>
+                      <button type="submit" className="btn-ink" disabled={loading}>
                         {loading ? (
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
                             <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83">
@@ -253,43 +667,104 @@ const Contact = () => {
                             </path>
                           </svg>
                         ) : (
-                          <>Send Message <Icon d={ICONS.arrow} size={15} color="white" /></>
+                          <>
+                            Send Message
+                            <Icon d={ICONS.arrow} size={15} color="white" />
+                          </>
                         )}
-                      </motion.button>
-                    </motion.form>
-                  )}
-                </AnimatePresence>
-              </div>
+                      </button>
+                    </div>
+                  </motion.form>
+                )}
+              </AnimatePresence>
             </motion.div>
 
             {/* ── INFO SIDE ── */}
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.15 }} variants={stagger}>
-              <motion.div variants={fadeUp} style={{ marginBottom: 28 }}>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 10, fontWeight: 800, color: "#8B5CF6", background: "#F5F3FF", padding: "4px 12px", borderRadius: 20, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>
-                  <Icon d={ICONS.sparkle} size={10} color="#8B5CF6" />
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.15 }}
+              variants={stagger}
+            >
+              <motion.div variants={fadeUp} style={{ marginBottom: 24 }}>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontSize: 11.5,
+                    fontWeight: 500,
+                    color: T.ink,
+                    background: T.white,
+                    border: `1px solid ${T.line}`,
+                    padding: "3px 12px",
+                    borderRadius: 20,
+                    letterSpacing: "-0.01em",
+                    marginBottom: 12,
+                  }}
+                >
+                  <Icon d={ICONS.sparkle} size={11} color={T.ink} />
                   Support Channels
                 </span>
-                <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 800, color: "#0F172A", lineHeight: 1.2 }}>Other Ways to Reach Us</h2>
+                <h2 style={{ fontSize: "clamp(24px, 3vw, 30px)", fontWeight: 300, color: T.ink, letterSpacing: "-0.025em" }}>
+                  Other Ways to Reach Us
+                </h2>
               </motion.div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {/* Channels List */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {CONTACT_CARDS.map((c, i) => (
-                  <motion.div key={i} variants={fadeUp}
-                    style={{ background: "white", borderRadius: 18, border: "1px solid #EEF2FF", padding: "18px 20px", display: "flex", alignItems: "flex-start", gap: 14, boxShadow: "0 2px 10px rgba(0,0,0,0.04)", transition: "all 0.22s", cursor: "default" }}
-                    whileHover={{ y: -3, boxShadow: `0 10px 30px ${c.color}18` }}>
-                    <div style={{ width: 42, height: 42, borderRadius: 12, background: c.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <Icon d={c.icon} size={19} color={c.color} />
+                  <motion.div
+                    key={i}
+                    variants={fadeUp}
+                    whileHover={{ y: -2 }}
+                    style={{
+                      background: T.surface,
+                      borderRadius: 20,
+                      border: `1px solid ${T.line}`,
+                      padding: "16px 20px",
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 14,
+                      transition: "border-color 0.25s, box-shadow 0.25s",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 12,
+                        background: T.white,
+                        border: `1px solid ${T.line}`,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Icon d={c.icon} size={18} color={T.ink} />
                     </div>
+
                     <div style={{ minWidth: 0 }}>
-                      <h4 style={{ fontSize: 14, fontWeight: 800, color: "#0F172A", marginBottom: 3 }}>{c.title}</h4>
-                      <p style={{ fontSize: 12.5, color: "#94A3B8", marginBottom: 5, lineHeight: 1.5 }}>{c.sub}</p>
-                      <a href={c.href} style={{ fontSize: 13, fontWeight: 700, color: c.color, textDecoration: "none" }}
-                        onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
-                        onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}>
+                      <h4 style={{ fontSize: 15, fontWeight: 500, color: T.ink, letterSpacing: "-0.01em", marginBottom: 2 }}>
+                        {c.title}
+                      </h4>
+                      <p style={{ fontSize: 13, color: T.body, marginBottom: 4, lineHeight: 1.5 }}>
+                        {c.sub}
+                      </p>
+                      <a
+                        href={c.href}
+                        style={{
+                          fontSize: 13.5,
+                          fontWeight: 500,
+                          color: T.ink,
+                          textDecoration: "none",
+                        }}
+                      >
                         {c.value}
                       </a>
-                      <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
-                        <Icon d={ICONS.clock} size={10} color="#94A3B8" />
+                      <p style={{ fontSize: 11.5, color: T.muted, marginTop: 4, display: "flex", alignItems: "center", gap: 5 }}>
+                        <Icon d={ICONS.clock} size={11} color={T.muted} />
                         {c.detail}
                       </p>
                     </div>
@@ -297,51 +772,152 @@ const Contact = () => {
                 ))}
               </div>
 
-              {/* Office hours mini card */}
-              <motion.div variants={fadeUp} style={{ marginTop: 14, background: "linear-gradient(135deg,#6366F1 0%,#8B5CF6 100%)", borderRadius: 18, padding: "22px 22px", boxShadow: "0 8px 28px rgba(99,102,241,0.30)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                  <div style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Icon d={ICONS.clock} size={16} color="white" />
+              {/* Office hours card with deep black & iridescent accents */}
+              <motion.div
+                variants={fadeUp}
+                style={{
+                  marginTop: 18,
+                  background: T.ink,
+                  borderRadius: 24,
+                  padding: "24px 24px",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                {/* Embedded decorative glow orb */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: -40,
+                    right: -40,
+                    width: 180,
+                    height: 180,
+                    borderRadius: "50%",
+                    background: ORBS.violet,
+                    opacity: 0.35,
+                    filter: "blur(30px)",
+                    pointerEvents: "none",
+                  }}
+                />
+
+                <div style={{ position: "relative", zIndex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                    <div
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: "50%",
+                        background: "rgba(255,255,255,0.12)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Icon d={ICONS.clock} size={15} color="white" />
+                    </div>
+                    <p style={{ fontSize: 13.5, fontWeight: 500, color: "white", letterSpacing: "-0.01em" }}>
+                      Support Hours
+                    </p>
                   </div>
-                  <p style={{ fontSize: 13, fontWeight: 800, color: "white", letterSpacing: "0.04em" }}>Support Hours</p>
+
+                  {[
+                    ["Monday – Friday", "9:00 AM – 6:00 PM"],
+                    ["Saturday", "10:00 AM – 2:00 PM"],
+                    ["Sunday", "Closed"],
+                  ].map(([day, time], i) => (
+                    <div
+                      key={i}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        padding: "8px 0",
+                        borderBottom: i < 2 ? "1px solid rgba(255,255,255,0.1)" : "none",
+                      }}
+                    >
+                      <span style={{ fontSize: 13, color: "rgba(255,255,255,0.65)", fontWeight: 400 }}>{day}</span>
+                      <span style={{ fontSize: 13, color: "white", fontWeight: 500 }}>{time}</span>
+                    </div>
+                  ))}
                 </div>
-                {[["Monday – Friday", "9:00 AM – 6:00 PM"], ["Saturday", "10:00 AM – 2:00 PM"], ["Sunday", "Closed"]].map(([day, time], i) => (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: i < 2 ? "1px solid rgba(255,255,255,0.12)" : "none" }}>
-                    <span style={{ fontSize: 12.5, color: "rgba(255,255,255,0.75)", fontWeight: 500 }}>{day}</span>
-                    <span style={{ fontSize: 12.5, color: "white", fontWeight: 700 }}>{time}</span>
-                  </div>
-                ))}
               </motion.div>
+
             </motion.div>
           </div>
         </section>
 
         {/* ──────────────── MAP ──────────────── */}
-        <section style={{ padding: "0 24px 96px" }}>
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={stagger}
-            style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <section id="map" style={{ padding: "0 24px 110px", position: "relative", zIndex: 1 }}>
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={stagger}
+            style={{ maxWidth: 1100, margin: "0 auto" }}
+          >
             <div style={{ textAlign: "center", marginBottom: 36 }}>
-              <motion.div variants={fadeUp}>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 10, fontWeight: 800, color: "#D97706", background: "#FFFBEB", padding: "4px 12px", borderRadius: 20, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>
-                  <Icon d={ICONS.sparkle} size={10} color="#D97706" />
-                  Location
-                </span>
-              </motion.div>
-              <motion.h2 variants={fadeUp} style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(24px,3.5vw,36px)", fontWeight: 800, color: "#0F172A", marginBottom: 8 }}>
-                Find Us on the Map
-              </motion.h2>
-              <motion.p variants={fadeUp} style={{ fontSize: 14, color: "#64748B" }}>Visit our main office or explore our service areas.</motion.p>
+              <Pill>Location</Pill>
+              <WordReveal
+                text={"Find Us on the Map"}
+                style={{
+                  fontSize: "clamp(26px, 3.5vw, 38px)",
+                  fontWeight: 300,
+                  color: T.ink,
+                  letterSpacing: "-0.03em",
+                  marginBottom: 8,
+                }}
+              />
+              <motion.p variants={fadeUp} style={{ fontSize: 14.5, color: T.body }}>
+                Visit our main office or explore our service areas.
+              </motion.p>
             </div>
 
-            <motion.div variants={scaleIn} className="ct-map-placeholder">
-              <div style={{ width: 56, height: 56, borderRadius: 16, background: "#EEF2FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Icon d={ICONS.location} size={26} color="#6366F1" />
+            <motion.div variants={fadeUp} className="ct-map-card">
+              <div
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 16,
+                  background: T.white,
+                  border: `1px solid ${T.line}`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 4px 16px rgba(12,10,9,0.04)",
+                }}
+              >
+                <Icon d={ICONS.location} size={24} color={T.ink} />
               </div>
-              <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, color: "#6366F1" }}>123 Health St, Wellness City</p>
-              <p style={{ fontSize: 13, color: "#94A3B8" }}>Replace with your Google Maps iframe</p>
-              <a href="#" style={{ display: "inline-flex", alignItems: "center", gap: 7, marginTop: 6, padding: "10px 20px", borderRadius: 11, background: "linear-gradient(135deg,#6366F1,#8B5CF6)", color: "white", fontSize: 13, fontWeight: 700, textDecoration: "none", boxShadow: "0 6px 18px rgba(99,102,241,0.30)" }}>
-                Open in Maps <Icon d={ICONS.arrow} size={13} color="white" />
-              </a>
+
+              <p style={{ fontSize: 17, fontWeight: 400, color: T.ink, letterSpacing: "-0.01em" }}>
+                123 Health St, Wellness City
+              </p>
+              <p style={{ fontSize: 13, color: T.muted }}>
+                Replace with your Google Maps iframe
+              </p>
+
+              <div style={{ marginTop: 8 }}>
+                <Magnetic>
+                  <a
+                    href="#"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "11px 24px",
+                      borderRadius: 999,
+                      background: T.ink,
+                      color: "white",
+                      fontSize: 13.5,
+                      fontWeight: 500,
+                      textDecoration: "none",
+                      boxShadow: "0 8px 24px rgba(12,10,9,0.18)",
+                    }}
+                  >
+                    Open in Maps
+                    <Icon d={ICONS.arrow} size={13} color="white" />
+                  </a>
+                </Magnetic>
+              </div>
             </motion.div>
           </motion.div>
         </section>

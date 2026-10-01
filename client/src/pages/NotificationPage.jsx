@@ -1,12 +1,50 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useMemo, useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  useScroll,
+  useSpring,
+  useTransform,
+  useMotionValue,
+  useReducedMotion,
+} from "framer-motion";
 import { Authcontext } from "../Context/AuthContext";
 
-// ─── ICONS ─────────────────────────────────────────────────────────────────────
-const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
-    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={style}>
+// ─── THEME TOKENS ─────────────────────────────────────────────────────────────
+const T = {
+  ink:      "#0C0A09",
+  body:     "#57534E",
+  muted:    "#A8A29E",
+  line:     "#ECEAE6",
+  surface:  "#F5F4F2",
+  surface2: "#FAFAF9",
+  white:    "#FFFFFF",
+};
+
+const EASE = [0.22, 1, 0.36, 1];
+
+// Iridescent gradient orbs
+const ORBS = {
+  violet: "radial-gradient(circle at 30% 28%, #FFFFFF 0%, #C9B8FF 22%, #7C8CFF 48%, #F6A5D8 78%, #FFD9B8 100%)",
+  sun:    "radial-gradient(circle at 32% 26%, #FFF3D6 0%, #FFB36B 28%, #FF5E3A 58%, #7A2BFF 100%)",
+  sky:    "radial-gradient(circle at 34% 30%, #FFFFFF 0%, #A5D8FF 26%, #5B8CFF 56%, #C2A6FF 100%)",
+  mint:   "radial-gradient(circle at 30% 28%, #FFFFFF 0%, #BDEFD8 26%, #5FD0A5 56%, #8EC5FF 100%)",
+};
+
+// ─── ICON PRIMITIVE ──────────────────────────────────────────────────────────
+const Icon = ({ d, size = 18, color = "currentColor", style = {} }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="1.6"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={style}
+  >
     {Array.isArray(d) ? d.map((p, i) => <path key={i} d={p} />) : <path d={d} />}
   </svg>
 );
@@ -21,7 +59,6 @@ const ICONS = {
   alert:       ["M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z", "M12 9v4", "M12 17h.01"],
   check:       ["M22 11.08V12a10 10 0 1 1-5.93-9.14", "m9 11 3 3L22 4"],
   checkDouble: ["m3 12 5 5L18 7", "m9 12 5 5L24 7"],
-  chevron:     "m9 18 6-6-6-6",
   sparkle:     ["M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z", "M5 3v4M3 5h4M19 17v4M17 19h4"],
   trash:       ["M3 6h18", "M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2", "M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6", "M10 11v6", "M14 11v6"],
   inbox:       ["M22 12h-6l-2 3h-4l-2-3H2", "M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"],
@@ -29,103 +66,319 @@ const ICONS = {
   dot:         ["M12 12h.01"],
 };
 
-// ─── MOCK DATA (wire to your API) ───────────────────────────────────────────────
+// ─── CONFIGURATION ─────────────────────────────────────────────────────────────
 const FILTERS = [
-  { key: "all",           label: "All" },
-  { key: "appointment",   label: "Appointments" },
-  { key: "prescription",  label: "Prescriptions" },
-  { key: "lab",           label: "Lab Results" },
-  { key: "message",       label: "Messages" },
-  { key: "alert",         label: "Alerts" },
+  { key: "all",          label: "All Updates" },
+  { key: "appointment",  label: "Appointments" },
+  { key: "prescription", label: "Prescriptions" },
+  { key: "lab",          label: "Lab Results" },
+  { key: "message",      label: "Messages" },
+  { key: "alert",        label: "Alerts" },
 ];
 
 const TYPE_META = {
-  appointment:  { icon: ICONS.calendar, color: "#6366F1", bg: "#EEF2FF", label: "Appointment" },
-  prescription: { icon: ICONS.pill,     color: "#D97706", bg: "#FFFBEB", label: "Prescription" },
-  lab:          { icon: ICONS.flask,    color: "#0284C7", bg: "#E0F2FE", label: "Lab Result" },
-  message:      { icon: ICONS.message,  color: "#7C3AED", bg: "#F5F3FF", label: "Message" },
-  alert:        { icon: ICONS.alert,    color: "#DC2626", bg: "#FEF2F2", label: "Alert" },
-  ai:           { icon: ICONS.ai,       color: "#059669", bg: "#ECFDF5", label: "AI Insight" },
+  appointment:  { icon: ICONS.calendar, label: "Appointment",  orb: ORBS.violet },
+  prescription: { icon: ICONS.pill,     label: "Prescription", orb: ORBS.sun    },
+  lab:          { icon: ICONS.flask,    label: "Lab Result",   orb: ORBS.sky    },
+  message:      { icon: ICONS.message,  label: "Message",      orb: ORBS.violet },
+  alert:        { icon: ICONS.alert,    label: "Clinical Alert",orb: ORBS.sun   },
+  ai:           { icon: ICONS.ai,       label: "AI Insight",   orb: ORBS.mint   },
 };
 
 const MOCK_NOTIFICATIONS = [
-//   { id: 1,  type: "appointment",  title: "Appointment confirmed with Dr. Priya Reddy",  detail: "Tomorrow, 10:00 AM · Dermatology · Video Consultation", time: "12m ago",   group: "Today",     unread: true,  link: "/my-appointments" },
-//   { id: 2,  type: "alert",        title: "Action needed: reschedule with Dr. Verma",     detail: "Your 3:30 PM slot today has been cancelled by the clinic.", time: "1h ago", group: "Today",     unread: true,  link: "/my-appointments" },
-//   { id: 3,  type: "lab",          title: "Lab results are ready",                        detail: "Complete Blood Count (CBC) — reviewed by Dr. Anand Rao", time: "3h ago",   group: "Today",     unread: true,  link: "/health-records" },
-//   { id: 4,  type: "message",      title: "New message from Dr. Priya Reddy",             detail: "\u201cPlease continue the ointment for 5 more days...\u201d", time: "5h ago", group: "Today",     unread: false, link: "/messages" },
-//   { id: 5,  type: "prescription", title: "Prescription uploaded — Dermatology",          detail: "Added to your Health Vault automatically after visit", time: "Yesterday, 6:40 PM", group: "Yesterday", unread: false, link: "/prescriptions" },
-//   { id: 6,  type: "ai",           title: "AI Symptom report generated",                  detail: "Mild seasonal allergy pattern detected — no urgent action needed", time: "Yesterday, 11:02 AM", group: "Yesterday", unread: false, link: "/symptom-analyzer" },
-//   { id: 7,  type: "appointment",  title: "Reminder: annual health check-up due",         detail: "It's been 11 months since your last full check-up", time: "2 days ago", group: "Earlier",  unread: false, link: "/find-doctors" },
-//   { id: 8,  type: "message",      title: "New message from Dr. Kabir Malhotra",          detail: "Shared your updated diet plan and follow-up notes", time: "4 days ago", group: "Earlier",  unread: false, link: "/messages" },
-//   { id: 9,  type: "prescription", title: "Prescription expiring soon",                   detail: "Your Cetirizine 10mg prescription expires in 3 days", time: "5 days ago", group: "Earlier",  unread: false, link: "/prescriptions" },
+  // Mock data ready for wiring to API
 ];
 
-// ─── HELPERS ───────────────────────────────────────────────────────────────────
 const groupOrder = ["Today", "Yesterday", "Earlier"];
 
-// ─── NOTIFICATION ROW ──────────────────────────────────────────────────────────
-const NotificationRow = ({ item, index, onToggleRead, onDismiss }) => {
-  const meta = TYPE_META[item.type];
+// ─── ANIMATION PRIMITIVES ────────────────────────────────────────────────────
+const fadeUp = {
+  hidden:  { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: EASE } },
+};
+
+const stagger = {
+  hidden:  {},
+  visible: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
+};
+
+const wordParent = {
+  hidden:  {},
+  visible: { transition: { staggerChildren: 0.05 } },
+};
+
+const wordChild = {
+  hidden:  { y: "115%", rotate: 4 },
+  visible: { y: 0, rotate: 0, transition: { duration: 0.8, ease: EASE } },
+};
+
+const WordReveal = ({ text, as = "h1", style = {}, ...rest }) => {
+  const Tag = motion[as];
+  const lines = text.split("\n");
+  return (
+    <Tag variants={wordParent} style={style} {...rest}>
+      {lines.map((line, li) => (
+        <React.Fragment key={li}>
+          {line.split(" ").map((w, i) => (
+            <span
+              key={i}
+              style={{
+                display: "inline-block",
+                overflow: "hidden",
+                verticalAlign: "top",
+                paddingBottom: "0.14em",
+                marginBottom: "-0.14em",
+                marginRight: "0.24em",
+              }}
+            >
+              <motion.span variants={wordChild} style={{ display: "inline-block", transformOrigin: "0% 100%" }}>
+                {w}
+              </motion.span>
+            </span>
+          ))}
+          {li < lines.length - 1 && <br />}
+        </React.Fragment>
+      ))}
+    </Tag>
+  );
+};
+
+const Pill = ({ children }) => (
+  <motion.span
+    variants={fadeUp}
+    style={{
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 6,
+      fontSize: 12.5,
+      fontWeight: 500,
+      color: T.muted,
+      marginBottom: 12,
+      letterSpacing: "-0.01em",
+    }}
+  >
+    <motion.span
+      animate={{ rotate: [0, 90, 0], scale: [1, 1.2, 1] }}
+      transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+      style={{ display: "inline-flex" }}
+    >
+      <Icon d={ICONS.sparkle} size={12} color={T.muted} />
+    </motion.span>
+    {children}
+  </motion.span>
+);
+
+// ─── 3D TILT NOTIFICATION CARD ────────────────────────────────────────────────
+const TiltNotificationCard = ({ children, style = {}, max = 2.5, className = "", ...rest }) => {
+  const ref = useRef(null);
+  const rx = useMotionValue(0);
+  const ry = useMotionValue(0);
+  const srx = useSpring(rx, { stiffness: 180, damping: 18 });
+  const sry = useSpring(ry, { stiffness: 180, damping: 18 });
+
   return (
     <motion.div
+      ref={ref}
       layout
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, x: 40, transition: { duration: 0.2 } }}
-      transition={{ delay: 0.04 * index, type: "spring", stiffness: 260, damping: 24 }}
-      style={{
-        display: "flex",
-        alignItems: "flex-start",
-        gap: 16,
-        padding: "18px 20px",
-        borderRadius: 18,
-        background: item.unread ? "#F8FAFF" : "white",
-        border: item.unread ? "1px solid #E0E7FF" : "1px solid #F1F5F9",
-        marginBottom: 10,
-        position: "relative",
-        transition: "border-color 0.2s, background 0.2s",
+      variants={fadeUp}
+      className={`notif-card ${className}`}
+      onMouseMove={(e) => {
+        const r = ref.current.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width;
+        const py = (e.clientY - r.top) / r.height;
+        ry.set((px - 0.5) * max * 2);
+        rx.set(-(py - 0.5) * max * 2);
+        ref.current.style.setProperty("--mx", `${px * 100}%`);
+        ref.current.style.setProperty("--my", `${py * 100}%`);
       }}
+      onMouseLeave={() => {
+        rx.set(0);
+        ry.set(0);
+      }}
+      style={{ rotateX: srx, rotateY: sry, transformPerspective: 1000, ...style }}
+      {...rest}
     >
-      {item.unread && (
-        <span style={{ position: "absolute", top: 18, left: 8, width: 6, height: 6, borderRadius: "50%", background: "#6366F1" }} />
-      )}
-
-      <div style={{ width: 44, height: 44, borderRadius: 14, background: meta.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <Icon d={meta.icon} size={20} color={meta.color} />
-      </div>
-
-      <Link to={item.link} style={{ textDecoration: "none", flex: 1, minWidth: 0 }}>
-        <div className="flex items-center gap-2 flex-wrap" style={{ marginBottom: 3 }}>
-          <span style={{ fontSize: 10, fontWeight: 700, color: meta.color, background: meta.bg, padding: "2px 9px", borderRadius: 20, letterSpacing: "0.06em", textTransform: "uppercase" }}>
-            {meta.label}
-          </span>
-          <span style={{ fontSize: 11, color: "#94A3B8" }}>{item.time}</span>
-        </div>
-        <p style={{ fontSize: 14, fontWeight: item.unread ? 700 : 600, color: "#0F172A", lineHeight: 1.4 }}>{item.title}</p>
-        <p style={{ fontSize: 12.5, color: "#64748B", marginTop: 3, lineHeight: 1.55, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.detail}</p>
-      </Link>
-
-      <div className="flex items-center gap-1" style={{ flexShrink: 0, alignSelf: "center" }}>
-        <button
-          onClick={() => onToggleRead(item.id)}
-          title={item.unread ? "Mark as read" : "Mark as unread"}
-          style={{ width: 32, height: 32, borderRadius: 10, border: "none", background: item.unread ? "#EEF2FF" : "#F8FAFC", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
-        >
-          <Icon d={ICONS.check} size={14} color={item.unread ? "#6366F1" : "#94A3B8"} />
-        </button>
-        <button
-          onClick={() => onDismiss(item.id)}
-          title="Dismiss"
-          style={{ width: 32, height: 32, borderRadius: 10, border: "none", background: "#F8FAFC", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
-        >
-          <Icon d={ICONS.trash} size={14} color="#94A3B8" />
-        </button>
-      </div>
+      {children}
     </motion.div>
   );
 };
 
-// ─── MAIN PAGE ─────────────────────────────────────────────────────────────────
+// ─── MAGNETIC BUTTON ─────────────────────────────────────────────────────────
+const Magnetic = ({ children, strength = 0.25 }) => {
+  const ref = useRef(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const sx = useSpring(x, { stiffness: 220, damping: 16, mass: 0.4 });
+  const sy = useSpring(y, { stiffness: 220, damping: 16, mass: 0.4 });
+  return (
+    <motion.div
+      ref={ref}
+      onMouseMove={(e) => {
+        const r = ref.current.getBoundingClientRect();
+        x.set((e.clientX - (r.left + r.width / 2)) * strength);
+        y.set((e.clientY - (r.top + r.height / 2)) * strength);
+      }}
+      onMouseLeave={() => { x.set(0); y.set(0); }}
+      style={{ x: sx, y: sy, display: "inline-block" }}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+// ─── SCROLL PROGRESS ─────────────────────────────────────────────────────────
+const ScrollProgress = () => {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, { stiffness: 120, damping: 28, restDelta: 0.001 });
+  return (
+    <motion.div
+      aria-hidden
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 2,
+        background: T.ink,
+        transformOrigin: "0% 50%",
+        scaleX,
+        zIndex: 100,
+      }}
+    />
+  );
+};
+
+// ─── NOTIFICATION ROW ──────────────────────────────────────────────────────────
+const NotificationRow = ({ item, onToggleRead, onDismiss }) => {
+  const meta = TYPE_META[item.type] || TYPE_META.appointment;
+
+  return (
+    <TiltNotificationCard
+      style={{
+        padding: "20px 22px",
+        marginBottom: 12,
+        background: item.unread ? T.white : T.surface,
+        borderColor: item.unread ? T.ink : T.line,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+        
+        {/* Category Icon */}
+        <div
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 14,
+            background: T.white,
+            border: `1px solid ${T.line}`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+            boxShadow: "0 4px 12px rgba(12,10,9,0.03)",
+            position: "relative",
+          }}
+        >
+          <Icon d={meta.icon} size={18} color={T.ink} />
+          {item.unread && (
+            <span
+              style={{
+                position: "absolute",
+                top: -2,
+                right: -2,
+                width: 7,
+                height: 7,
+                borderRadius: "50%",
+                background: "#10B981",
+                boxShadow: "0 0 0 2px white",
+              }}
+            />
+          )}
+        </div>
+
+        {/* Content details */}
+        <Link to={item.link} style={{ textDecoration: "none", color: "inherit", flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <span
+              style={{
+                background: T.white,
+                border: `1px solid ${T.line}`,
+                color: T.ink,
+                fontSize: 10.5,
+                fontWeight: 500,
+                padding: "2px 8px",
+                borderRadius: 20,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              {meta.label}
+            </span>
+            <span style={{ fontSize: 12, color: T.muted }}>·</span>
+            <span style={{ fontSize: 12, color: T.muted }}>{item.time}</span>
+          </div>
+
+          <p style={{ fontSize: 14.5, fontWeight: item.unread ? 500 : 400, color: T.ink, lineHeight: 1.4 }}>
+            {item.title}
+          </p>
+
+          <p style={{ fontSize: 13, color: T.body, marginTop: 3, lineHeight: 1.55, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {item.detail}
+          </p>
+        </Link>
+
+        {/* Action Controls */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, alignSelf: "center", marginLeft: 8 }}>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              onToggleRead(item.id);
+            }}
+            title={item.unread ? "Mark as read" : "Mark as unread"}
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: "50%",
+              border: `1px solid ${T.line}`,
+              background: T.white,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              transition: "border-color 0.2s ease",
+            }}
+          >
+            <Icon d={ICONS.check} size={13} color={item.unread ? T.ink : T.muted} />
+          </button>
+
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              onDismiss(item.id);
+            }}
+            title="Dismiss"
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: "50%",
+              border: `1px solid ${T.line}`,
+              background: T.white,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              transition: "border-color 0.2s ease",
+            }}
+          >
+            <Icon d={ICONS.trash} size={13} color={T.muted} />
+          </button>
+        </div>
+
+      </div>
+    </TiltNotificationCard>
+  );
+};
+
+// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 const Notifications = () => {
   const { user } = useContext(Authcontext);
   const userName = user?.name || "there";
@@ -133,104 +386,269 @@ const Notifications = () => {
   const [items, setItems] = useState(MOCK_NOTIFICATIONS);
   const [filter, setFilter] = useState("all");
 
-  const unreadCount = items.filter(i => i.unread).length;
-  const todayCount = items.filter(i => i.group === "Today").length;
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end end"] });
+  const reduce = useReducedMotion();
+
+  const orbA = useTransform(scrollYProgress, [0, 1], reduce ? [0, 0] : [0, -180]);
+  const orbB = useTransform(scrollYProgress, [0, 1], reduce ? [0, 0] : [0, 160]);
+
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const smx = useSpring(mx, { stiffness: 45, damping: 20 });
+  const smy = useSpring(my, { stiffness: 45, damping: 20 });
+  const mouseX = useTransform(smx, [-0.5, 0.5], [-35, 35]);
+  const mouseY = useTransform(smy, [-0.5, 0.5], [-25, 25]);
+
+  const unreadCount = items.filter((i) => i.unread).length;
+  const todayCount = items.filter((i) => i.group === "Today").length;
 
   const filtered = useMemo(() => {
     if (filter === "all") return items;
-    return items.filter(i => i.type === filter);
+    return items.filter((i) => i.type === filter);
   }, [items, filter]);
 
   const grouped = useMemo(() => {
     const map = {};
-    filtered.forEach(i => {
+    filtered.forEach((i) => {
       if (!map[i.group]) map[i.group] = [];
       map[i.group].push(i);
     });
     return map;
   }, [filtered]);
 
-  const toggleRead = (id) => setItems(prev => prev.map(i => i.id === id ? { ...i, unread: !i.unread } : i));
-  const dismiss = (id) => setItems(prev => prev.filter(i => i.id !== id));
-  const markAllRead = () => setItems(prev => prev.map(i => ({ ...i, unread: false })));
+  const toggleRead = (id) =>
+    setItems((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, unread: !i.unread } : i))
+    );
+
+  const dismiss = (id) => setItems((prev) => prev.filter((i) => i.id !== id));
+
+  const markAllRead = () =>
+    setItems((prev) => prev.map((i) => ({ ...i, unread: false })));
 
   return (
     <>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap');`}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        .notif-root {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+          background: ${T.white};
+          color: ${T.body};
+          -webkit-font-smoothing: antialiased;
+          min-height: 100vh;
+          position: relative;
+          overflow-x: clip;
+        }
 
-      <div style={{ minHeight: "100vh", background: "linear-gradient(145deg,#F0F4FF 0%,#F8F6FF 40%,#EFF6FF 100%)", fontFamily: "'DM Sans', sans-serif" }}>
+        .notif-card {
+          position: relative;
+          isolation: isolate;
+          background: ${T.surface};
+          border: 1px solid ${T.line};
+          border-radius: 22px;
+          transition: box-shadow 0.3s, border-color 0.3s;
+          will-change: transform;
+        }
+        .notif-card::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          z-index: -1;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.3s;
+          background: radial-gradient(400px circle at var(--mx,50%) var(--my,50%), rgba(255,255,255,0.92), rgba(255,255,255,0) 60%);
+        }
+        .notif-card:hover {
+          border-color: #D6D3D1;
+          box-shadow: 0 16px 40px rgba(12,10,9,0.06);
+        }
+        .notif-card:hover::before {
+          opacity: 1;
+        }
 
-        {/* Blobs */}
-        <div style={{ position: "fixed", top: -80, right: -80, width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle,rgba(99,102,241,0.08) 0%,transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
-        <div style={{ position: "fixed", bottom: -60, left: -60, width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle,rgba(139,92,246,0.07) 0%,transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
+        .stat-capsule {
+          background: ${T.surface};
+          border: 1px solid ${T.line};
+          border-radius: 20px;
+          padding: 16px 20px;
+          transition: all 0.2s ease;
+        }
+        .stat-capsule:hover {
+          background: ${T.white};
+          border-color: #D6D3D1;
+          transform: translateY(-2px);
+        }
+      `}</style>
 
-        <div style={{ maxWidth: 900, margin: "0 auto", padding: "40px 24px 80px", position: "relative", zIndex: 1 }}>
+      <ScrollProgress />
 
-          {/* ── HERO HEADER ── */}
-          <motion.div initial={{ opacity: 0, y: -24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}
-            style={{ background: "linear-gradient(135deg,#6366F1 0%,#8B5CF6 60%,#A78BFA 100%)", borderRadius: 24, padding: "36px 40px", marginBottom: 28, position: "relative", overflow: "hidden", boxShadow: "0 16px 48px rgba(99,102,241,0.35)" }}>
+      <div
+        ref={containerRef}
+        className="notif-root"
+        onMouseMove={(e) => {
+          mx.set(e.clientX / window.innerWidth - 0.5);
+          my.set(e.clientY / window.innerHeight - 0.5);
+        }}
+      >
+        {/* Ambient Iridescent Background Orbs */}
+        <motion.div
+          style={{
+            position: "fixed",
+            top: -120,
+            right: -100,
+            width: 500,
+            height: 500,
+            borderRadius: "50%",
+            background: ORBS.violet,
+            opacity: 0.3,
+            filter: "blur(70px)",
+            pointerEvents: "none",
+            y: orbA,
+            x: mouseX,
+          }}
+        />
+        <motion.div
+          style={{
+            position: "fixed",
+            bottom: -100,
+            left: -80,
+            width: 440,
+            height: 440,
+            borderRadius: "50%",
+            background: ORBS.sky,
+            opacity: 0.25,
+            filter: "blur(65px)",
+            pointerEvents: "none",
+            y: orbB,
+            x: mouseY,
+          }}
+        />
 
-            <div style={{ position: "absolute", top: -40, right: -40, width: 220, height: 220, borderRadius: "50%", background: "rgba(255,255,255,0.06)", pointerEvents: "none" }} />
-            <div style={{ position: "absolute", bottom: -30, right: 120, width: 140, height: 140, borderRadius: "50%", background: "rgba(255,255,255,0.05)", pointerEvents: "none" }} />
+        <div style={{ maxWidth: 940, margin: "0 auto", padding: "60px 24px 100px", position: "relative", zIndex: 1 }}>
 
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Icon d={ICONS.bell} size={16} color="rgba(255,255,255,0.8)" />
-                  <p style={{ color: "rgba(255,255,255,0.8)", fontSize: 13, fontWeight: 600 }}>Hi {userName}</p>
-                </div>
-                <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 34, fontWeight: 800, color: "white", lineHeight: 1.15 }}>
-                  Notifications<span style={{ color: "rgba(255,255,255,0.6)" }}>.</span>
-                </h1>
-                <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 14, marginTop: 6 }}>Everything about your care, kept up to date.</p>
-              </div>
-
-              <button
-                onClick={markAllRead}
-                disabled={unreadCount === 0}
-                style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: 14, padding: "12px 20px", display: "flex", alignItems: "center", gap: 8, cursor: unreadCount === 0 ? "default" : "pointer", opacity: unreadCount === 0 ? 0.5 : 1, flexShrink: 0, backdropFilter: "blur(8px)" }}
-              >
-                <Icon d={ICONS.checkDouble} size={15} color="white" />
-                <span style={{ color: "white", fontSize: 13, fontWeight: 700 }}>Mark all as read</span>
-              </button>
+          {/* ──────────────── 1. EDITORIAL HEADER ──────────────── */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={stagger}
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "flex-end",
+              justifyContent: "space-between",
+              gap: 24,
+              marginBottom: 44,
+            }}
+          >
+            <div>
+              <Pill>Live Care Feed</Pill>
+              <WordReveal
+                as="h1"
+                text={"Notifications"}
+                style={{
+                  fontSize: "clamp(32px, 4.8vw, 54px)",
+                  fontWeight: 300,
+                  color: T.ink,
+                  letterSpacing: "-0.035em",
+                  lineHeight: 1.1,
+                  marginBottom: 12,
+                }}
+              />
+              <motion.p variants={fadeUp} style={{ fontSize: 15, color: T.body, maxWidth: 500 }}>
+                Real-time clinical updates, physician messages, and prescription alerts for {userName}.
+              </motion.p>
             </div>
 
-            {/* Mini stat pills */}
-            <div className="flex flex-wrap gap-2 mt-6">
-              {[
-                { label: "Unread", value: unreadCount, icon: ICONS.dot },
-                { label: "Today", value: todayCount, icon: ICONS.calendar },
-                { label: "Total", value: items.length, icon: ICONS.inbox },
-              ].map((s, i) => (
-                <div key={i} style={{ background: "rgba(255,255,255,0.15)", borderRadius: 12, padding: "8px 14px", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", gap: 8 }}>
-                  <Icon d={s.icon} size={14} color="rgba(255,255,255,0.85)" />
-                  <span style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>{s.label}:</span>
-                  <span style={{ fontSize: 12, color: "white", fontWeight: 700 }}>{s.value}</span>
-                </div>
-              ))}
-            </div>
+            <motion.div variants={fadeUp}>
+              <Magnetic strength={0.25}>
+                <button
+                  type="button"
+                  onClick={markAllRead}
+                  disabled={unreadCount === 0}
+                  style={{
+                    background: unreadCount === 0 ? T.surface : T.ink,
+                    color: unreadCount === 0 ? T.muted : "white",
+                    fontWeight: 500,
+                    fontSize: 13.5,
+                    padding: "12px 24px",
+                    borderRadius: 999,
+                    border: `1px solid ${unreadCount === 0 ? T.line : T.ink}`,
+                    cursor: unreadCount === 0 ? "default" : "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    transition: "all 0.2s ease",
+                    fontFamily: "'Inter', sans-serif",
+                  }}
+                >
+                  <Icon d={ICONS.checkDouble} size={14} color={unreadCount === 0 ? T.muted : "white"} />
+                  Mark all as read
+                </button>
+              </Magnetic>
+            </motion.div>
           </motion.div>
 
-          {/* ── FILTER TABS ── */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-            className="flex items-center gap-2 flex-wrap mb-6">
-            {FILTERS.map(f => {
+          {/* ──────────────── 2. METRICS CAPSULES ──────────────── */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 32 }}
+          >
+            {[
+              { label: "Unread Alerts", value: unreadCount,    icon: ICONS.dot      },
+              { label: "Delivered Today", value: todayCount,   icon: ICONS.calendar },
+              { label: "Total Stream",  value: items.length,   icon: ICONS.inbox    },
+            ].map((s, i) => (
+              <div key={i} className="stat-capsule">
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                  <span style={{ fontSize: 12, color: T.muted, fontWeight: 400 }}>{s.label}</span>
+                  <Icon d={s.icon} size={14} color={T.ink} />
+                </div>
+                <p style={{ fontSize: 28, fontWeight: 300, color: T.ink, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+                  {s.value}
+                </p>
+              </div>
+            ))}
+          </motion.div>
+
+          {/* ──────────────── 3. FILTER TABS CONSOLE ──────────────── */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              flexWrap: "wrap",
+              marginBottom: 32,
+              padding: "16px 20px",
+              background: T.surface,
+              borderRadius: 24,
+              border: `1px solid ${T.line}`,
+            }}
+          >
+            {FILTERS.map((f) => {
               const active = filter === f.key;
               return (
                 <button
                   key={f.key}
                   onClick={() => setFilter(f.key)}
                   style={{
-                    padding: "9px 16px",
-                    borderRadius: 12,
-                    border: active ? "1px solid transparent" : "1px solid #E2E8F0",
-                    background: active ? "linear-gradient(135deg,#6366F1,#8B5CF6)" : "white",
-                    color: active ? "white" : "#475569",
+                    padding: "7px 18px",
+                    borderRadius: 20,
+                    border: `1px solid ${active ? T.ink : T.line}`,
+                    background: active ? T.ink : T.white,
+                    color: active ? "white" : T.body,
                     fontSize: 12.5,
-                    fontWeight: 700,
+                    fontWeight: active ? 500 : 400,
                     cursor: "pointer",
-                    boxShadow: active ? "0 6px 16px rgba(99,102,241,0.3)" : "0 1px 4px rgba(0,0,0,0.04)",
-                    transition: "all 0.2s",
+                    transition: "all 0.2s ease",
                   }}
                 >
                   {f.label}
@@ -239,30 +657,67 @@ const Notifications = () => {
             })}
           </motion.div>
 
-          {/* ── NOTIFICATION LIST ── */}
+          {/* ──────────────── 4. NOTIFICATION STREAM ──────────────── */}
           {filtered.length === 0 ? (
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-              style={{ background: "white", borderRadius: 20, border: "1px solid #EEF2FF", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "60px 30px", textAlign: "center" }}>
-              <div style={{ width: 56, height: 56, borderRadius: 16, background: "#EEF2FF", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-                <Icon d={ICONS.inbox} size={24} color="#6366F1" />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              style={{
+                textAlign: "center",
+                padding: "90px 24px",
+                background: T.surface,
+                borderRadius: 28,
+                border: `1px solid ${T.line}`,
+              }}
+            >
+              <div
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 18,
+                  background: T.white,
+                  border: `1px solid ${T.line}`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "0 auto 16px",
+                }}
+              >
+                <Icon d={ICONS.inbox} size={24} color={T.ink} />
               </div>
-              <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#0F172A", marginBottom: 6 }}>You're all caught up</h3>
-              <p style={{ fontSize: 13, color: "#64748B" }}>Nothing here for this filter right now.</p>
+
+              <h3 style={{ fontSize: 20, fontWeight: 400, color: T.ink, letterSpacing: "-0.02em", marginBottom: 6 }}>
+                You're completely caught up
+              </h3>
+              <p style={{ color: T.muted, fontSize: 14, maxWidth: 360, margin: "0 auto" }}>
+                No active notifications or clinical updates in this view.
+              </p>
             </motion.div>
           ) : (
-            groupOrder.filter(g => grouped[g]?.length).map((g, gi) => (
-              <motion.div key={g} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 + gi * 0.05 }} style={{ marginBottom: 22 }}>
-                <div className="flex items-center gap-2" style={{ marginBottom: 10, paddingLeft: 4 }}>
-                  <span style={{ fontSize: 11, color: "#6366F1", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{g}</span>
-                  <div style={{ flex: 1, height: 1, background: "#EEF2FF" }} />
+            groupOrder
+              .filter((g) => grouped[g]?.length)
+              .map((g) => (
+                <div key={g} style={{ marginBottom: 32 }}>
+                  {/* Clean Hairline Group Divider */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, paddingLeft: 4 }}>
+                    <span style={{ fontSize: 11.5, fontWeight: 500, color: T.muted, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                      {g}
+                    </span>
+                    <div style={{ flex: 1, height: 1, background: T.line }} />
+                  </div>
+
+                  <AnimatePresence initial={false}>
+                    {grouped[g].map((item) => (
+                      <NotificationRow
+                        key={item.id}
+                        item={item}
+                        onToggleRead={toggleRead}
+                        onDismiss={dismiss}
+                      />
+                    ))}
+                  </AnimatePresence>
                 </div>
-                <AnimatePresence initial={false}>
-                  {grouped[g].map((item, i) => (
-                    <NotificationRow key={item.id} item={item} index={i} onToggleRead={toggleRead} onDismiss={dismiss} />
-                  ))}
-                </AnimatePresence>
-              </motion.div>
-            ))
+              ))
           )}
 
         </div>

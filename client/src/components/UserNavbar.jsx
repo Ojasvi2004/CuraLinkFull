@@ -3,11 +3,39 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Authcontext } from "../Context/AuthContext";
 
-// ─── ICONS ──────────────────────────────────────────────────────────────────
+// ─── THEME TOKENS (shared with the Navbar & About page) ───────────────────────
+const T = {
+  ink:      "#0C0A09",
+  body:     "#57534E",
+  muted:    "#A8A29E",
+  line:     "#ECEAE6",
+  surface:  "#F5F4F2",
+  surface2: "#FAFAF9",
+  white:    "#FFFFFF",
+};
+
+const EASE = [0.22, 1, 0.36, 1];
+
+const ORB_VIOLET = "radial-gradient(circle at 30% 28%, #FFFFFF 0%, #C9B8FF 22%, #7C8CFF 48%, #F6A5D8 78%, #FFD9B8 100%)";
+const ORB_SUN    = "radial-gradient(circle at 32% 26%, #FFF3D6 0%, #FFB36B 28%, #FF5E3A 58%, #7A2BFF 100%)";
+
 const Icon = ({ d, size = 18, color = "currentColor", style = {} }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
-    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={style}>
-    {Array.isArray(d) ? d.map((p, i) => <path key={i} d={p} />) : <path d={d} />}
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="1.6"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={style}
+  >
+    {Array.isArray(d) ? (
+      d.map((p, i) => <path key={i} d={p} />)
+    ) : (
+      <path d={d} />
+    )}
   </svg>
 );
 
@@ -20,55 +48,56 @@ const ICONS = {
   user:      ["M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2", "M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"],
   cog:       ["M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z", "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"],
   logout:    ["M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4", "M16 17l5-5-5-5", "M21 12H9"],
-  chevronD:  "M19 9l-7 7-7-7",
-  menu:      "M4 6h16M4 12h16M4 18h16",
-  close:     "M18 6L6 18M6 6l12 12",
+  chevronD:  "M6 9l6 6 6-6",
+  menu:      ["M4 8h16", "M4 16h16"],
+  close:     ["M18 6L6 18", "M6 6l12 12"],
   cross:     ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M8 12h8M12 8v8"],
   arrow:     "M17 8l4 4m0 0l-4 4m4-4H3",
-  profile:   ["M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2", "M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"],
-  dot:       "M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0",
 };
 
 const NAV_LINKS = [
-  { to: "/dashboard",        label: "Dashboard",      icon: ICONS.dashboard },
-  { to: "/find-doctors",     label: "Find Doctors",   icon: ICONS.doctors   },
-  { to: "/symptom-analyzer", label: "AI Analyzer",    icon: ICONS.ai        },
-  { to: "/my-appointments",  label: "Appointments",   icon: ICONS.appts     },
+  { to: "/dashboard",        label: "Dashboard",    icon: ICONS.dashboard },
+  { to: "/find-doctors",     label: "Find Doctors", icon: ICONS.doctors   },
+  { to: "/symptom-analyzer", label: "AI Analyzer",  icon: ICONS.ai        },
+  { to: "/my-appointments",  label: "Appointments", icon: ICONS.appts     },
 ];
 
-// Notification mock data
-const MOCK_NOTIFS = [
-
-];
+const MOCK_NOTIFS = [];
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 const NavbarAfterLogin = ({
   userName: propUserName = "Aarav Sharma",
   userProfilePic = null,
 }) => {
-  const navigate  = useNavigate();
-  const location  = useLocation();
-  const { token, settoken, user } = useContext(Authcontext);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { settoken, user } = useContext(Authcontext);
 
   const displayName = user?.name || propUserName;
-  const initials    = displayName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+  const initials    = displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 
-  const [scrolled,         setScrolled]         = useState(false);
-  const [mobileOpen,       setMobileOpen]        = useState(false);
-  const [profileOpen,      setProfileOpen]       = useState(false);
-  const [notifOpen,        setNotifOpen]         = useState(false);
-  const [unreadCount,      setUnreadCount]       = useState(MOCK_NOTIFS.filter(n => n.unread).length);
+  const [scrolled,    setScrolled]    = useState(false);
+  const [mobileOpen,  setMobileOpen]  = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [notifOpen,   setNotifOpen]   = useState(false);
+  const [unreadCount, setUnreadCount] = useState(MOCK_NOTIFS.filter((n) => n.unread).length);
+  const [hovered,     setHovered]     = useState(null);
 
   const profileRef = useRef(null);
   const notifRef   = useRef(null);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 16);
-    window.addEventListener("scroll", onScroll);
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => { setMobileOpen(false); setProfileOpen(false); setNotifOpen(false); }, [location]);
+  useEffect(() => {
+    setMobileOpen(false);
+    setProfileOpen(false);
+    setNotifOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -79,15 +108,29 @@ const NavbarAfterLogin = ({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // Lock scroll when mobile drawer is open
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKey = (e) => { if (e.key === "Escape") setMobileOpen(false); };
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [mobileOpen]);
+
   const handleLogout = () => {
     settoken(null);
     localStorage.removeItem("Token");
     setProfileOpen(false);
+    setMobileOpen(false);
     navigate("/login");
   };
 
   const handleNotifOpen = () => {
-    setNotifOpen(o => !o);
+    setNotifOpen((o) => !o);
     setProfileOpen(false);
     setUnreadCount(0);
   };
@@ -95,222 +138,384 @@ const NavbarAfterLogin = ({
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
         .anl-root {
-          position: sticky; top: 0; z-index: 1000;
-          font-family: 'DM Sans', sans-serif;
+          position: sticky;
+          top: 0;
+          z-index: 1000;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+          -webkit-font-smoothing: antialiased;
         }
-        .anl-root::before {
-          content: '';
-          display: block; height: 3px;
-          background: linear-gradient(90deg,#6366F1,#8B5CF6,#A78BFA,#6366F1);
-          background-size: 200% 100%;
-          animation: anl-shimmer 3s linear infinite;
+
+        .anl-inner {
+          background: rgba(255,255,255,0.72);
+          backdrop-filter: blur(18px) saturate(1.4);
+          -webkit-backdrop-filter: blur(18px) saturate(1.4);
+          border-bottom: 1px solid transparent;
+          transition: background 0.35s, border-color 0.35s, box-shadow 0.35s;
         }
-        @keyframes anl-shimmer { 0%{background-position:0%} 100%{background-position:200%} }
+        .anl-inner.scrolled {
+          background: rgba(255,255,255,0.9);
+          border-bottom-color: ${T.line};
+          box-shadow: 0 8px 30px rgba(12,10,9,0.05);
+        }
 
         .anl-bar {
-          background: rgba(255,255,255,0.88);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          border-bottom: 1px solid rgba(99,102,241,0.10);
-          transition: box-shadow 0.3s, background 0.3s;
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 0 24px;
+          height: 72px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          transition: height 0.35s cubic-bezier(0.22,1,0.36,1);
         }
-        .anl-bar.scrolled {
-          box-shadow: 0 4px 32px rgba(99,102,241,0.13);
-          background: rgba(255,255,255,0.97);
-        }
+        .anl-inner.scrolled .anl-bar { height: 62px; }
 
-        /* Nav links */
-        .anl-link {
+        .anl-link-item {
           position: relative;
-          display: flex; align-items: center; gap: 6px;
-          padding: 7px 13px; border-radius: 10px;
-          font-size: 13.5px; font-weight: 600;
-          color: #475569; text-decoration: none;
-          transition: color 0.18s, background 0.18s;
-          white-space: nowrap;
+          display: flex;
+          align-items: center;
+          padding: 8px 16px;
+          border-radius: 999px;
+          font-size: 14px;
+          font-weight: 500;
+          letter-spacing: -0.005em;
+          text-decoration: none;
+          transition: color 0.2s;
         }
-        .anl-link:hover { color: #6366F1; background: #EEF2FF; }
-        .anl-link.active { color: #6366F1; background: #EEF2FF; }
-        .anl-link.active::after {
-          content: '';
-          position: absolute; bottom: -1px; left: 50%;
-          transform: translateX(-50%);
-          width: 18px; height: 2px; border-radius: 2px;
-          background: linear-gradient(90deg,#6366F1,#8B5CF6);
+        .anl-link-content {
+          position: relative;
+          z-index: 1;
+          display: flex;
+          align-items: center;
+          gap: 7px;
+        }
+        .anl-hover-bg {
+          position: absolute;
+          inset: 0;
+          border-radius: 999px;
+          background: ${T.surface};
+        }
+        .anl-active-dot {
+          position: absolute;
+          bottom: 1px;
+          left: 50%;
+          width: 4px;
+          height: 4px;
+          margin-left: -2px;
+          border-radius: 50%;
+          background: ${T.ink};
         }
 
-        /* Icon buttons */
         .anl-icon-btn {
-          width: 38px; height: 38px; border-radius: 11px;
-          background: transparent; border: none; cursor: pointer;
-          display: flex; align-items: center; justify-content: center;
-          color: #64748B; transition: background 0.18s, color 0.18s;
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          background: ${T.surface};
+          border: 1px solid ${T.line};
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: ${T.ink};
+          transition: background 0.2s, border-color 0.2s;
           position: relative;
         }
-        .anl-icon-btn:hover { background: #EEF2FF; color: #6366F1; }
+        .anl-icon-btn:hover {
+          background: ${T.white};
+          border-color: #D6D3D1;
+        }
 
-        /* Notification badge */
         .anl-badge {
-          position: absolute; top: 5px; right: 5px;
-          width: 16px; height: 16px; border-radius: 50%;
-          background: linear-gradient(135deg,#6366F1,#8B5CF6);
-          border: 2px solid white;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 9px; font-weight: 800; color: white;
-          line-height: 1;
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: #10B981;
+          box-shadow: 0 0 0 2px white;
         }
 
-        /* Avatar button */
-        .anl-avatar-btn {
-          display: flex; align-items: center; gap: 8px;
-          padding: 5px 10px 5px 5px;
-          border-radius: 12px; border: 1.5px solid #E2E8F0;
-          background: transparent; cursor: pointer;
-          transition: all 0.18s;
+        .profile-chip {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: ${T.surface};
+          border-radius: 999px;
+          padding: 4px 12px 4px 4px;
+          border: 1px solid ${T.line};
+          cursor: pointer;
+          font-family: inherit;
+          transition: background 0.2s, border-color 0.2s;
         }
-        .anl-avatar-btn:hover {
-          border-color: #C7D2FE; background: #EEF2FF;
-        }
-        .anl-avatar {
-          width: 30px; height: 30px; border-radius: 9px;
-          background: linear-gradient(135deg,#6366F1,#8B5CF6);
-          display: flex; align-items: center; justify-content: center;
-          font-size: 11px; font-weight: 800; color: white;
-          overflow: hidden; flex-shrink: 0;
-        }
-        .anl-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-        /* Dropdown panel */
-        .anl-dropdown {
-          position: absolute; right: 0; top: calc(100% + 10px);
-          background: white; border-radius: 18px;
-          border: 1px solid #EEF2FF;
-          box-shadow: 0 16px 48px rgba(99,102,241,0.16), 0 2px 8px rgba(0,0,0,0.06);
-          overflow: hidden; z-index: 50;
+        .profile-chip:hover {
+          background: ${T.white};
+          border-color: #D6D3D1;
         }
 
-        /* Profile dropdown items */
+        .anl-dropdown-panel {
+          position: absolute;
+          right: 0;
+          top: calc(100% + 10px);
+          background: white;
+          border-radius: 18px;
+          box-shadow: 0 20px 50px rgba(12,10,9,0.12);
+          border: 1px solid ${T.line};
+          overflow: hidden;
+          z-index: 1001;
+          transform-origin: top right;
+        }
+
         .anl-menu-item {
-          display: flex; align-items: center; gap: 10px;
-          width: 100%; padding: 11px 16px;
-          font-size: 13px; font-weight: 600;
-          color: #334155; background: transparent; border: none;
-          cursor: pointer; text-decoration: none;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          width: 100%;
+          padding: 10px 12px;
+          font-size: 13.5px;
+          font-weight: 500;
+          color: ${T.body};
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          text-decoration: none;
+          border-radius: 12px;
           transition: background 0.15s, color 0.15s;
+          font-family: inherit;
         }
-        .anl-menu-item:hover { background: #EEF2FF; color: #6366F1; }
-        .anl-menu-item.danger:hover { background: #FEF2F2; color: #EF4444; }
+        .anl-menu-item:hover {
+          background: ${T.surface};
+          color: ${T.ink};
+        }
+        .anl-menu-item.danger {
+          color: #DC2626;
+        }
+        .anl-menu-item.danger:hover {
+          background: #FEF2F2;
+          color: #DC2626;
+        }
 
         /* Mobile drawer */
-        .anl-backdrop {
-          position: fixed; inset: 0; z-index: 998;
-          background: rgba(15,23,42,0.45);
-          backdrop-filter: blur(4px);
+        .mobile-drawer {
+          position: fixed;
+          inset: 0;
+          z-index: 1100;
+          display: flex;
+          flex-direction: column;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
-        .anl-drawer {
-          position: fixed; top: 0; right: 0; bottom: 0;
-          width: min(310px,100vw); z-index: 999;
-          background: white;
-          box-shadow: -8px 0 48px rgba(99,102,241,0.18);
-          display: flex; flex-direction: column; overflow: hidden;
+        .drawer-backdrop {
+          position: absolute;
+          inset: 0;
+          background: rgba(12,10,9,0.45);
+          backdrop-filter: blur(6px);
+          -webkit-backdrop-filter: blur(6px);
         }
-        .anl-drawer-header {
-          background: linear-gradient(135deg,#6366F1 0%,#8B5CF6 100%);
-          padding: 28px 22px 22px; position: relative; overflow: hidden;
+        .drawer-panel {
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: min(340px, 100vw);
+          height: 100%;
+          background: ${T.white};
+          box-shadow: -8px 0 48px rgba(12,10,9,0.18);
+          display: flex;
+          flex-direction: column;
+          padding: 0;
+          overflow: hidden;
         }
-        .anl-drawer-header::before {
-          content:''; position:absolute; top:-30px; right:-30px;
-          width:120px; height:120px; border-radius:50%;
-          background:rgba(255,255,255,0.08);
+        .drawer-header {
+          background: ${T.ink};
+          padding: 28px 24px 24px;
+          position: relative;
+          overflow: hidden;
         }
-        .anl-drawer-link {
-          display: flex; align-items: center; gap: 12px;
-          padding: 12px 16px; border-radius: 14px;
-          font-size: 13.5px; font-weight: 600;
-          color: #475569; text-decoration: none;
-          transition: all 0.18s;
+        .drawer-links {
+          padding: 18px 16px;
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          overflow-y: auto;
         }
-        .anl-drawer-link:hover, .anl-drawer-link.active {
-          background: #EEF2FF; color: #6366F1;
+        .drawer-link {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px 14px;
+          border-radius: 16px;
+          font-size: 14.5px;
+          font-weight: 500;
+          color: ${T.body};
+          text-decoration: none;
+          transition: background 0.18s, color 0.18s;
         }
-        .anl-drawer-icon {
-          width: 36px; height: 36px; border-radius: 10px;
-          background: #EEF2FF; flex-shrink: 0;
-          display: flex; align-items: center; justify-content: center;
-          transition: background 0.18s;
+        .drawer-link:hover, .drawer-link.active {
+          background: ${T.surface};
+          color: ${T.ink};
         }
-        .anl-drawer-link:hover .anl-drawer-icon,
-        .anl-drawer-link.active .anl-drawer-icon { background: #C7D2FE; }
+        .drawer-link-icon {
+          width: 38px;
+          height: 38px;
+          border-radius: 12px;
+          background: ${T.surface};
+          border: 1px solid ${T.line};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: background 0.18s, border-color 0.18s;
+        }
+        .drawer-link:hover .drawer-link-icon,
+        .drawer-link.active .drawer-link-icon {
+          background: ${T.ink};
+          border-color: ${T.ink};
+        }
+        .drawer-link:hover .drawer-link-icon svg,
+        .drawer-link.active .drawer-link-icon svg {
+          stroke: #fff;
+        }
+
+        .desktop-nav {
+          display: flex;
+          align-items: center;
+        }
+        .mobile-toggle {
+          display: none;
+        }
+
+        @media (max-width: 868px) {
+          .desktop-nav {
+            display: none !important;
+          }
+          .mobile-toggle {
+            display: flex !important;
+          }
+        }
       `}</style>
 
+      {/* ── MAIN NAV BAR ── */}
       <div className="anl-root">
-        <div className={`anl-bar ${scrolled ? "scrolled" : ""}`}>
-          <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 66, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <div className={`anl-inner ${scrolled ? "scrolled" : ""}`}>
+          <div className="anl-bar">
 
             {/* ── LOGO ── */}
-            <NavLink to="/dashboard" style={{ display: "flex", alignItems: "center", gap: 9, textDecoration: "none", flexShrink: 0 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg,#6366F1,#8B5CF6)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(99,102,241,0.35)" }}>
-                <Icon d={ICONS.cross} size={19} color="white" />
+            <NavLink to="/dashboard" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", flexShrink: 0 }}>
+              <motion.div
+                whileHover={{ rotate: 90 }}
+                transition={{ duration: 0.6, ease: EASE }}
+                style={{ width: 38, height: 38, borderRadius: 12, background: T.ink, display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                <Icon d={ICONS.cross} size={20} color="white" />
+              </motion.div>
+              <div style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
+                <span style={{ fontSize: 19, fontWeight: 600, color: T.ink, letterSpacing: "-0.03em" }}>
+                  CURA<span style={{ color: T.muted, fontWeight: 400 }}>LINK</span>
+                </span>
+                <span style={{ fontSize: 10.5, fontWeight: 400, color: T.muted, marginTop: 3 }}>Clinical Care Hub</span>
               </div>
-              <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 19, fontWeight: 800, color: "#0F172A", letterSpacing: "-0.02em" }}>
-                CURA<span style={{ color: "#6366F1" }}>LINK</span>
-              </span>
             </NavLink>
 
-            {/* ── CENTER NAV (desktop) ── */}
-            <nav style={{ display: "flex", alignItems: "center", gap: 2, flex: 1, justifyContent: "center" }} className="hidden lg:flex">
+            {/* ── CENTER NAVIGATION (desktop) ── */}
+            <nav style={{ gap: 4, flex: 1, justifyContent: "center" }} className="desktop-nav" onMouseLeave={() => setHovered(null)}>
               {NAV_LINKS.map(({ to, label, icon }) => (
-                <NavLink key={to} to={to}
-                  className={({ isActive }) => `anl-link ${isActive ? "active" : ""}`}>
-                  <Icon d={icon} size={14} color="currentColor" />
-                  {label}
+                <NavLink
+                  key={to}
+                  to={to}
+                  className="anl-link-item"
+                  onMouseEnter={() => setHovered(to)}
+                  style={({ isActive }) => ({ color: isActive ? T.ink : T.body })}
+                >
+                  {({ isActive }) => (
+                    <>
+                      {hovered === to && (
+                        <motion.span
+                          layoutId="anl-hover"
+                          className="anl-hover-bg"
+                          transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                        />
+                      )}
+                      <span className="anl-link-content">
+                        <Icon d={icon} size={15} color="currentColor" />
+                        {label}
+                      </span>
+                      {isActive && (
+                        <motion.span
+                          layoutId="anl-active"
+                          className="anl-active-dot"
+                          transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                        />
+                      )}
+                    </>
+                  )}
                 </NavLink>
               ))}
             </nav>
 
-            {/* ── RIGHT SIDE (desktop) ── */}
-            <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }} className="hidden lg:flex">
-
-              {/* Notification bell */}
+            {/* ── RIGHT CONTROLS (desktop) ── */}
+            <div style={{ gap: 10, flexShrink: 0 }} className="desktop-nav">
+              
+              {/* Notification Button */}
               <div style={{ position: "relative" }} ref={notifRef}>
-                {/* <button className="anl-icon-btn" onClick={handleNotifOpen} aria-label="Notifications">
-                  <Icon d={ICONS.bell} size={18} />
-                  {unreadCount > 0 && <span className="anl-badge">{unreadCount}</span>}
-                </button> */}
+                <button
+                  className="anl-icon-btn"
+                  onClick={handleNotifOpen}
+                  aria-label="Notifications"
+                >
+                  <Icon d={ICONS.bell} size={16} />
+                  {unreadCount > 0 && <span className="anl-badge" />}
+                </button>
 
                 <AnimatePresence>
                   {notifOpen && (
-                    <motion.div className="anl-dropdown" style={{ width: 320 }}
-                      initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                    <motion.div
+                      className="anl-dropdown-panel"
+                      style={{ width: 320 }}
+                      initial={{ opacity: 0, y: -8, scale: 0.96 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 8, scale: 0.97 }}
-                      transition={{ duration: 0.18 }}>
-                      {/* Header */}
-                      <div style={{ padding: "16px 18px 12px", borderBottom: "1px solid #F1F5F9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#0F172A" }}>Notifications</span>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: "#6366F1", cursor: "pointer" }}>Mark all read</span>
+                      exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                      transition={{ duration: 0.18, ease: EASE }}
+                    >
+                      <div style={{ padding: "16px 18px", borderBottom: `1px solid ${T.line}`, background: T.surface2, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <span style={{ fontSize: 13.5, fontWeight: 500, color: T.ink, letterSpacing: "-0.01em" }}>Notifications</span>
+                        <span style={{ fontSize: 11.5, fontWeight: 400, color: T.muted }}>Live Feed</span>
                       </div>
-                      {/* Items */}
-                      {MOCK_NOTIFS.map((n, i) => (
-                        <div key={n.id} style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 18px", background: n.unread ? "#FAFBFF" : "white", borderBottom: i < MOCK_NOTIFS.length - 1 ? "1px solid #F8FAFF" : "none", cursor: "pointer", transition: "background 0.15s" }}
-                          onMouseEnter={e => e.currentTarget.style.background = "#F5F7FF"}
-                          onMouseLeave={e => e.currentTarget.style.background = n.unread ? "#FAFBFF" : "white"}>
-                          <div style={{ width: 34, height: 34, borderRadius: 10, background: n.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
-                            <Icon d={n.icon} size={15} color={n.color} />
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ fontSize: 12.5, color: "#1E293B", fontWeight: 600, lineHeight: 1.45 }}>{n.text}</p>
-                            <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 3, fontWeight: 500 }}>{n.time}</p>
-                          </div>
-                          {n.unread && <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#6366F1", flexShrink: 0, marginTop: 6 }} />}
-                        </div>
-                      ))}
-                      <div style={{ padding: "10px 18px" }}>
-                        <button onClick={() => navigate("/messages")} style={{ width: "100%", padding: "9px", fontSize: 12, fontWeight: 700, color: "#6366F1", background: "#EEF2FF", border: "none", borderRadius: 10, cursor: "pointer" }}>
-                          View all notifications →
+
+                      <div style={{ padding: "8px 12px" }}>
+                        {MOCK_NOTIFS.length === 0 ? (
+                          <p style={{ textAlign: "center", fontSize: 13, color: T.muted, padding: "24px 12px" }}>
+                            All clinical notifications reviewed
+                          </p>
+                        ) : (
+                          MOCK_NOTIFS.map((n) => (
+                            <div key={n.id} style={{ padding: "10px 8px", borderBottom: `1px solid ${T.line}` }}>
+                              <p style={{ fontSize: 13, color: T.ink }}>{n.text}</p>
+                            </div>
+                          ))
+                        )}
+                        <button
+                          onClick={() => {
+                            setNotifOpen(false);
+                            navigate("/notifications");
+                          }}
+                          style={{
+                            width: "100%",
+                            padding: "9px",
+                            fontSize: 12.5,
+                            fontWeight: 500,
+                            color: T.ink,
+                            background: T.surface,
+                            border: `1px solid ${T.line}`,
+                            borderRadius: 10,
+                            cursor: "pointer",
+                            marginTop: 4,
+                          }}
+                        >
+                          Open Notification Console →
                         </button>
                       </div>
                     </motion.div>
@@ -318,80 +523,103 @@ const NavbarAfterLogin = ({
                 </AnimatePresence>
               </div>
 
-              {/* Divider */}
-              <div style={{ width: 1, height: 24, background: "#E2E8F0", margin: "0 4px" }} />
-
-              {/* Profile dropdown */}
-              <div style={{ position: "relative" }} ref={profileRef}>
-                <button className="anl-avatar-btn" onClick={() => { setProfileOpen(o => !o); setNotifOpen(false); }}>
-                  <div className="anl-avatar">
-                    {userProfilePic ? <img src={userProfilePic} alt={displayName} /> : initials}
+              {/* Profile Chip with Dropdown */}
+              <div ref={profileRef} style={{ position: "relative" }}>
+                <button
+                  className="profile-chip"
+                  onClick={() => {
+                    setProfileOpen((o) => !o);
+                    setNotifOpen(false);
+                  }}
+                  aria-haspopup="menu"
+                  aria-expanded={profileOpen}
+                >
+                  <div
+                    style={{
+                      width: 30,
+                      height: 30,
+                      borderRadius: "50%",
+                      background: ORB_VIOLET,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0 4px 12px rgba(12,10,9,0.12)",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {userProfilePic ? (
+                      <img src={userProfilePic} alt={displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : (
+                      <span style={{ fontSize: 11, fontWeight: 500, color: "white" }}>{initials}</span>
+                    )}
                   </div>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "#334155", maxWidth: 90, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <span style={{ fontSize: 13.5, fontWeight: 500, color: T.ink, letterSpacing: "-0.005em" }}>
                     {displayName.split(" ")[0]}
                   </span>
-                  <motion.div animate={{ rotate: profileOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                    <Icon d={ICONS.chevronD} size={13} color="#94A3B8" />
-                  </motion.div>
+                  <motion.span animate={{ rotate: profileOpen ? 180 : 0 }} transition={{ duration: 0.25 }} style={{ display: "inline-flex" }}>
+                    <Icon d={ICONS.chevronD} size={14} color={T.muted} />
+                  </motion.span>
                 </button>
 
                 <AnimatePresence>
                   {profileOpen && (
-                    <motion.div className="anl-dropdown" style={{ width: 230, right: 0 }}
-                      initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                    <motion.div
+                      className="anl-dropdown-panel"
+                      style={{ width: 230 }}
+                      initial={{ opacity: 0, y: -8, scale: 0.96 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 8, scale: 0.97 }}
-                      transition={{ duration: 0.18 }}>
-
-                      {/* User info header */}
-                      <div style={{ padding: "16px 16px 12px", borderBottom: "1px solid #F1F5F9" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <div className="anl-avatar" style={{ width: 36, height: 36, borderRadius: 11, fontSize: 13 }}>
-                            {userProfilePic ? <img src={userProfilePic} alt={displayName} /> : initials}
-                          </div>
-                          <div style={{ minWidth: 0 }}>
-                            <p style={{ fontSize: 13, fontWeight: 700, color: "#0F172A", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{displayName}</p>
-                            <p style={{ fontSize: 11, color: "#94A3B8", fontWeight: 500, marginTop: 1 }}>{user?.email || "patient"}</p>
-                          </div>
-                        </div>
+                      exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                      transition={{ duration: 0.18, ease: EASE }}
+                    >
+                      <div style={{ padding: "14px 16px", borderBottom: `1px solid ${T.line}`, background: T.surface2 }}>
+                        <p style={{ fontSize: 13.5, fontWeight: 500, color: T.ink, letterSpacing: "-0.005em" }}>{displayName}</p>
+                        <p style={{ fontSize: 11.5, color: T.muted, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {user?.email || "Patient Profile"}
+                        </p>
                       </div>
 
-                      {/* Menu items */}
                       <div style={{ padding: "6px" }}>
-                        <NavLink to="/profile" className="anl-menu-item" style={{ borderRadius: 10 }} onClick={() => setProfileOpen(false)}>
-                          <div style={{ width: 30, height: 30, borderRadius: 8, background: "#EEF2FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <Icon d={ICONS.profile} size={14} color="#6366F1" />
-                          </div>
+                        <NavLink to="/profile" className="anl-menu-item" onClick={() => setProfileOpen(false)}>
+                          <Icon d={ICONS.user} size={14} color={T.muted} />
                           Your Profile
                         </NavLink>
-                        <NavLink to="/settings" className="anl-menu-item" style={{ borderRadius: 10 }} onClick={() => setProfileOpen(false)}>
-                          <div style={{ width: 30, height: 30, borderRadius: 8, background: "#EEF2FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <Icon d={ICONS.cog} size={14} color="#6366F1" />
-                          </div>
+                        <NavLink to="/settings" className="anl-menu-item" onClick={() => setProfileOpen(false)}>
+                          <Icon d={ICONS.cog} size={14} color={T.muted} />
                           Settings
                         </NavLink>
-                        <div style={{ height: 1, background: "#F1F5F9", margin: "6px 0" }} />
-                        <button className="anl-menu-item danger" style={{ borderRadius: 10 }} onClick={handleLogout}>
-                          <div style={{ width: 30, height: 30, borderRadius: 8, background: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <Icon d={ICONS.logout} size={14} color="#EF4444" />
-                          </div>
-                          Sign out
+                        <div style={{ height: 1, background: T.line, margin: "4px 0" }} />
+                        <button className="anl-menu-item danger" onClick={handleLogout}>
+                          <Icon d={ICONS.logout} size={14} color="#DC2626" />
+                          Sign Out
                         </button>
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
+
             </div>
 
-            {/* ── MOBILE: bell + hamburger ── */}
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }} className="lg:hidden">
-              <button className="anl-icon-btn" onClick={handleNotifOpen} style={{ position: "relative" }}>
-                <Icon d={ICONS.bell} size={18} />
-                {unreadCount > 0 && <span className="anl-badge">{unreadCount}</span>}
-              </button>
-              <button className="anl-icon-btn" onClick={() => setMobileOpen(true)}>
-                <Icon d={ICONS.menu} size={18} />
+            {/* ── HAMBURGER (mobile) ── */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }} className="mobile-toggle">
+              {/* <button
+                className="anl-icon-btn"
+                onClick={() => {
+                  setMobileOpen(false);
+                  navigate("/notifications");
+                }}
+                aria-label="Notifications"
+              >
+                <Icon d={ICONS.bell} size={16} />
+                {unreadCount > 0 && <span className="anl-badge" />}
+              </button> */}
+
+              <button
+                onClick={() => setMobileOpen(true)}
+                style={{ width: 42, height: 42, borderRadius: "50%", background: T.surface, border: `1px solid ${T.line}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
+                aria-label="Open menu"
+              >
+                <Icon d={ICONS.menu} size={18} color={T.ink} />
               </button>
             </div>
 
@@ -402,73 +630,130 @@ const NavbarAfterLogin = ({
       {/* ── MOBILE DRAWER ── */}
       <AnimatePresence>
         {mobileOpen && (
-          <>
-            <motion.div className="anl-backdrop"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setMobileOpen(false)} />
+          <div className="mobile-drawer">
+            {/* Backdrop */}
+            <motion.div
+              className="drawer-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileOpen(false)}
+            />
 
-            <motion.div className="anl-drawer"
-              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
-              transition={{ type: "spring", stiffness: 340, damping: 34 }}>
+            {/* Panel */}
+            <motion.div
+              className="drawer-panel"
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 340, damping: 34 }}
+            >
+              {/* Header */}
+              <div className="drawer-header">
+                {/* Embedded Iridescent Orbs */}
+                <motion.div
+                  animate={{ y: [0, -14, 0], rotate: [0, 10, 0] }}
+                  transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+                  style={{ position: "absolute", top: -70, right: -50, width: 220, height: 220, borderRadius: "50%", background: ORB_VIOLET, opacity: 0.6, filter: "blur(22px)", pointerEvents: "none" }}
+                />
+                <motion.div
+                  animate={{ y: [0, 12, 0] }}
+                  transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                  style={{ position: "absolute", bottom: -60, left: -30, width: 150, height: 150, borderRadius: "50%", background: ORB_SUN, opacity: 0.4, filter: "blur(30px)", pointerEvents: "none" }}
+                />
 
-              {/* Drawer header */}
-              <div className="anl-drawer-header">
-                <button onClick={() => setMobileOpen(false)}
-                  style={{ position: "absolute", top: 14, right: 14, width: 30, height: 30, borderRadius: 8, background: "rgba(255,255,255,0.2)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-                  <Icon d={ICONS.close} size={15} color="white" />
+                <button
+                  onClick={() => setMobileOpen(false)}
+                  aria-label="Close menu"
+                  style={{ position: "absolute", top: 16, right: 16, zIndex: 2, width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.14)", border: "1px solid rgba(255,255,255,0.22)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                >
+                  <Icon d={ICONS.close} size={16} color="white" />
                 </button>
 
-                {/* User info in drawer */}
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ width: 46, height: 46, borderRadius: 13, background: "rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: "white", overflow: "hidden", flexShrink: 0 }}>
-                    {userProfilePic ? <img src={userProfilePic} alt={displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initials}
+                <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 12, background: "rgba(255,255,255,0.14)", border: "1px solid rgba(255,255,255,0.22)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Icon d={ICONS.cross} size={18} color="white" />
                   </div>
                   <div>
-                    <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, color: "white" }}>{displayName}</p>
-                    <p style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", marginTop: 2, fontWeight: 500 }}>{user?.email || "Patient Account"}</p>
+                    <p style={{ fontSize: 20, fontWeight: 600, color: "white", lineHeight: 1, letterSpacing: "-0.03em" }}>
+                      CURA<span style={{ color: "rgba(255,255,255,0.55)", fontWeight: 400 }}>LINK</span>
+                    </p>
+                    <p style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", fontWeight: 400, marginTop: 4 }}>Clinical Hub</p>
+                  </div>
+                </div>
+
+                {/* User card inside drawer */}
+                <div style={{ position: "relative", zIndex: 1, marginTop: 20, display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.12)", backdropFilter: "blur(10px)", borderRadius: 16, padding: "10px 14px", border: "1px solid rgba(255,255,255,0.2)" }}>
+                  <div style={{ width: 34, height: 34, borderRadius: "50%", background: ORB_VIOLET, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                    {userProfilePic ? <img src={userProfilePic} alt={displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initials}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ fontSize: 13.5, fontWeight: 500, color: "white" }}>{displayName}</p>
+                    <p style={{ fontSize: 11.5, color: "rgba(255,255,255,0.65)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user?.email || ""}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Drawer links */}
-              <div style={{ padding: "12px", flex: 1, display: "flex", flexDirection: "column", gap: 4, overflowY: "auto" }}>
-                <p style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", letterSpacing: "0.1em", textTransform: "uppercase", padding: "4px 12px 8px" }}>Navigation</p>
+              {/* Links */}
+              <div className="drawer-links">
+                <p style={{ fontSize: 12, fontWeight: 500, color: T.muted, padding: "4px 14px 10px" }}>Console Navigation</p>
                 {NAV_LINKS.map(({ to, label, icon }, i) => (
-                  <motion.div key={to} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 * i }}>
-                    <NavLink to={to} className={({ isActive }) => `anl-drawer-link ${isActive ? "active" : ""}`}>
-                      <div className="anl-drawer-icon"><Icon d={icon} size={15} color="#6366F1" /></div>
+                  <motion.div key={to} initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.08 + 0.05 * i, duration: 0.45, ease: EASE }}>
+                    <NavLink
+                      to={to}
+                      className={({ isActive }) => `drawer-link ${isActive ? "active" : ""}`}
+                    >
+                      <div className="drawer-link-icon">
+                        <Icon d={icon} size={16} color={T.ink} />
+                      </div>
                       {label}
-                      <Icon d={ICONS.arrow} size={13} color="#CBD5E1" style={{ marginLeft: "auto" }} />
+                      <Icon d={ICONS.arrow} size={13} color={T.muted} style={{ marginLeft: "auto" }} />
                     </NavLink>
                   </motion.div>
                 ))}
 
-                <div style={{ height: 1, background: "#F1F5F9", margin: "8px 0" }} />
-                <p style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", letterSpacing: "0.1em", textTransform: "uppercase", padding: "0 12px 8px" }}>Account</p>
+                <div style={{ height: 1, background: T.line, margin: "8px 12px" }} />
+                <p style={{ fontSize: 12, fontWeight: 500, color: T.muted, padding: "4px 14px 10px" }}>Account</p>
 
-                <NavLink to="/profile" className="anl-drawer-link" onClick={() => setMobileOpen(false)}>
-                  <div className="anl-drawer-icon"><Icon d={ICONS.profile} size={15} color="#6366F1" /></div>
+                <NavLink to="/profile" className="drawer-link" onClick={() => setMobileOpen(false)}>
+                  <div className="drawer-link-icon"><Icon d={ICONS.user} size={16} color={T.ink} /></div>
                   Your Profile
-                  <Icon d={ICONS.arrow} size={13} color="#CBD5E1" style={{ marginLeft: "auto" }} />
+                  <Icon d={ICONS.arrow} size={13} color={T.muted} style={{ marginLeft: "auto" }} />
                 </NavLink>
-                <NavLink to="/settings" className="anl-drawer-link" onClick={() => setMobileOpen(false)}>
-                  <div className="anl-drawer-icon"><Icon d={ICONS.cog} size={15} color="#6366F1" /></div>
+                <NavLink to="/settings" className="drawer-link" onClick={() => setMobileOpen(false)}>
+                  <div className="drawer-link-icon"><Icon d={ICONS.cog} size={16} color={T.ink} /></div>
                   Settings
-                  <Icon d={ICONS.arrow} size={13} color="#CBD5E1" style={{ marginLeft: "auto" }} />
+                  <Icon d={ICONS.arrow} size={13} color={T.muted} style={{ marginLeft: "auto" }} />
                 </NavLink>
               </div>
 
-              {/* Drawer footer */}
-              <div style={{ padding: "12px 12px 20px", borderTop: "1px solid #EEF2FF" }}>
-                <button onClick={handleLogout}
-                  style={{ width: "100%", padding: "11px", fontSize: 13, fontWeight: 700, color: "#EF4444", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                  <Icon d={ICONS.logout} size={15} color="#EF4444" />
+              {/* Footer */}
+              <div className="drawer-footer">
+                <button
+                  style={{
+                    width: "100%",
+                    padding: "12px 20px",
+                    fontSize: 14,
+                    fontWeight: 500,
+                    fontFamily: "inherit",
+                    color: "#DC2626",
+                    background: "#FEF2F2",
+                    border: "1px solid #FECACA",
+                    borderRadius: 999,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                  }}
+                  onClick={handleLogout}
+                >
+                  <Icon d={ICONS.logout} size={15} color="#DC2626" />
                   Sign Out
                 </button>
               </div>
-
             </motion.div>
-          </>
+          </div>
         )}
       </AnimatePresence>
     </>
