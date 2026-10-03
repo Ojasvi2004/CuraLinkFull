@@ -705,14 +705,14 @@ const RegisterPage = () => {
             </div>
 
             {/* Google Signup Button */}
-            <button
+            {/* <button
               type="button"
               className="reg-btn-google"
               onClick={() => alert("Google Sign-up (UI only)")}
             >
               <GoogleIcon />
               Continue with Google
-            </button>
+            </button> */}
 
           </motion.div>
 
