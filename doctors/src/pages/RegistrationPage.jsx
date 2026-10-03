@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom'; 
 import axios from 'axios';
+const server=import.meta.env.VITE_SERVER;
 
 
 
@@ -223,7 +224,7 @@ const DoctorRegistrationPage = () => {
 
     try {
 
-      const response=await axios.post('http://localhost:8000/api/doctors/register',data,{
+      const response=await axios.post(`${server}/api/doctors/register`,data,{
         headers:{
            "Content-Type": "multipart/form-data",
         }
