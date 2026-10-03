@@ -1,366 +1,345 @@
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useMemo } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Link } from "react-router-dom";
-const server=import.meta.env.VITE_SERVER;
+const server = import.meta.env.VITE_SERVER;
 
-// ─── ICON SYSTEM ─────────────────────────────────────────────────────────────
+/* ─── THEME TOKENS (identical to dashboard, add-patient, data-access) ─── */
+const T = {
+    ink: "#0C0A09", body: "#57534E", muted: "#A8A29E", line: "#ECEAE6",
+    surface: "#F5F4F2", surface2: "#FAFAF9", white: "#FFFFFF",
+};
+const EASE = [0.22, 1, 0.36, 1];
+const GLASS = { background: "rgba(255,255,255,0.78)", backdropFilter: "blur(14px)", border: `1px solid ${T.line}` };
+
+/* ─── ICONS ─────────────────────────────────────────────────────────────── */
 const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
-    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={style}>
-    {Array.isArray(d) ? d.map((p, i) => <path key={i} d={p} />) : <path d={d} />}
-  </svg>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
+        strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={style}>
+        {(Array.isArray(d) ? d : [d]).map((p, i) => <path key={i} d={p} />)}
+    </svg>
 );
-
 const ICONS = {
-  bell:     ["M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6.002 6.002 0 0 0-4-5.659V5a2 2 0 1 0-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9"],
-  lock:     ["M12 15v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2zm10-10V7a4 4 0 0 0-8 0v4h8z"],
-  globe:    ["M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 0 1 6.412 9m6.088 9.5A18.022 18.022 0 0 1 17.588 9m-11.176 0A18.022 18.022 0 0 1 12 2.5c4.418 0 8.463 2.012 11.176 5.5m-22.352 0A18.022 18.022 0 0 1 12 21.5c4.418 0 8.463-2.012 11.176-5.5m-22.352 0h22.352"],
-  moon:     "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z",
-  shield:   ["M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"],
-  chevron:  "m9 18 6-6-6-6",
-  sparkle:  ["M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"],
-  check:    ["M22 11.08V12a10 10 0 1 1-5.93-9.14", "m9 11 3 3L22 4"],
-  trash:    ["M3 6h18", "M8 6V4h8v2", "M19 6l-1 14H6L5 6"],
-  save:     ["M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z", "M17 21v-8H7v8", "M7 3v5h8"],
-  mail:     ["M3 8l7.89 5.26a2 2 0 0 0 2.22 0L21 8", "M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z"],
-  sms:      ["M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"],
-  clock:    ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M12 6v6l4 2"],
-  key:      ["M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"],
-  privacy:  ["M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z", "M12 8v4m0 4h.01"],
+    bell: "M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6.002 6.002 0 0 0-4-5.659V5a2 2 0 1 0-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9",
+    globe: ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M2 12h20", "M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"],
+    moon: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z",
+    shield: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
+    chevron: "m9 18 6-6-6-6",
+    chevD: "m6 9 6 6 6-6",
+    sparkle: ["M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z", "M5 3v4M3 5h4M19 17v4M17 19h4"],
+    check: ["M22 11.08V12a10 10 0 1 1-5.93-9.14", "m9 11 3 3L22 4"],
+    trash: ["M3 6h18", "M8 6V4h8v2", "M19 6l-1 14H6L5 6"],
+    save: ["M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z", "M17 21v-8H7v8", "M7 3v5h8"],
+    mail: ["M3 8l7.89 5.26a2 2 0 0 0 2.22 0L21 8", "M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z"],
+    sms: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z",
+    clock: ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M12 6v6l4 2"],
+    key: "M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4",
+    privacy: ["M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z", "M12 8v4m0 4h.01"],
 };
 
-// ─── TOGGLE SWITCH ────────────────────────────────────────────────────────────
-const Toggle = ({ enabled, onToggle, label, desc, icon, iconBg, iconColor }) => (
-  <motion.div
-    whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(99,102,241,0.1)" }}
-    style={{
-      background: "white", borderRadius: 18, border: "1.5px solid",
-      borderColor: enabled ? "#C7D2FE" : "#EEF2FF",
-      padding: "18px 22px", display: "flex", alignItems: "center", gap: 14,
-      transition: "border-color 0.2s",
-    }}
-  >
-    <div style={{
-      width: 44, height: 44, borderRadius: 13, background: enabled ? iconBg : "#F1F5F9",
-      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-      transition: "background 0.2s",
-    }}>
-      <Icon d={icon} size={20} color={enabled ? iconColor : "#94A3B8"} />
+/* ─── VARIANTS / SHARED PIECES ──────────────────────────────────────────── */
+const fadeUp = { hidden: { opacity: 0, y: 40 }, visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: EASE } } };
+const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.1 } } };
+const wordParent = { hidden: {}, visible: { transition: { staggerChildren: 0.07 } } };
+const wordChild = { hidden: { y: "115%", rotate: 4 }, visible: { y: 0, rotate: 0, transition: { duration: 0.85, ease: EASE } } };
+const H = { fontWeight: 300, color: T.ink, lineHeight: 1.06, letterSpacing: "-0.04em" };
+
+const Aura = ({ blobs }) => (
+    <div aria-hidden style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none", zIndex: 0 }}>
+        {blobs.map((b, i) => (
+            <div key={i} style={{ position: "absolute", borderRadius: "50%", filter: "blur(80px)", width: b.s, height: b.s, background: b.c, opacity: b.o ?? 0.4, top: b.t, left: b.l, right: b.r, bottom: b.b }} />
+        ))}
     </div>
-    <div style={{ flex: 1 }}>
-      <p style={{ fontSize: 14, fontWeight: 700, color: "#0F172A" }}>{label}</p>
-      <p style={{ fontSize: 12, color: "#94A3B8", marginTop: 2 }}>{desc}</p>
-    </div>
-    {/* Toggle pill */}
-    <button
-      onClick={onToggle}
-      style={{
-        width: 48, height: 26, borderRadius: 13, border: "none", cursor: "pointer",
-        background: enabled ? "linear-gradient(135deg,#6366F1,#8B5CF6)" : "#E2E8F0",
-        position: "relative", transition: "all 0.25s", flexShrink: 0,
-        boxShadow: enabled ? "0 2px 8px rgba(99,102,241,0.4)" : "none",
-      }}
-    >
-      <motion.div
-        animate={{ x: enabled ? 24 : 2 }}
-        transition={{ type: "spring", stiffness: 500, damping: 30 }}
-        style={{
-          position: "absolute", top: 3, left: 0,
-          width: 20, height: 20, borderRadius: "50%",
-          background: "white", boxShadow: "0 1px 4px rgba(0,0,0,0.2)",
-        }}
-      />
-    </button>
-  </motion.div>
 );
 
-// ─── SETTINGS CARD ────────────────────────────────────────────────────────────
-const SettingsCard = ({ title, subtitle, icon, iconBg, iconColor, children, delay = 0 }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-    transition={{ delay, type: "spring", stiffness: 240, damping: 22 }}
-    style={{
-      background: "white", borderRadius: 24, border: "1px solid #EEF2FF",
-      boxShadow: "0 2px 16px rgba(0,0,0,0.06)", overflow: "hidden", marginBottom: 20,
-    }}
-  >
-    <div style={{ padding: "22px 28px 18px", borderBottom: "1px solid #F1F5F9", display: "flex", alignItems: "center", gap: 14 }}>
-      <div style={{ width: 44, height: 44, borderRadius: 14, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <Icon d={icon} size={20} color={iconColor} />
-      </div>
-      <div>
-        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#0F172A" }}>{title}</h2>
-        {subtitle && <p style={{ fontSize: 12, color: "#94A3B8", marginTop: 2 }}>{subtitle}</p>}
-      </div>
-    </div>
-    <div style={{ padding: "22px 28px" }}>
-      {children}
-    </div>
-  </motion.div>
+const NeuralArt = ({ reduce, count = 40, style = {}, id = "st-g" }) => {
+    const { nodes, edges } = useMemo(() => {
+        let s = 7;
+        const rnd = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+        const nodes = [];
+        while (nodes.length < count) {
+            const x = rnd() * 2 - 1, y = rnd() * 2 - 1;
+            if (x * x + (y * y) / 0.62 > 1) continue;
+            if (nodes.some((n) => (n.x - x) ** 2 + (n.y - y) ** 2 < 0.028)) continue;
+            nodes.push({ x, y, r: 2.2 + rnd() * 3, d: rnd() * 5, h: rnd() });
+        }
+        const edges = [];
+        nodes.forEach((a, i) => nodes.forEach((b, j) => {
+            if (j > i && (a.x - b.x) ** 2 + (a.y - b.y) ** 2 < 0.13) edges.push([a, b]);
+        }));
+        return { nodes, edges };
+    }, [count]);
+    const P = ["#7C8CFF", "#C9B8FF", "#F6A5D8", "#A5D8FF", "#FFB36B"];
+    return (
+        <svg viewBox="-1.1 -0.85 2.2 1.7" aria-hidden style={{ overflow: "visible", ...style }}>
+            <defs>
+                <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stopColor="#7C8CFF" /><stop offset="1" stopColor="#F6A5D8" />
+                </linearGradient>
+            </defs>
+            {edges.map(([a, b], i) => <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={`url(#${id})`} strokeWidth="0.004" opacity="0.6" />)}
+            {nodes.map((n, i) => (
+                <circle key={i} cx={n.x} cy={n.y} r={n.r / 260} fill={P[(n.h * P.length) | 0]}
+                    className={reduce ? undefined : "st-node"} style={{ animationDelay: `${n.d}s` }} />
+            ))}
+        </svg>
+    );
+};
+
+const Section = ({ children, style = {}, ...rest }) => (
+    <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.12 }} variants={stagger} style={{ position: "relative", ...style }} {...rest}>
+        {children}
+    </motion.section>
 );
 
-// ─── NAV LINK ROW ─────────────────────────────────────────────────────────────
-const NavRow = ({ icon, iconBg, iconColor, label, to }) => (
-  <Link to={to} style={{ textDecoration: "none" }}>
-    <motion.div
-      whileHover={{ x: 4, background: "#F8FAFF" }}
-      style={{
-        display: "flex", alignItems: "center", gap: 14, padding: "14px 18px",
-        borderRadius: 16, border: "1.5px solid #EEF2FF", background: "white",
-        marginBottom: 10, cursor: "pointer", transition: "all 0.2s",
-      }}
-    >
-      <div style={{ width: 38, height: 38, borderRadius: 12, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <Icon d={icon} size={18} color={iconColor} />
-      </div>
-      <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: "#334155" }}>{label}</span>
-      <Icon d={ICONS.chevron} size={16} color="#CBD5E1" />
-    </motion.div>
-  </Link>
-);
+const WordReveal = ({ text, as = "h2", style = {}, ...rest }) => {
+    const Tag = motion[as];
+    return (
+        <Tag variants={wordParent} style={style} {...rest}>
+            {text.split("\n").map((line, li, arr) => (
+                <React.Fragment key={li}>
+                    {line.split(" ").map((w, i) => (
+                        <span key={i} style={{ display: "inline-block", overflow: "hidden", verticalAlign: "top", paddingBottom: "0.14em", marginBottom: "-0.14em", marginRight: "0.24em" }}>
+                            <motion.span variants={wordChild} style={{ display: "inline-block", transformOrigin: "0% 100%" }}>{w}</motion.span>
+                        </span>
+                    ))}
+                    {li < arr.length - 1 && <br />}
+                </React.Fragment>
+            ))}
+        </Tag>
+    );
+};
 
-// ─── SELECT FIELD ─────────────────────────────────────────────────────────────
-const SelectField = ({ label, value, onChange, options }) => (
-  <div style={{ marginBottom: 16 }}>
-    <label style={{ fontSize: 11, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 8 }}>{label}</label>
-    <div style={{ position: "relative" }}>
-      <select
-        value={value} onChange={e => onChange(e.target.value)}
-        style={{
-          width: "100%", padding: "12px 40px 12px 16px", borderRadius: 14,
-          border: "1.5px solid #EEF2FF", background: "#F8FAFF", fontSize: 13,
-          fontFamily: "'DM Sans', sans-serif", color: "#0F172A", outline: "none",
-          appearance: "none", cursor: "pointer", transition: "border-color 0.2s",
-        }}
-        onFocus={e => e.target.style.borderColor = "#6366F1"}
-        onBlur={e => e.target.style.borderColor = "#EEF2FF"}
-      >
-        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-      </select>
-      <div style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
-        <Icon d="m6 9 6 6 6-6" size={14} color="#6366F1" />
-      </div>
+const IconTile = ({ d, size = 48, dark = false }) => (
+    <div style={{ width: size, height: size, borderRadius: 14, background: dark ? T.ink : T.surface, border: `1px solid ${dark ? T.ink : T.line}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <Icon d={d} size={size > 40 ? 22 : 15} color={dark ? "#fff" : T.ink} />
     </div>
-  </div>
 );
 
-// ─── MAIN SETTINGS PAGE ───────────────────────────────────────────────────────
+/* ─── SETTINGS PIECES ───────────────────────────────────────────────────── */
+const Toggle = ({ enabled, onToggle, label, desc, icon }) => (
+    <div className="st-row">
+        <IconTile d={icon} size={44} dark={enabled} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 14.5, fontWeight: 500, color: T.ink }}>{label}</p>
+            <p style={{ fontSize: 13, color: T.muted, marginTop: 2, lineHeight: 1.5 }}>{desc}</p>
+        </div>
+        <button type="button" role="switch" aria-checked={enabled} aria-label={label} onClick={onToggle}
+            className="st-switch" style={{ background: enabled ? T.ink : "#E7E5E4" }}>
+            <motion.span animate={{ x: enabled ? 22 : 0 }} transition={{ duration: 0.3, ease: EASE }}
+                style={{ position: "absolute", top: 3, left: 3, width: 20, height: 20, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.2)" }} />
+        </button>
+    </div>
+);
+
+const SettingsCard = ({ id, title, subtitle, icon, children, danger = false }) => (
+    <motion.section id={id} variants={fadeUp} className="st-card" style={{ scrollMarginTop: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 22, paddingBottom: 20, borderBottom: `1px solid ${T.line}` }}>
+            <IconTile d={icon} dark={danger} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+                <h2 style={{ fontSize: 22, fontWeight: 400, color: T.ink, letterSpacing: "-0.03em" }}>{title}</h2>
+                {subtitle && <p style={{ fontSize: 13.5, color: T.body, marginTop: 2 }}>{subtitle}</p>}
+            </div>
+        </div>
+        {children}
+    </motion.section>
+);
+
+const NavRow = ({ icon, label, to }) => (
+    <Link to={to} className="st-row st-nav">
+        <IconTile d={icon} size={38} />
+        <span style={{ flex: 1, fontSize: 14.5, fontWeight: 500, color: T.ink }}>{label}</span>
+        <Icon d={ICONS.chevron} size={16} color={T.muted} />
+    </Link>
+);
+
+const SelectField = ({ id, label, value, onChange, options }) => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <label htmlFor={id} style={{ fontSize: 13, fontWeight: 500, color: T.ink }}>{label}</label>
+        <div style={{ position: "relative" }}>
+            <select id={id} className="st-input" value={value} onChange={(e) => onChange(e.target.value)}>
+                {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            <span style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", display: "flex" }}>
+                <Icon d={ICONS.chevD} size={14} color={T.muted} />
+            </span>
+        </div>
+    </div>
+);
+
+const NAV_PILLS = [
+    { label: "Notifications", id: "st-notifications" },
+    { label: "Security", id: "st-security" },
+    { label: "Preferences", id: "st-preferences" },
+    { label: "Danger zone", id: "st-danger" },
+];
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PAGE
+═══════════════════════════════════════════════════════════════════════════ */
 const DoctorSettingsPage = () => {
-  const [emailNotif, setEmailNotif] = useState(true);
-  const [smsReminders, setSmsReminders] = useState(false);
-  const [availReminders, setAvailReminders] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
-  const [language, setLanguage] = useState("en-US");
-  const [timezone, setTimezone] = useState("Asia/Kolkata");
-  const [saved, setSaved] = useState(false);
+    const reduce = useReducedMotion();
+    const [emailNotif, setEmailNotif] = useState(true);
+    const [smsReminders, setSmsReminders] = useState(false);
+    const [availReminders, setAvailReminders] = useState(true);
+    const [darkMode, setDarkMode] = useState(false);
+    const [language, setLanguage] = useState("en-US");
+    const [timezone, setTimezone] = useState("Asia/Kolkata");
+    const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
-  };
+    const handleSave = () => {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2500);
+    };
 
-  return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        select { appearance: none; }
+    const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+
+    return (
+        <>
+            <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        .st-root{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:${T.white};color:${T.body};-webkit-font-smoothing:antialiased;overflow-x:clip;min-height:100vh}
+        .st-root *{box-sizing:border-box;margin:0;padding:0;font-family:inherit}
+        .st-root ::selection{background:${T.ink};color:#fff}
+        .st-root a{text-decoration:none;color:inherit}
+
+        .st-card{background:rgba(255,255,255,.78);backdrop-filter:blur(14px);border:1px solid ${T.line};border-radius:28px;padding:32px;box-shadow:0 18px 50px rgba(12,10,9,.04)}
+        .st-row{display:flex;align-items:center;gap:14px;padding:14px 12px;border-radius:20px;transition:background .2s}
+        .st-row:hover{background:${T.surface}}
+        .st-row + .st-row{margin-top:4px}
+        .st-nav{cursor:pointer}
+        .st-nav svg:last-child{transition:transform .3s cubic-bezier(.22,1,.36,1)}
+        .st-nav:hover svg:last-child{transform:translateX(4px)}
+        .st-switch{position:relative;width:48px;height:26px;border-radius:999px;border:0;cursor:pointer;flex-shrink:0;transition:background .25s}
+
+        .st-input{width:100%;padding:13px 42px 13px 18px;border:1px solid ${T.line};border-radius:16px;font-size:14.5px;color:${T.ink};background:${T.surface2};outline:0;appearance:none;cursor:pointer;transition:border-color .2s,background .2s}
+        .st-input:focus{border-color:${T.ink};background:#fff}
+        .st-grid-half{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:12px}
+
+        .st-btn-ink{display:inline-flex;align-items:center;gap:8px;background:${T.ink};color:#fff;font-weight:500;font-size:14px;padding:14px 32px;border-radius:999px;border:0;cursor:pointer;transition:box-shadow .25s,transform .25s}
+        .st-btn-ink:hover{box-shadow:0 16px 36px rgba(12,10,9,.25);transform:translateY(-1px)}
+        .st-btn-outline{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);color:${T.ink};font-weight:500;font-size:14px;padding:13px 28px;border-radius:999px;border:1px solid ${T.line};cursor:pointer;transition:background .25s,border-color .25s,transform .25s}
+        .st-btn-outline:hover{background:#fff;border-color:#D6D3D1;transform:translateY(-1px)}
+        .st-pill{display:inline-flex;align-items:center;font-size:13px;font-weight:500;color:${T.ink};padding:8px 18px;border-radius:999px;border:1px solid ${T.line};background:rgba(255,255,255,.78);backdrop-filter:blur(14px);cursor:pointer;transition:background .25s,border-color .25s}
+        .st-pill:hover{background:#fff;border-color:#D6D3D1}
+        .st-root a:focus-visible,.st-root button:focus-visible,.st-root select:focus-visible{outline:2px solid ${T.ink};outline-offset:3px}
+
+        @keyframes st-pulse{0%,100%{opacity:.35;transform:scale(1)}50%{opacity:1;transform:scale(1.9)}}
+        .st-node{transform-box:fill-box;transform-origin:center;animation:st-pulse 4.5s ease-in-out infinite}
+
+        @media (max-width:900px){.st-neural{opacity:.3!important;width:100%!important}}
+        @media (max-width:560px){.st-card{padding:22px 18px;border-radius:24px}.st-grid-half{grid-template-columns:1fr}}
+        @media (prefers-reduced-motion:reduce){.st-node{animation:none}.st-btn-ink,.st-btn-outline,.st-pill,.st-row,.st-switch{transition:none}}
       `}</style>
 
-      <div style={{ minHeight: "100vh", background: "linear-gradient(145deg,#F0F4FF 0%,#F8F6FF 40%,#EFF6FF 100%)", fontFamily: "'DM Sans', sans-serif" }}>
+            <div className="st-root">
 
-        {/* Ambient blobs */}
-        <div style={{ position: "fixed", top: -80, right: -80, width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle,rgba(99,102,241,0.08) 0%,transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
-        <div style={{ position: "fixed", bottom: -60, left: -60, width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle,rgba(139,92,246,0.07) 0%,transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
+                {/* ── HEADER ── */}
+                <Section style={{ padding: "56px 24px 72px", overflow: "hidden", background: `linear-gradient(180deg, ${T.white} 0%, #F4F0FF 100%)` }}>
+                    <Aura blobs={[
+                        { c: "#C9B8FF", s: 460, t: "-22%", l: "-8%", o: 0.5 },
+                        { c: "#A5D8FF", s: 420, t: "0%", r: "-6%", o: 0.42 },
+                        { c: "#FFD9B8", s: 360, b: "-24%", l: "34%", o: 0.45 },
+                    ]} />
+                    <div className="st-neural" aria-hidden style={{ position: "absolute", top: "0%", right: "2%", width: "min(46vw,560px)", opacity: 0.7, pointerEvents: "none" }}>
+                        <NeuralArt reduce={reduce} count={40} id="st-g1" style={{ width: "100%" }} />
+                    </div>
+                    <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: "radial-gradient(ellipse 55% 60% at 40% 48%, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.25) 60%, rgba(255,255,255,0) 100%)" }} />
 
-        <div style={{ maxWidth: 860, margin: "0 auto", padding: "40px 24px 80px", position: "relative", zIndex: 1 }}>
+                    <div style={{ position: "relative", zIndex: 1, maxWidth: 800, margin: "0 auto" }}>
+                        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", justifyContent: "space-between", gap: 24 }}>
+                            <div>
+                                <motion.div variants={fadeUp} style={{ marginBottom: 24 }}>
+                                    <span style={{ ...GLASS, display: "inline-flex", alignItems: "center", gap: 8, borderRadius: 40, padding: "6px 16px 6px 8px" }}>
+                                        <span style={{ position: "relative", width: 26, height: 26 }}>
+                                            <motion.span animate={{ scale: [1, 1.9], opacity: [0.35, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }} style={{ position: "absolute", inset: 0, borderRadius: "50%", background: T.ink }} />
+                                            <span style={{ position: "relative", width: 26, height: 26, borderRadius: "50%", background: T.ink, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                                <Icon d={ICONS.sparkle} size={13} color="white" />
+                                            </span>
+                                        </span>
+                                        <span style={{ fontSize: 12.5, fontWeight: 500, color: T.ink, letterSpacing: "-0.01em" }}>Account management</span>
+                                    </span>
+                                </motion.div>
+                                <WordReveal as="h1" text="Settings." style={{ ...H, fontSize: "clamp(38px,6vw,72px)", marginBottom: 14 }} />
+                                <motion.p variants={fadeUp} style={{ fontSize: "clamp(15px,2vw,17px)", color: T.body, lineHeight: 1.7, maxWidth: 480 }}>
+                                    Manage notifications, security, and platform preferences.
+                                </motion.p>
+                            </div>
 
-          {/* ── HERO ─────────────────────────────────────────────────────────── */}
-          <motion.div
-            initial={{ opacity: 0, y: -24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}
-            style={{
-              background: "linear-gradient(135deg,#1E3A5F 0%,#2D4E8A 55%,#3B5CB8 100%)",
-              borderRadius: 24, padding: "36px 40px", marginBottom: 32,
-              position: "relative", overflow: "hidden", boxShadow: "0 16px 48px rgba(30,58,95,0.4)",
-            }}
-          >
-            <div style={{ position: "absolute", top: -50, right: -50, width: 240, height: 240, borderRadius: "50%", background: "rgba(255,255,255,0.05)", pointerEvents: "none" }} />
-            <div style={{ position: "absolute", bottom: -30, right: 140, width: 160, height: 160, borderRadius: "50%", background: "rgba(255,255,255,0.04)", pointerEvents: "none" }} />
+                            <AnimatePresence>
+                                {saved && (
+                                    <motion.div role="status" initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.94 }} transition={{ duration: 0.4, ease: EASE }}
+                                        style={{ ...GLASS, borderRadius: 999, padding: "10px 20px 10px 10px", display: "flex", alignItems: "center", gap: 10 }}>
+                                        <IconTile d={ICONS.check} size={30} dark />
+                                        <span style={{ fontSize: 13.5, fontWeight: 500, color: T.ink }}>Settings saved</span>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
 
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                  <Icon d={ICONS.sparkle} size={15} color="rgba(255,255,255,0.7)" />
-                  <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: 600 }}>Account Management</p>
+                        <motion.div variants={fadeUp} style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 36 }}>
+                            {NAV_PILLS.map((p) => (
+                                <button key={p.id} type="button" className="st-pill" onClick={() => scrollTo(p.id)}>{p.label}</button>
+                            ))}
+                        </motion.div>
+                    </div>
+                </Section>
+
+                {/* ── SETTINGS ── */}
+                <div style={{ position: "relative", padding: "72px 24px 110px", overflow: "hidden" }}>
+                    <Aura blobs={[
+                        { c: "#F6A5D8", s: 400, t: "6%", r: "-10%", o: 0.2 },
+                        { c: "#A5D8FF", s: 440, t: "50%", l: "-12%", o: 0.28 },
+                        { c: "#FFD9B8", s: 400, b: "2%", r: "-8%", o: 0.32 },
+                    ]} />
+                    <Section style={{ zIndex: 1, maxWidth: 800, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
+
+                        <SettingsCard id="st-notifications" title="Notification preferences" subtitle="Control how and when CuraLink contacts you" icon={ICONS.bell}>
+                            <Toggle enabled={emailNotif} onToggle={() => setEmailNotif(!emailNotif)} icon={ICONS.mail}
+                                label="Email notifications" desc="Appointment confirmations, cancellations, and platform updates." />
+                            <Toggle enabled={smsReminders} onToggle={() => setSmsReminders(!smsReminders)} icon={ICONS.sms}
+                                label="SMS reminders" desc="Reminders for your upcoming consultations sent by text." />
+                            <Toggle enabled={availReminders} onToggle={() => setAvailReminders(!availReminders)} icon={ICONS.clock}
+                                label="Availability update reminders" desc="Weekly prompts to update your schedule before the new week." />
+                        </SettingsCard>
+
+                        <SettingsCard id="st-security" title="Security & privacy" subtitle="Manage your credentials and data access controls" icon={ICONS.shield}>
+                            <NavRow icon={ICONS.key} label="Change your password" to="/doctor/change-password" />
+                            <NavRow icon={ICONS.privacy} label="Manage data & privacy settings" to="/doctor/privacy-settings" />
+                            <NavRow icon={ICONS.shield} label="Two-factor authentication" to="/doctor/2fa" />
+                        </SettingsCard>
+
+                        <SettingsCard id="st-preferences" title="Platform preferences" subtitle="Language, timezone, and display settings" icon={ICONS.globe}>
+                            <div className="st-grid-half">
+                                <SelectField id="st-lang" label="Display language" value={language} onChange={setLanguage}
+                                    options={[{ value: "en-US", label: "English (United States)" }, { value: "hi-IN", label: "हिन्दी (भारत)" }]} />
+                                <SelectField id="st-tz" label="Timezone for schedule" value={timezone} onChange={setTimezone}
+                                    options={[{ value: "Asia/Kolkata", label: "Asia/Kolkata (IST)" }, { value: "America/New_York", label: "America/New_York (EST)" }]} />
+                            </div>
+                            <Toggle enabled={darkMode} onToggle={() => setDarkMode(!darkMode)} icon={ICONS.moon}
+                                label="Dark mode theme" desc="Switch the doctor portal to a dark colour scheme." />
+                        </SettingsCard>
+
+                        <SettingsCard id="st-danger" title="Danger zone" subtitle="Irreversible account actions" icon={ICONS.trash} danger>
+                            <p style={{ fontSize: 14, color: T.body, lineHeight: 1.7, marginBottom: 20, maxWidth: 560 }}>
+                                Permanently delete your CuraLink account and all associated patient records, appointment history, and analytics data. This action <strong style={{ color: T.ink, fontWeight: 500 }}>cannot be undone</strong>.
+                            </p>
+                            <button type="button" className="st-btn-outline"
+                                onClick={() => window.confirm("Are you absolutely sure? This cannot be undone.") && alert("Account deletion initiated.")}>
+                                <Icon d={ICONS.trash} size={14} color={T.ink} /> Request account deletion
+                            </button>
+                        </SettingsCard>
+
+                        <motion.div variants={fadeUp} style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+                            <button type="button" className="st-btn-ink" onClick={handleSave}>
+                                <Icon d={ICONS.save} size={15} color="white" /> Save all settings
+                            </button>
+                        </motion.div>
+                    </Section>
                 </div>
-                <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 34, fontWeight: 800, color: "white", lineHeight: 1.15 }}>
-                  Settings<span style={{ color: "rgba(255,255,255,0.45)" }}>.</span>
-                </h1>
-                <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, marginTop: 5, fontWeight: 500 }}>
-                  Manage notifications, security, and platform preferences.
-                </p>
-              </div>
 
-              {/* Save confirmation badge */}
-              <AnimatePresence>
-                {saved && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8, y: 10 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.8, y: 10 }}
-                    style={{
-                      background: "rgba(16,185,129,0.2)", border: "1px solid rgba(16,185,129,0.4)",
-                      borderRadius: 14, padding: "10px 18px", display: "flex", alignItems: "center", gap: 8,
-                    }}
-                  >
-                    <Icon d={ICONS.check} size={16} color="#10B981" />
-                    <span style={{ fontSize: 12, fontWeight: 700, color: "#10B981" }}>Settings saved!</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
-
-            {/* Quick nav pills */}
-            <div style={{ display: "flex", gap: 8, marginTop: 24, flexWrap: "wrap" }}>
-              {["Notifications", "Security", "Preferences", "Danger Zone"].map((label, i) => (
-                <div key={i} style={{
-                  background: "rgba(255,255,255,0.12)", borderRadius: 10, padding: "6px 14px",
-                  border: "1px solid rgba(255,255,255,0.15)", fontSize: 11, fontWeight: 700,
-                  color: "rgba(255,255,255,0.7)", cursor: "pointer",
-                }}>
-                  {label}
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* ── SECTION 1: NOTIFICATIONS ──────────────────────────────────── */}
-          <SettingsCard
-            title="Notification Preferences"
-            subtitle="Control how and when CuraLink contacts you"
-            icon={ICONS.bell} iconBg="#EEF2FF" iconColor="#6366F1"
-            delay={0.18}
-          >
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <Toggle
-                enabled={emailNotif} onToggle={() => setEmailNotif(!emailNotif)}
-                label="Email Notifications" desc="Appointment confirmations, cancellations, and platform updates."
-                icon={ICONS.mail} iconBg="#EEF2FF" iconColor="#6366F1"
-              />
-              <Toggle
-                enabled={smsReminders} onToggle={() => setSmsReminders(!smsReminders)}
-                label="SMS Reminders" desc="Reminders for your upcoming consultations sent by text."
-                icon={ICONS.sms} iconBg="#FFFBEB" iconColor="#D97706"
-              />
-              <Toggle
-                enabled={availReminders} onToggle={() => setAvailReminders(!availReminders)}
-                label="Availability Update Reminders" desc="Weekly prompts to update your schedule before the new week."
-                icon={ICONS.clock} iconBg="#ECFDF5" iconColor="#059669"
-              />
-            </div>
-          </SettingsCard>
-
-          {/* ── SECTION 2: SECURITY ───────────────────────────────────────── */}
-          <SettingsCard
-            title="Security & Privacy"
-            subtitle="Manage your credentials and data access controls"
-            icon={ICONS.shield} iconBg="#FDF2F8" iconColor="#DB2777"
-            delay={0.24}
-          >
-            <NavRow icon={ICONS.key} iconBg="#EEF2FF" iconColor="#6366F1" label="Change Your Password" to="/doctor/change-password" />
-            <NavRow icon={ICONS.privacy} iconBg="#ECFDF5" iconColor="#059669" label="Manage Data & Privacy Settings" to="/doctor/privacy-settings" />
-            <NavRow icon={ICONS.shield} iconBg="#FFFBEB" iconColor="#D97706" label="Two-Factor Authentication" to="/doctor/2fa" />
-          </SettingsCard>
-
-          {/* ── SECTION 3: PREFERENCES ────────────────────────────────────── */}
-          <SettingsCard
-            title="Platform Preferences"
-            subtitle="Language, timezone, and display settings"
-            icon={ICONS.globe} iconBg="#ECFDF5" iconColor="#059669"
-            delay={0.30}
-          >
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-              <SelectField
-                label="Display Language" value={language} onChange={setLanguage}
-                options={[{ value: "en-US", label: "English (United States)" }, { value: "hi-IN", label: "हिन्दी (भारत)" }]}
-              />
-              <SelectField
-                label="Timezone for Schedule" value={timezone} onChange={setTimezone}
-                options={[{ value: "Asia/Kolkata", label: "Asia/Kolkata (IST)" }, { value: "America/New_York", label: "America/New_York (EST)" }]}
-              />
-            </div>
-            <Toggle
-              enabled={darkMode} onToggle={() => setDarkMode(!darkMode)}
-              label="Dark Mode Theme" desc="Switch the doctor portal to a dark colour scheme."
-              icon={ICONS.moon} iconBg="#EEF2FF" iconColor="#6366F1"
-            />
-          </SettingsCard>
-
-          {/* ── SECTION 4: DANGER ZONE ────────────────────────────────────── */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36 }}
-            style={{
-              background: "white", borderRadius: 24, border: "1.5px solid #FEE2E2",
-              boxShadow: "0 2px 16px rgba(0,0,0,0.06)", overflow: "hidden", marginBottom: 32,
-            }}
-          >
-            <div style={{ padding: "22px 28px 18px", borderBottom: "1px solid #FEE2E2", display: "flex", alignItems: "center", gap: 14 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 14, background: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <Icon d={ICONS.trash} size={20} color="#EF4444" />
-              </div>
-              <div>
-                <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#B91C1C" }}>Danger Zone</h2>
-                <p style={{ fontSize: 12, color: "#94A3B8", marginTop: 2 }}>Irreversible account actions</p>
-              </div>
-            </div>
-            <div style={{ padding: "22px 28px" }}>
-              <p style={{ fontSize: 13, color: "#64748B", lineHeight: 1.7, marginBottom: 20 }}>
-                Permanently delete your CuraLink account and all associated patient records, appointment history, and analytics data. This action <strong style={{ color: "#B91C1C" }}>cannot be undone</strong>.
-              </p>
-              <motion.button
-                whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(239,68,68,0.25)" }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => window.confirm("Are you absolutely sure? This cannot be undone.") && alert("Account deletion initiated.")}
-                style={{
-                  background: "#FEF2F2", color: "#DC2626", border: "1.5px solid #FEE2E2",
-                  borderRadius: 14, padding: "12px 24px", fontWeight: 700, fontSize: 13,
-                  cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-                  display: "flex", alignItems: "center", gap: 6,
-                  transition: "all 0.2s",
-                }}
-              >
-                <Icon d={ICONS.trash} size={14} color="#DC2626" />
-                Request Account Deletion
-              </motion.button>
-            </div>
-          </motion.div>
-
-          {/* ── SAVE BUTTON ───────────────────────────────────────────────── */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.42 }}
-            style={{ display: "flex", justifyContent: "flex-end" }}
-          >
-            <motion.button
-              whileHover={{ y: -3, boxShadow: "0 16px 40px rgba(99,102,241,0.4)" }}
-              whileTap={{ scale: 0.97 }}
-              onClick={handleSave}
-              style={{
-                background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
-                color: "white", border: "none", borderRadius: 16,
-                padding: "14px 40px", fontWeight: 700, fontSize: 14,
-                cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-                boxShadow: "0 6px 24px rgba(99,102,241,0.35)",
-                display: "flex", alignItems: "center", gap: 8,
-              }}
-            >
-              <Icon d={ICONS.save} size={16} color="white" />
-              Save All Settings
-            </motion.button>
-          </motion.div>
-        </div>
-      </div>
-    </>
-  );
+        </>
+    );
 };
 
 export default DoctorSettingsPage;

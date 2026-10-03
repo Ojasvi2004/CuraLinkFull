@@ -20,6 +20,8 @@ import SettingsPage from './pages/ProfileSettings'
 import DoctorPatientRecordPage from './pages/DoctorPatientRecordPage'
 import DoctorAddPatientPage from './pages/AddPatientPage'
 import DoctorPatientDataAccessPage from './pages/DoctorPatientDataAccessPage'
+import DoctorFooter from './components/Footer'
+import DoctorProfile from './pages/DoctorProfile'
 
 
 
@@ -47,7 +49,7 @@ function App() {
       <Route path='/doctor/register' element={<DoctorRegistrationPage/>}></Route>
       <Route path='/doctor/login' element={<DoctorLoginPage/>}></Route>
 
-
+     <Route path='/doctor/profile' element={<DoctorProfile/>}></Route>
       <Route path='/doctor/patient-record/pat002' element={<ProtectedRouteForDoctors><DoctorPatientRecordPage/></ProtectedRouteForDoctors>}></Route>
       <Route path='/doctor/add-patient' element={<DoctorAddPatientPage></DoctorAddPatientPage>}></Route>
       <Route  path='/doctor/dashboard' element={<ProtectedRouteForDoctors><DoctorDashboardPage/></ProtectedRouteForDoctors>} ></Route>
@@ -58,6 +60,7 @@ function App() {
       <Route path='/doctor/settings' element={<ProtectedRouteForDoctors><SettingsPage/></ProtectedRouteForDoctors>} ></Route>
       <Route path='/doctor/permissions' element={<DoctorPatientDataAccessPage></DoctorPatientDataAccessPage>}></Route>
     </Routes>
+    <DoctorFooter/>
    
      
     </>

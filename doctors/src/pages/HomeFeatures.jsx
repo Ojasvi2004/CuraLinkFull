@@ -1,477 +1,498 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import {
+  motion, animate, useInView, useMotionValue, useReducedMotion,
+  useScroll, useSpring, useTransform,
+} from "framer-motion";
+import DoctorHero from "./HeroSection";     // the neural-brain hero (adjust path)
 
-// ─── ICON SYSTEM ─────────────────────────────────────────────────────────────
-const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
+/* ─── THEME TOKENS (identical to hero + footer) ─────────────────────────── */
+const T = {
+  ink: "#0C0A09", body: "#57534E", muted: "#A8A29E", line: "#ECEAE6",
+  surface: "#F5F4F2", surface2: "#FAFAF9", white: "#FFFFFF",
+};
+const EASE = [0.22, 1, 0.36, 1];
+const ORBS = {
+  violet: "radial-gradient(circle at 30% 28%, #FFFFFF 0%, #C9B8FF 22%, #7C8CFF 48%, #F6A5D8 78%, #FFD9B8 100%)",
+  sun: "radial-gradient(circle at 32% 26%, #FFF3D6 0%, #FFB36B 28%, #FF5E3A 58%, #7A2BFF 100%)",
+  sky: "radial-gradient(circle at 34% 30%, #FFFFFF 0%, #A5D8FF 26%, #5B8CFF 56%, #C2A6FF 100%)",
+  mint: "radial-gradient(circle at 30% 28%, #FFFFFF 0%, #BDEFD8 26%, #5FD0A5 56%, #8EC5FF 100%)",
+};
+const GLASS = {
+  background: "rgba(255,255,255,0.78)",
+  backdropFilter: "blur(14px)",
+  border: `1px solid ${T.line}`,
+};
+
+/* ─── ICONS ─────────────────────────────────────────────────────────────── */
+const Icon = ({ d, size = 22, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
-    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={style}>
-    {Array.isArray(d) ? d.map((p, i) => <path key={i} d={p} />) : <path d={d} />}
+    strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    {(Array.isArray(d) ? d : [d]).map((p, i) => <path key={i} d={p} />)}
   </svg>
 );
-
-const ICONS = {
+const I = {
   calendar: ["M8 2v3M16 2v3M3 8h18M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5z"],
-  queue:    ["M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2", "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z", "M23 21v-2a4 4 0 0 0-3-3.87", "M16 3.13a4 4 0 0 1 0 7.75"],
-  video:    ["M23 7l-7 5 7 5V7z", "M1 5h15a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H1a2 2 0 0 0 0-5V5z"],
-  notes:    ["M9 12h6", "M9 16h6", "M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z", "M9 7h6"],
-  chart:    ["M18 20V10", "M12 20V4", "M6 20v-6"],
-  user:     ["M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2", "M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"],
-  sparkle:  ["M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z", "M5 3v4M3 5h4M19 17v4M17 19h4"],
-  arrow:    "M17 8l4 4m0 0l-4 4m4-4H3",
-  steth:    ["M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3", "M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"],
-  check:    ["M22 11.08V12a10 10 0 1 1-5.93-9.14", "m9 11 3 3L22 4"],
-  pulse:    "M22 12h-4l-3 9L9 3l-3 9H2",
-  shield:   ["M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"],
-  clock:    ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M12 6v6l4 2"],
-  quote:    "M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1zm12 0c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z",
+  queue: ["M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2", "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z", "M23 21v-2a4 4 0 0 0-3-3.87", "M16 3.13a4 4 0 0 1 0 7.75"],
+  video: ["M23 7l-7 5 7 5V7z", "M1 5h15a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H1V5z"],
+  notes: ["M9 12h6", "M9 16h6", "M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z", "M9 7h6"],
+  chart: ["M18 20V10", "M12 20V4", "M6 20v-6"],
+  user: ["M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2", "M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"],
+  check: ["M22 11.08V12a10 10 0 1 1-5.93-9.14", "m9 11 3 3L22 4"],
+  arrow: "M17 8l4 4m0 0l-4 4m4-4H3",
+  steth: ["M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1", "M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"],
+  shield: ["M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"],
+  sparkle: ["M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z", "M5 3v4M3 5h4M19 17v4M17 19h4"],
 };
 
-// ─── FEATURES DATA ────────────────────────────────────────────────────────────
+/* ─── DATA ──────────────────────────────────────────────────────────────── */
 const FEATURES = [
-  { icon: ICONS.calendar, title: "Smart Scheduling", description: "Effortlessly set and update consultation slots for in-person and digital appointments with intelligent conflict detection.", gradient: "linear-gradient(135deg,#6366F1,#8B5CF6)", glow: "rgba(99,102,241,0.22)", bg: "#EEF2FF", color: "#6366F1", tag: "Schedule" },
-  { icon: ICONS.queue, title: "Live Patient Queue", description: "Real-time queue management that reduces wait times and keeps your clinic flowing smoothly through any busy day.", gradient: "linear-gradient(135deg,#0EA5E9,#38BDF8)", glow: "rgba(14,165,233,0.22)", bg: "#E0F2FE", color: "#0284C7", tag: "Live" },
-  { icon: ICONS.video, title: "Secure Telemedicine", description: "High-quality encrypted video consultations built directly into your workflow — no third-party apps needed.", gradient: "linear-gradient(135deg,#10B981,#34D399)", glow: "rgba(16,185,129,0.22)", bg: "#ECFDF5", color: "#059669", tag: "Digital" },
-  { icon: ICONS.notes, title: "Patient History", description: "Instant access to patient-shared medical records, past prescriptions, and consultation notes at a glance.", gradient: "linear-gradient(135deg,#F59E0B,#FBBF24)", glow: "rgba(245,158,11,0.22)", bg: "#FFFBEB", color: "#D97706", tag: "Records" },
-  { icon: ICONS.user, title: "Digital Presence", description: "Build a professional profile that showcases your expertise and helps patients find and trust you instantly.", gradient: "linear-gradient(135deg,#EC4899,#F472B6)", glow: "rgba(236,72,153,0.22)", bg: "#FDF2F8", color: "#DB2777", tag: "Profile" },
-  { icon: ICONS.chart, title: "Practice Analytics", description: "Deep insights on revenue, patient volume, no-show rates, and growth trends — all in one unified view.", gradient: "linear-gradient(135deg,#8B5CF6,#A78BFA)", glow: "rgba(139,92,246,0.22)", bg: "#F5F3FF", color: "#7C3AED", tag: "Insights" },
+  { icon: I.calendar, title: "Smart scheduling", desc: "Set in-person and video slots once. Conflicts are caught before a patient ever sees them." },
+  { icon: I.queue, title: "Live patient queue", desc: "Patients see their turn in real time, so your waiting room stays calm on the busiest day." },
+  { icon: I.video, title: "Built-in video visits", desc: "Encrypted consultations start from the appointment itself. No links, no extra apps." },
+  { icon: I.notes, title: "Patient history", desc: "Shared records, past prescriptions and notes open beside the patient you're seeing." },
+  { icon: I.user, title: "Public profile", desc: "A clear page with your experience, fees and clinics, so patients can choose you with confidence." },
+  { icon: I.chart, title: "Practice analytics", desc: "Revenue, patient volume and no-show rate on one screen, compared week over week." },
 ];
-
-// ─── TESTIMONIALS ─────────────────────────────────────────────────────────────
-const TESTIMONIALS = [
-  { name: "Dr. Riya Chauhan", role: "General Medicine · Apollo Delhi", quote: "CuraLink transformed how I connect with patients. The telemedicine feature cut my no-show rate by 40% in the first month alone.", avatar: "RC", gradient: "linear-gradient(135deg,#6366F1,#8B5CF6)" },
-  { name: "Dr. Arjun Mehta", role: "Cardiologist · Fortis Mumbai", quote: "The live queue system is a game-changer. My clinic now runs like clockwork. Patients actually arrive prepared and on time.", avatar: "AM", gradient: "linear-gradient(135deg,#10B981,#34D399)" },
-  { name: "Dr. Sneha Rao", role: "Paediatrician · Manipal Bangalore", quote: "Setting up was incredibly fast. Within an hour I had my full schedule live and was receiving bookings. Outstanding platform.", avatar: "SR", gradient: "linear-gradient(135deg,#F59E0B,#FBBF24)" },
-];
-
-// ─── STATS ────────────────────────────────────────────────────────────────────
-const STATS = [
-  { value: "12,000+", label: "Verified Doctors", icon: ICONS.user },
-  { value: "2.4M+", label: "Consultations Done", icon: ICONS.steth },
-  { value: "98.2%", label: "Uptime Guarantee", icon: ICONS.shield },
-  { value: "4.9★", label: "Average Rating", icon: ICONS.sparkle },
-];
-
-// ─── HOW IT WORKS STEPS ───────────────────────────────────────────────────────
 const STEPS = [
-  { num: "01", title: "Register & Verify", desc: "Sign up in minutes, submit credentials, and our team verifies your profile within 24 hours.", icon: ICONS.check, color: "#6366F1", bg: "#EEF2FF" },
-  { num: "02", title: "Set Up Your Clinic", desc: "Add services, fees, clinic locations, and upload a professional photo to attract patients.", icon: ICONS.user, color: "#059669", bg: "#ECFDF5" },
-  { num: "03", title: "Define Availability", desc: "Use the intuitive calendar to set physical and teleconsultation hours that fit your lifestyle.", icon: ICONS.calendar, color: "#D97706", bg: "#FFFBEB" },
-  { num: "04", title: "Start Consulting", desc: "Receive bookings, manage your queue, and consult patients — all from one beautiful dashboard.", icon: ICONS.steth, color: "#0284C7", bg: "#E0F2FE" },
+  { icon: I.check, title: "Register and verify", desc: "Sign up in minutes and submit your credentials. We verify your profile within 24 hours." },
+  { icon: I.user, title: "Set up your clinic", desc: "Add services, fees and clinic locations, then upload a professional photo." },
+  { icon: I.calendar, title: "Set your availability", desc: "Mark in-person and video hours on the calendar. Change them any time." },
+  { icon: I.steth, title: "Start consulting", desc: "Accept bookings, run your queue and see patients from one dashboard." },
 ];
+const TESTIMONIALS = [
+  { name: "Dr. Riya Chauhan", role: "General Medicine, Apollo Delhi", quote: "Video visits cut my no-show rate by 40% in the first month.", av: "RC", orb: ORBS.violet },
+  { name: "Dr. Arjun Mehta", role: "Cardiologist, Fortis Mumbai", quote: "The live queue changed my clinic. Patients arrive prepared and on time.", av: "AM", orb: ORBS.sun },
+  { name: "Dr. Sneha Rao", role: "Paediatrician, Manipal Bangalore", quote: "My full schedule was live and taking bookings within an hour.", av: "SR", orb: ORBS.sky },
+];
+const STATS = [
+  { label: "Verified doctors", to: 12000, decimals: 0, suffix: "+" },
+  { label: "Consultations", to: 2.4, decimals: 1, suffix: "M+" },
+  { label: "Uptime", to: 98.2, decimals: 1, suffix: "%" },
+  { label: "Average rating", to: 4.9, decimals: 1, suffix: " ★" },
+];
+const MARQUEE = ["General Medicine", "Cardiology", "Paediatrics", "Dermatology", "Orthopaedics", "Gynaecology", "Psychiatry", "ENT"];
+const BEADS = [ORBS.violet, ORBS.sun, ORBS.sky, ORBS.mint];
 
-// ─── FEATURE CARD ─────────────────────────────────────────────────────────────
-const FeatureCard = ({ feat, index }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 32 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, amount: 0.2 }}
-    transition={{ delay: 0.07 * index, type: "spring", stiffness: 240, damping: 22 }}
-    whileHover={{ y: -8, boxShadow: `0 24px 56px ${feat.glow}` }}
-    style={{
-      background: "white", borderRadius: 24, border: "1px solid #EEF2FF",
-      boxShadow: "0 2px 16px rgba(0,0,0,0.06)", overflow: "hidden", cursor: "default",
-    }}
-  >
-    <div style={{ height: 4, background: feat.gradient }} />
-    <div style={{ padding: "28px 24px" }}>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 18 }}>
-        <div style={{ width: 52, height: 52, borderRadius: 16, background: feat.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Icon d={feat.icon} size={24} color={feat.color} />
-        </div>
-        <span style={{ fontSize: 10, fontWeight: 700, color: feat.color, background: feat.bg, padding: "3px 10px", borderRadius: 20, letterSpacing: "0.07em", textTransform: "uppercase" }}>{feat.tag}</span>
-      </div>
-      <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#0F172A", marginBottom: 10 }}>{feat.title}</h3>
-      <p style={{ fontSize: 13, color: "#64748B", lineHeight: 1.7 }}>{feat.description}</p>
-    </div>
-  </motion.div>
+/* ─── VARIANTS / HELPERS ────────────────────────────────────────────────── */
+const fadeUp = { hidden: { opacity: 0, y: 40 }, visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: EASE } } };
+const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.12 } } };
+const scaleIn = { hidden: { opacity: 0, scale: 0.92 }, visible: { opacity: 1, scale: 1, transition: { duration: 0.8, ease: EASE } } };
+const wordParent = { hidden: {}, visible: { transition: { staggerChildren: 0.07 } } };
+const wordChild = { hidden: { y: "115%", rotate: 4 }, visible: { y: 0, rotate: 0, transition: { duration: 0.85, ease: EASE } } };
+
+const useParallax = (progress, from, to) => {
+  const reduce = useReducedMotion();
+  return useTransform(progress, [0, 1], reduce ? [from, from] : [from, to]);
+};
+
+// iridescent progress bar (was solid ink)
+const ScrollProgress = () => {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, { stiffness: 120, damping: 28, restDelta: 0.001 });
+  return <motion.div aria-hidden style={{ position: "fixed", top: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg,#7C8CFF,#F6A5D8,#FFB36B)", transformOrigin: "0% 50%", scaleX, zIndex: 60 }} />;
+};
+
+// soft blurred colour blobs, the same recipe as the footer aurora
+const Aura = ({ blobs }) => (
+  <div aria-hidden style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none", zIndex: 0 }}>
+    {blobs.map((b, i) => (
+      <div key={i} style={{ position: "absolute", borderRadius: "50%", filter: "blur(80px)", width: b.s, height: b.s, background: b.c, opacity: b.o ?? 0.45, top: b.t, left: b.l, right: b.r, bottom: b.b }} />
+    ))}
+  </div>
 );
 
-// ─── LANDING PAGE ─────────────────────────────────────────────────────────────
-const DoctorLandingPage = () => {
+// glass bead, the "neuron" from the hero used as a bullet
+const Bead = ({ bg, size = 14 }) => (
+  <span style={{ position: "relative", width: size, height: size, borderRadius: "50%", background: bg, flexShrink: 0, boxShadow: "0 0 14px rgba(124,140,255,0.35)" }}>
+    <span style={{ position: "absolute", top: "18%", left: "22%", width: "30%", height: "30%", borderRadius: "50%", background: "rgba(255,255,255,0.9)" }} />
+  </span>
+);
+
+// SVG neural constellation (same generator as the footer)
+const NeuralArt = ({ reduce, count = 46, style = {}, id = "lp-g", live = true }) => {
+  const { nodes, edges } = useMemo(() => {
+    let s = 7;
+    const rnd = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+    const nodes = [];
+    while (nodes.length < count) {
+      const x = rnd() * 2 - 1, y = rnd() * 2 - 1;
+      if (x * x + (y * y) / 0.62 > 1) continue;
+      if (nodes.some((n) => (n.x - x) ** 2 + (n.y - y) ** 2 < 0.028)) continue;
+      nodes.push({ x, y, r: 2.2 + rnd() * 3, d: rnd() * 5, h: rnd() });
+    }
+    const edges = [];
+    nodes.forEach((a, i) => nodes.forEach((b, j) => {
+      if (j > i && (a.x - b.x) ** 2 + (a.y - b.y) ** 2 < 0.13) edges.push([a, b]);
+    }));
+    return { nodes, edges };
+  }, [count]);
+  const P = ["#7C8CFF", "#C9B8FF", "#F6A5D8", "#A5D8FF", "#FFB36B"];
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800;900&family=DM+Sans:wght@300;400;500;600;700&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-      `}</style>
-
-      <div style={{ fontFamily: "'DM Sans', sans-serif", color: "#0F172A", overflowX: "hidden" }}>
-
-        {/* ── HERO ──────────────────────────────────────────────────────────── */}
-        <section style={{ minHeight: "100vh", background: "linear-gradient(145deg,#F0F4FF 0%,#F8F6FF 40%,#EFF6FF 100%)", position: "relative", display: "flex", alignItems: "center", overflow: "hidden" }}>
-
-          {/* Ambient blobs */}
-          <div style={{ position: "absolute", top: -120, right: -120, width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle,rgba(99,102,241,0.1) 0%,transparent 70%)", pointerEvents: "none" }} />
-          <div style={{ position: "absolute", bottom: -80, left: -80, width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle,rgba(139,92,246,0.08) 0%,transparent 70%)", pointerEvents: "none" }} />
-          <div style={{ position: "absolute", top: "30%", left: "55%", width: 200, height: 200, borderRadius: "50%", background: "radial-gradient(circle,rgba(16,185,129,0.06) 0%,transparent 70%)", pointerEvents: "none" }} />
-
-          <div style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 24px", position: "relative", zIndex: 1, width: "100%" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "center" }}>
-
-              {/* Left */}
-              <div>
-                <motion.div
-                  initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6 }}
-                >
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#ECFDF5", border: "1px solid #6EE7B7", borderRadius: 20, padding: "6px 16px", marginBottom: 28 }}>
-                    <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#10B981" }} />
-                    <span style={{ fontSize: 11, fontWeight: 700, color: "#059669", textTransform: "uppercase", letterSpacing: "0.1em" }}>For Medical Professionals</span>
-                  </div>
-
-                  <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 58, fontWeight: 900, lineHeight: 1.08, color: "#0F172A", marginBottom: 24 }}>
-                    Elevate Your<br />
-                    Practice with<br />
-                    <span style={{ color: "#6366F1" }}>CuraLink.</span>
-                  </h1>
-
-                  <p style={{ fontSize: 17, color: "#475569", lineHeight: 1.75, marginBottom: 36, maxWidth: 480 }}>
-                    Join 12,000+ doctors who streamlined their appointments, expanded with telemedicine, and focused on what matters most — their patients.
-                  </p>
-
-                  <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-                    <Link to="/doctor/register" style={{ textDecoration: "none" }}>
-                      <motion.div
-                        whileHover={{ y: -4, boxShadow: "0 16px 40px rgba(30,58,95,0.45)" }}
-                        whileTap={{ scale: 0.97 }}
-                        style={{
-                          background: "linear-gradient(135deg,#1E3A5F,#3B5CB8)", color: "white",
-                          borderRadius: 16, padding: "15px 32px", fontWeight: 700, fontSize: 15,
-                          boxShadow: "0 6px 24px rgba(30,58,95,0.35)", display: "flex", alignItems: "center", gap: 8, cursor: "pointer",
-                        }}
-                      >
-                        Register Your Clinic <Icon d={ICONS.arrow} size={15} color="white" />
-                      </motion.div>
-                    </Link>
-                    <Link to="/doctor/login" style={{ textDecoration: "none" }}>
-                      <motion.div
-                        whileHover={{ y: -2, background: "#EEF2FF" }}
-                        style={{
-                          background: "white", color: "#6366F1", border: "1.5px solid #EEF2FF",
-                          borderRadius: 16, padding: "15px 28px", fontWeight: 700, fontSize: 15,
-                          boxShadow: "0 2px 12px rgba(0,0,0,0.06)", cursor: "pointer", transition: "all 0.2s",
-                        }}
-                      >
-                        Doctor Login
-                      </motion.div>
-                    </Link>
-                  </div>
-
-                  {/* Trust indicators */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 32 }}>
-                    <div style={{ display: "flex" }}>
-                      {["RC","AM","SR","VK"].map((initials, i) => (
-                        <div key={i} style={{
-                          width: 32, height: 32, borderRadius: "50%",
-                          background: ["linear-gradient(135deg,#6366F1,#8B5CF6)","linear-gradient(135deg,#10B981,#34D399)","linear-gradient(135deg,#F59E0B,#FBBF24)","linear-gradient(135deg,#EC4899,#F472B6)"][i],
-                          border: "2px solid white", marginLeft: i > 0 ? -10 : 0,
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          fontSize: 10, fontWeight: 800, color: "white",
-                        }}>
-                          {initials}
-                        </div>
-                      ))}
-                    </div>
-                    <p style={{ fontSize: 12, color: "#64748B" }}>
-                      <span style={{ fontWeight: 700, color: "#0F172A" }}>12,000+</span> verified doctors already on CuraLink
-                    </p>
-                  </div>
-                </motion.div>
-              </div>
-
-              {/* Right — Dashboard preview card */}
-              <motion.div
-                initial={{ opacity: 0, x: 40, scale: 0.95 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                transition={{ duration: 0.7, delay: 0.2 }}
-                style={{ position: "relative" }}
-              >
-                {/* Main card */}
-                <div style={{
-                  background: "linear-gradient(135deg,#1E3A5F 0%,#2D4E8A 55%,#3B5CB8 100%)",
-                  borderRadius: 28, padding: "32px", boxShadow: "0 24px 64px rgba(30,58,95,0.45)",
-                  position: "relative", overflow: "hidden",
-                }}>
-                  <div style={{ position: "absolute", top: -40, right: -40, width: 180, height: 180, borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />
-                  <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4 }}>Good morning, Doctor</p>
-                  <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, color: "white", fontWeight: 800, marginBottom: 20 }}>Dr. Ananya Sharma.</h3>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
-                    {[
-                      { label: "Today's Appointments", value: "15", color: "#A78BFA" },
-                      { label: "Patients Waiting", value: "7", color: "#34D399" },
-                      { label: "Digital Consults", value: "6", color: "#38BDF8" },
-                      { label: "Avg. Wait Time", value: "15m", color: "#FBBF24" },
-                    ].map((s, i) => (
-                      <div key={i} style={{ background: "rgba(255,255,255,0.1)", borderRadius: 14, padding: "14px 16px", border: "1px solid rgba(255,255,255,0.12)" }}>
-                        <p style={{ fontSize: 10, color: "rgba(255,255,255,0.55)", marginBottom: 4, fontWeight: 600 }}>{s.label}</p>
-                        <p style={{ fontSize: 24, fontWeight: 800, color: s.color, fontFamily: "'Playfair Display', serif" }}>{s.value}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div style={{ background: "rgba(16,185,129,0.2)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 14, padding: "12px 16px", display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981" }} />
-                    <span style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", fontWeight: 600 }}>Live Queue · Currently serving A005</span>
-                  </div>
-                </div>
-
-                {/* Floating badges */}
-                <motion.div
-                  animate={{ y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  style={{
-                    position: "absolute", top: -20, right: -20,
-                    background: "white", borderRadius: 16, padding: "12px 18px",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.12)", border: "1px solid #EEF2FF",
-                    display: "flex", alignItems: "center", gap: 8,
-                  }}
-                >
-                  <div style={{ width: 32, height: 32, borderRadius: 10, background: "#ECFDF5", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Icon d={ICONS.check} size={16} color="#059669" />
-                  </div>
-                  <div>
-                    <p style={{ fontSize: 11, fontWeight: 700, color: "#0F172A" }}>Verified Doctor</p>
-                    <p style={{ fontSize: 10, color: "#94A3B8" }}>AIIMS Delhi</p>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  animate={{ y: [0, 8, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                  style={{
-                    position: "absolute", bottom: -16, left: -20,
-                    background: "white", borderRadius: 16, padding: "12px 18px",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.12)", border: "1px solid #EEF2FF",
-                    display: "flex", alignItems: "center", gap: 8,
-                  }}
-                >
-                  <div style={{ width: 32, height: 32, borderRadius: 10, background: "#EEF2FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Icon d={ICONS.video} size={16} color="#6366F1" />
-                  </div>
-                  <div>
-                    <p style={{ fontSize: 11, fontWeight: 700, color: "#0F172A" }}>Next: Teleconsult</p>
-                    <p style={{ fontSize: 10, color: "#94A3B8" }}>in 12 minutes</p>
-                  </div>
-                </motion.div>
-              </motion.div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── STATS BAR ─────────────────────────────────────────────────────── */}
-        <section style={{ background: "linear-gradient(135deg,#1E3A5F 0%,#2D4E8A 55%,#3B5CB8 100%)", padding: "40px 24px" }}>
-          <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 24 }}>
-            {STATS.map((s, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                style={{ textAlign: "center" }}
-              >
-                <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Icon d={s.icon} size={18} color="rgba(255,255,255,0.8)" />
-                  </div>
-                </div>
-                <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, fontWeight: 800, color: "white" }}>{s.value}</p>
-                <p style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", fontWeight: 600, marginTop: 4 }}>{s.label}</p>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── FEATURES ──────────────────────────────────────────────────────── */}
-        <section style={{ background: "linear-gradient(145deg,#F0F4FF 0%,#F8F6FF 40%,#EFF6FF 100%)", padding: "100px 24px", position: "relative" }}>
-          <div style={{ position: "absolute", top: -60, right: -60, width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle,rgba(99,102,241,0.07) 0%,transparent 70%)", pointerEvents: "none" }} />
-
-          <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-            <motion.div
-              initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }} transition={{ duration: 0.55 }}
-              style={{ textAlign: "center", marginBottom: 64 }}
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 16 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 11, background: "#EEF2FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Icon d={ICONS.sparkle} size={17} color="#6366F1" />
-                </div>
-                <p style={{ fontSize: 11, color: "#6366F1", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Platform Advantages</p>
-              </div>
-              <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 44, fontWeight: 800, color: "#0F172A", lineHeight: 1.15, marginBottom: 16 }}>
-                Tools Designed for<br />Modern Medical Practice.
-              </h2>
-              <p style={{ fontSize: 16, color: "#64748B", maxWidth: 560, margin: "0 auto", lineHeight: 1.75 }}>
-                A comprehensive suite of features to help you manage your practice efficiently and connect with patients effectively.
-              </p>
-            </motion.div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(300px,1fr))", gap: 24 }}>
-              {FEATURES.map((f, i) => <FeatureCard key={i} feat={f} index={i} />)}
-            </div>
-          </div>
-        </section>
-
-        {/* ── HOW IT WORKS ──────────────────────────────────────────────────── */}
-        <section style={{ background: "white", padding: "100px 24px" }}>
-          <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-            <motion.div
-              initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 64 }}
-            >
-              <p style={{ fontSize: 11, color: "#6366F1", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>How It Works</p>
-              <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 44, fontWeight: 800, color: "#0F172A", lineHeight: 1.15 }}>
-                Up and running<br />in four steps.
-              </h2>
-            </motion.div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 20 }}>
-              {STEPS.map((step, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 32 }} whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                  style={{
-                    background: "#F8FAFF", borderRadius: 24, padding: "28px 24px",
-                    border: "1px solid #EEF2FF", position: "relative", overflow: "hidden",
-                  }}
-                >
-                  <div style={{ position: "absolute", top: 16, right: 16, fontFamily: "'Playfair Display', serif", fontSize: 48, fontWeight: 900, color: "rgba(99,102,241,0.06)", lineHeight: 1 }}>
-                    {step.num}
-                  </div>
-                  <div style={{ width: 48, height: 48, borderRadius: 14, background: step.bg, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
-                    <Icon d={step.icon} size={22} color={step.color} />
-                  </div>
-                  <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#0F172A", marginBottom: 10 }}>{step.title}</h3>
-                  <p style={{ fontSize: 13, color: "#64748B", lineHeight: 1.7 }}>{step.desc}</p>
-                  {i < STEPS.length - 1 && (
-                    <div style={{
-                      position: "absolute", right: -12, top: "50%", transform: "translateY(-50%)",
-                      zIndex: 2, display: "flex", alignItems: "center",
-                    }}>
-                      <Icon d={ICONS.arrow} size={16} color="#CBD5E1" />
-                    </div>
-                  )}
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── TESTIMONIALS ──────────────────────────────────────────────────── */}
-        <section style={{ background: "linear-gradient(145deg,#F0F4FF 0%,#F8F6FF 40%,#EFF6FF 100%)", padding: "100px 24px" }}>
-          <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-            <motion.div
-              initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 56 }}
-            >
-              <p style={{ fontSize: 11, color: "#6366F1", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>What Doctors Say</p>
-              <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 44, fontWeight: 800, color: "#0F172A" }}>Trusted by 12,000+ doctors.</h2>
-            </motion.div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 24 }}>
-              {TESTIMONIALS.map((t, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                  whileHover={{ y: -6, boxShadow: "0 20px 48px rgba(99,102,241,0.15)" }}
-                  style={{
-                    background: "white", borderRadius: 24, padding: "28px",
-                    border: "1px solid #EEF2FF", boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
-                  }}
-                >
-                  <div style={{ marginBottom: 16 }}>
-                    <Icon d={ICONS.quote} size={24} color="#EEF2FF" />
-                  </div>
-                  <p style={{ fontSize: 14, color: "#334155", lineHeight: 1.75, marginBottom: 24, fontStyle: "italic" }}>"{t.quote}"</p>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{
-                      width: 44, height: 44, borderRadius: "50%", background: t.gradient,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 14, fontWeight: 800, color: "white",
-                    }}>
-                      {t.avatar}
-                    </div>
-                    <div>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: "#0F172A" }}>{t.name}</p>
-                      <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 2 }}>{t.role}</p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── CTA BANNER ────────────────────────────────────────────────────── */}
-        <section style={{ background: "linear-gradient(135deg,#1E3A5F 0%,#2D4E8A 55%,#3B5CB8 100%)", padding: "80px 24px", position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: -60, right: -60, width: 320, height: 320, borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />
-          <div style={{ position: "absolute", bottom: -40, left: -40, width: 220, height: 220, borderRadius: "50%", background: "rgba(255,255,255,0.04)" }} />
-
-          <motion.div
-            initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            style={{ maxWidth: 700, margin: "0 auto", textAlign: "center", position: "relative", zIndex: 1 }}
-          >
-            <div style={{ width: 52, height: 52, borderRadius: 16, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
-              <Icon d={ICONS.steth} size={24} color="white" />
-            </div>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 44, fontWeight: 800, color: "white", lineHeight: 1.15, marginBottom: 16 }}>
-              Ready to Transform<br />Your Practice?
-            </h2>
-            <p style={{ fontSize: 16, color: "rgba(255,255,255,0.7)", lineHeight: 1.75, marginBottom: 36 }}>
-              Join the growing network of forward-thinking doctors on CuraLink. Setup takes less than an hour.
-            </p>
-            <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-              <Link to="/doctor/register" style={{ textDecoration: "none" }}>
-                <motion.div
-                  whileHover={{ y: -4, boxShadow: "0 16px 40px rgba(0,0,0,0.3)" }}
-                  whileTap={{ scale: 0.97 }}
-                  style={{
-                    background: "white", color: "#1E3A5F",
-                    borderRadius: 16, padding: "15px 36px", fontWeight: 800, fontSize: 15,
-                    boxShadow: "0 6px 24px rgba(0,0,0,0.2)", cursor: "pointer",
-                    display: "flex", alignItems: "center", gap: 8,
-                  }}
-                >
-                  Register Now <Icon d={ICONS.arrow} size={15} color="#1E3A5F" />
-                </motion.div>
-              </Link>
-              <Link to="/doctor/how-it-works" style={{ textDecoration: "none" }}>
-                <motion.div
-                  whileHover={{ y: -2, background: "rgba(255,255,255,0.15)" }}
-                  style={{
-                    background: "rgba(255,255,255,0.1)", color: "white",
-                    border: "1.5px solid rgba(255,255,255,0.25)",
-                    borderRadius: 16, padding: "15px 28px", fontWeight: 700, fontSize: 15,
-                    cursor: "pointer", transition: "all 0.2s",
-                  }}
-                >
-                  See How It Works
-                </motion.div>
-              </Link>
-            </div>
-          </motion.div>
-        </section>
-
-        {/* ── FOOTER ────────────────────────────────────────────────────────── */}
-        <footer style={{ background: "#0F172A", padding: "32px 24px", textAlign: "center" }}>
-          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", fontWeight: 500 }}>
-            © 2025 CuraLink for Doctors · Empowering healthcare professionals across India
-          </p>
-        </footer>
-      </div>
-
-      <style>{`
-        @media (max-width: 900px) {
-          section > div > div[style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
-          section > div > div[style*="grid-template-columns: repeat(4"] { grid-template-columns: repeat(2,1fr) !important; }
-          section > div > div[style*="grid-template-columns: repeat(3"] { grid-template-columns: 1fr !important; }
-          h1 { font-size: 38px !important; }
-          h2 { font-size: 30px !important; }
-        }
-      `}</style>
-    </>
+    <svg viewBox="-1.1 -0.85 2.2 1.7" aria-hidden style={{ overflow: "visible", ...style }}>
+      <defs>
+        <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#7C8CFF" /><stop offset="1" stopColor="#F6A5D8" />
+        </linearGradient>
+      </defs>
+      {edges.map(([a, b], i) => <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={`url(#${id})`} strokeWidth="0.004" opacity="0.6" />)}
+      {nodes.map((n, i) => (
+        <circle key={i} cx={n.x} cy={n.y} r={n.r / 260} fill={P[(n.h * P.length) | 0]}
+          className={reduce || !live ? undefined : "lp-node"} style={{ animationDelay: `${n.d}s` }} />
+      ))}
+    </svg>
   );
 };
+
+const Section = ({ children, style = {}, once = false }) => (
+  <motion.section initial="hidden" whileInView="visible" viewport={{ once, amount: 0.15 }} variants={stagger} style={{ position: "relative", ...style }}>
+    {children}
+  </motion.section>
+);
+
+const WordReveal = ({ text, as = "h2", style = {}, ...rest }) => {
+  const Tag = motion[as];
+  return (
+    <Tag variants={wordParent} style={style} {...rest}>
+      {text.split("\n").map((line, li, arr) => (
+        <React.Fragment key={li}>
+          {line.split(" ").map((w, i) => (
+            <span key={i} style={{ display: "inline-block", overflow: "hidden", verticalAlign: "top", paddingBottom: "0.14em", marginBottom: "-0.14em", marginRight: "0.24em" }}>
+              <motion.span variants={wordChild} style={{ display: "inline-block", transformOrigin: "0% 100%" }}>{w}</motion.span>
+            </span>
+          ))}
+          {li < arr.length - 1 && <br />}
+        </React.Fragment>
+      ))}
+    </Tag>
+  );
+};
+
+// headings now use the hero's light weight and tight tracking
+const H2 = { fontWeight: 300, color: T.ink, lineHeight: 1.06, letterSpacing: "-0.04em" };
+
+const SectionHeading = ({ title, sub }) => (
+  <div style={{ textAlign: "center", marginBottom: 56 }}>
+    <WordReveal text={title} style={{ ...H2, fontSize: "clamp(32px,4.8vw,56px)", marginBottom: 16 }} />
+    {sub && <motion.p variants={fadeUp} style={{ fontSize: "clamp(15px,2vw,17px)", color: T.body, maxWidth: 540, margin: "0 auto", lineHeight: 1.7 }}>{sub}</motion.p>}
+  </div>
+);
+
+const Magnetic = ({ children, strength = 0.28 }) => {
+  const ref = useRef(null);
+  const x = useMotionValue(0), y = useMotionValue(0);
+  const sx = useSpring(x, { stiffness: 220, damping: 16, mass: 0.4 });
+  const sy = useSpring(y, { stiffness: 220, damping: 16, mass: 0.4 });
+  return (
+    <motion.div ref={ref} style={{ x: sx, y: sy, display: "inline-block" }}
+      onMouseMove={(e) => {
+        const r = ref.current.getBoundingClientRect();
+        x.set((e.clientX - (r.left + r.width / 2)) * strength);
+        y.set((e.clientY - (r.top + r.height / 2)) * strength);
+      }}
+      onMouseLeave={() => { x.set(0); y.set(0); }}>
+      {children}
+    </motion.div>
+  );
+};
+
+const TiltCard = ({ children, style = {}, max = 6, ...rest }) => {
+  const ref = useRef(null);
+  const rx = useMotionValue(0), ry = useMotionValue(0);
+  const srx = useSpring(rx, { stiffness: 180, damping: 18 });
+  const sry = useSpring(ry, { stiffness: 180, damping: 18 });
+  return (
+    <motion.div ref={ref} variants={fadeUp} className="lp-card"
+      onMouseMove={(e) => {
+        const r = ref.current.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+        ry.set((px - 0.5) * max * 2); rx.set(-(py - 0.5) * max * 2);
+        ref.current.style.setProperty("--mx", `${px * 100}%`);
+        ref.current.style.setProperty("--my", `${py * 100}%`);
+      }}
+      onMouseLeave={() => { rx.set(0); ry.set(0); }}
+      style={{ rotateX: srx, rotateY: sry, transformPerspective: 900, ...style }} {...rest}>
+      {children}
+    </motion.div>
+  );
+};
+
+const IconTile = ({ d, size = 48 }) => (
+  <div style={{ width: size, height: size, borderRadius: 14, background: T.surface, border: `1px solid ${T.line}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+    <Icon d={d} size={22} color={T.ink} />
+  </div>
+);
+
+// same glass pill as the hero stats
+const Stat = ({ to, decimals, suffix, label, delay = 0 }) => {
+  const ref = useRef(null);
+  const reduce = useReducedMotion();
+  const inView = useInView(ref, { amount: 0.6, once: true });
+  const [v, setV] = useState(0);
+  useEffect(() => {
+    if (reduce) { setV(to); return; }
+    if (!inView) return;
+    const c = animate(0, to, { duration: 1.9, delay, ease: EASE, onUpdate: setV });
+    return () => c.stop();
+  }, [inView, to, delay, reduce]);
+  return (
+    <motion.div ref={ref} variants={fadeUp} whileHover={{ y: -4, backgroundColor: "#FFFFFF" }}
+      style={{ background: "rgba(245,244,242,0.85)", backdropFilter: "blur(8px)", border: `1px solid ${T.line}`, borderRadius: 24, padding: "30px 20px", textAlign: "center" }}>
+      <p style={{ fontSize: "clamp(30px,3.6vw,46px)", fontWeight: 300, color: T.ink, letterSpacing: "-0.04em", fontVariantNumeric: "tabular-nums" }}>
+        {v.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}{suffix}
+      </p>
+      <p style={{ fontSize: 13, color: T.muted, marginTop: 4 }}>{label}</p>
+    </motion.div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SECTION 2 — SPECIALTY MARQUEE + STATS
+═══════════════════════════════════════════════════════════════════════════ */
+const MarqueeSection = () => (
+  <div className="marquee" aria-hidden>
+    <div className="marquee-track">
+      {[...MARQUEE, ...MARQUEE].map((v, i) => (
+        <span key={i} className="marquee-item"><Bead bg={BEADS[i % 4]} size={16} />{v}</span>
+      ))}
+    </div>
+  </div>
+);
+
+const StatsSection = () => (
+  <Section style={{ padding: "90px 24px 60px" }}>
+    <Aura blobs={[{ c: "#C9B8FF", s: 420, t: "-20%", l: "-6%", o: 0.35 }, { c: "#A5D8FF", s: 380, b: "-30%", r: "-4%", o: 0.35 }]} />
+    <div className="lp-grid-4" style={{ maxWidth: 1100, margin: "0 auto", position: "relative", zIndex: 1 }}>
+      {STATS.map((s, i) => <Stat key={s.label} {...s} delay={i * 0.1} />)}
+    </div>
+  </Section>
+);
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SECTION 3 — FEATURES (cards fly through 3D space on scroll)
+═══════════════════════════════════════════════════════════════════════════ */
+const FeatureCard = ({ f, i }) => {
+  const ref = useRef(null);
+  const reduce = useReducedMotion();
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  const dir = i % 3 === 0 ? -1 : i % 3 === 2 ? 1 : 0;
+  const rotateX = useTransform(scrollYProgress, [0, 0.35, 0.65, 1], reduce ? [0, 0, 0, 0] : [50, 0, 0, -35]);
+  const rotateY = useTransform(scrollYProgress, [0, 0.4, 0.6, 1], reduce ? [0, 0, 0, 0] : [dir * 35, 0, 0, dir * -25]);
+  const z = useTransform(scrollYProgress, [0, 0.4, 0.6, 1], reduce ? [0, 0, 0, 0] : [-450, 0, 0, -350]);
+  const opacity = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [0, 1, 1, 0.2]);
+  return (
+    <motion.div ref={ref} style={{ rotateX, rotateY, z, opacity, transformStyle: "preserve-3d" }}>
+      <TiltCard style={{ padding: "32px 28px", minHeight: 250 }}>
+        <IconTile d={f.icon} />
+        <h3 style={{ fontSize: 22, fontWeight: 400, color: T.ink, letterSpacing: "-0.03em", margin: "22px 0 10px" }}>{f.title}</h3>
+        <p style={{ fontSize: 14.5, color: T.body, lineHeight: 1.7 }}>{f.desc}</p>
+      </TiltCard>
+    </motion.div>
+  );
+};
+
+const FeaturesSection = () => (
+  <Section style={{ padding: "100px 0 130px", overflow: "hidden", background: `linear-gradient(180deg, ${T.white} 0%, #F4F0FF 55%, ${T.white} 100%)` }}>
+    <Aura blobs={[{ c: "#F6A5D8", s: 440, t: "6%", r: "-8%", o: 0.28 }, { c: "#FFD9B8", s: 420, b: "2%", l: "-8%", o: 0.4 }]} />
+    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px", position: "relative", zIndex: 1 }}>
+      <SectionHeading title="Everything a modern clinic needs" sub="Six tools that replace the paper diary, the phone calls and the spreadsheet." />
+      <div className="lp-grid-3" style={{ perspective: 1300, perspectiveOrigin: "50% 40%" }}>
+        {FEATURES.map((f, i) => <FeatureCard key={f.title} f={f} i={i} />)}
+      </div>
+    </div>
+  </Section>
+);
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SECTION 4 — HOW IT WORKS (scroll-drawn timeline + neural panel)
+═══════════════════════════════════════════════════════════════════════════ */
+const StepsTimeline = () => {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 70%", "end 60%"] });
+  const fill = useSpring(scrollYProgress, { stiffness: 110, damping: 26 });
+  const [active, setActive] = useState(0);
+  useEffect(() => scrollYProgress.on("change", (v) => setActive(Math.max(0, Math.min(STEPS.length - 1, Math.floor(v * STEPS.length))))), [scrollYProgress]);
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <div style={{ position: "absolute", left: 23, top: 24, bottom: 24, width: 1, background: T.line }} />
+      <motion.div style={{ position: "absolute", left: 23, top: 24, bottom: 24, width: 1.5, background: "linear-gradient(180deg,#7C8CFF,#F6A5D8)", transformOrigin: "50% 0%", scaleY: fill }} />
+      {STEPS.map((s, i) => {
+        const reached = i <= active;
+        return (
+          <motion.div key={s.title} variants={fadeUp} style={{ display: "flex", gap: 18, position: "relative", paddingBottom: i < STEPS.length - 1 ? 36 : 0 }}>
+            <motion.div animate={{ scale: i === active ? 1.08 : 1 }} transition={{ type: "spring", stiffness: 260, damping: 18 }}
+              style={{ flexShrink: 0, width: 48, height: 48, borderRadius: 14, background: reached ? T.ink : T.white, border: `1px solid ${reached ? T.ink : T.line}`, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", zIndex: 1, transition: "background .45s, border-color .45s" }}>
+              <Icon d={s.icon} size={20} color={reached ? "#fff" : T.ink} />
+            </motion.div>
+            <div style={{ paddingTop: 4, opacity: reached ? 1 : 0.42, transition: "opacity .45s" }}>
+              <span style={{ ...GLASS, fontSize: 12, fontWeight: 500, color: T.body, padding: "3px 12px", borderRadius: 20 }}>Step {i + 1}</span>
+              <h4 style={{ fontSize: 18, fontWeight: 500, color: T.ink, letterSpacing: "-0.02em", margin: "10px 0 4px" }}>{s.title}</h4>
+              <p style={{ fontSize: 14.5, color: T.body, lineHeight: 1.7 }}>{s.desc}</p>
+            </div>
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+};
+
+const HowItWorksSection = () => {
+  const ref = useRef(null);
+  const reduce = useReducedMotion();
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  const artY = useParallax(scrollYProgress, -30, 30);
+  return (
+    <Section style={{ padding: "110px 0" }}>
+      <Aura blobs={[{ c: "#A5D8FF", s: 400, t: "10%", l: "-10%", o: 0.3 }]} />
+      <div ref={ref} style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: 56, alignItems: "start", position: "relative", zIndex: 1 }}>
+        <div>
+          <WordReveal text={"Live in four steps,\nusually within a day."} style={{ ...H2, fontSize: "clamp(30px,4.2vw,50px)", marginBottom: 44 }} />
+          <StepsTimeline />
+        </div>
+        <motion.div variants={scaleIn} style={{ position: "sticky", top: 110, height: 500, borderRadius: 28, border: `1px solid ${T.line}`, overflow: "hidden", boxShadow: "0 30px 80px rgba(12,10,9,0.08)", background: `radial-gradient(ellipse 70% 60% at 50% 42%, rgba(201,184,255,0.55), rgba(165,216,255,0.25) 55%, rgba(255,255,255,0.9) 100%), ${T.white}` }}>
+          <motion.div style={{ position: "absolute", inset: "6% 4% 26%", y: artY }}>
+            <NeuralArt reduce={reduce} count={40} id="lp-g2" style={{ width: "100%", height: "100%" }} />
+          </motion.div>
+          <div style={{ ...GLASS, position: "absolute", left: 24, right: 24, bottom: 24, borderRadius: 20, padding: "18px 20px", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 18px 40px rgba(12,10,9,0.06)" }}>
+            <IconTile d={I.shield} size={44} />
+            <div><p style={{ fontSize: 14, fontWeight: 500, color: T.ink }}>Credentials verified</p><p style={{ fontSize: 13, color: T.body }}>Your profile goes live within 24 hours.</p></div>
+          </div>
+        </motion.div>
+      </div>
+    </Section>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SECTION 5 — TESTIMONIALS
+═══════════════════════════════════════════════════════════════════════════ */
+const QuoteCard = ({ t, i }) => {
+  const ref = useRef(null);
+  const reduce = useReducedMotion();
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  const rotateY = useTransform(scrollYProgress, [0, 0.5, 1], reduce ? [0, 0, 0] : [(i - 1) * 45, 0, (i - 1) * -45]);
+  const z = useTransform(scrollYProgress, [0, 0.5, 1], reduce ? [0, 0, 0] : [-300, 0, -300]);
+  return (
+    <motion.figure ref={ref} style={{ rotateY, z, margin: 0, transformStyle: "preserve-3d" }}>
+      <TiltCard style={{ padding: "34px 28px", minHeight: 290, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+        <blockquote style={{ fontSize: 21, fontWeight: 300, color: T.ink, lineHeight: 1.45, letterSpacing: "-0.03em" }}>“{t.quote}”</blockquote>
+        <figcaption style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 28 }}>
+          <motion.div animate={{ y: [0, -5, 0] }} transition={{ duration: 5 + i, repeat: Infinity, ease: "easeInOut" }}
+            style={{ width: 46, height: 46, borderRadius: "50%", background: t.orb, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 500, color: "#fff", textShadow: "0 1px 6px rgba(12,10,9,.25)", flexShrink: 0 }}>{t.av}</motion.div>
+          <div><p style={{ fontSize: 14, fontWeight: 500, color: T.ink }}>{t.name}</p><p style={{ fontSize: 13, color: T.muted }}>{t.role}</p></div>
+        </figcaption>
+      </TiltCard>
+    </motion.figure>
+  );
+};
+
+const TestimonialsSection = () => (
+  <Section style={{ padding: "110px 0", overflow: "hidden", background: `linear-gradient(180deg, ${T.white} 0%, #F4F0FF 50%, ${T.white} 100%)` }}>
+    <Aura blobs={[{ c: "#FFD9B8", s: 420, t: "0%", r: "-6%", o: 0.4 }, { c: "#C9B8FF", s: 400, b: "-4%", l: "-6%", o: 0.35 }]} />
+    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px", position: "relative", zIndex: 1 }}>
+      <SectionHeading title="Doctors who made the switch" />
+      <div className="lp-grid-3" style={{ perspective: 1200 }}>
+        {TESTIMONIALS.map((t, i) => <QuoteCard key={t.name} t={t} i={i} />)}
+      </div>
+    </div>
+  </Section>
+);
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SECTION 6 — CTA (light glass panel, like the hero, instead of a dark block)
+═══════════════════════════════════════════════════════════════════════════ */
+const CTASection = () => {
+  const reduce = useReducedMotion();
+  // Plays once and has no scroll-linked transforms: nothing re-renders or
+  // re-rasterises while scrolling, which is what caused the blinking.
+  return (
+    <Section once style={{ padding: "110px 24px 110px" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <motion.div variants={scaleIn} style={{ position: "relative", overflow: "hidden", borderRadius: 32, border: `1px solid ${T.line}`, boxShadow: "0 30px 80px rgba(12,10,9,0.08)", padding: "clamp(44px,6vw,84px) clamp(28px,6vw,72px)", background: `radial-gradient(ellipse 60% 70% at 50% 40%, rgba(201,184,255,0.5), rgba(165,216,255,0.22) 55%, rgba(255,255,255,0) 80%), radial-gradient(ellipse 40% 50% at 12% 100%, rgba(255,217,184,0.5), rgba(255,255,255,0) 70%), ${T.white}`, transform: "translateZ(0)" }}>
+          <div aria-hidden style={{ position: "absolute", inset: "-10% 4%", opacity: 0.5, pointerEvents: "none" }}>
+            <NeuralArt reduce={reduce} live={false} count={52} id="lp-g3" style={{ width: "100%", height: "100%" }} />
+          </div>
+          <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: "radial-gradient(ellipse 55% 60% at 50% 50%, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.25) 60%, rgba(255,255,255,0) 100%)" }} />
+          <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
+            <motion.div variants={fadeUp} style={{ background: "rgba(255,255,255,0.92)", border: `1px solid ${T.line}`, display: "inline-flex", alignItems: "center", gap: 8, borderRadius: 40, padding: "6px 16px 6px 8px", marginBottom: 26 }}>
+              <span style={{ position: "relative", width: 26, height: 26 }}>
+                <motion.span animate={{ scale: [1, 1.9], opacity: [0.35, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }} style={{ position: "absolute", inset: 0, borderRadius: "50%", background: T.ink }} />
+                <span style={{ position: "relative", width: 26, height: 26, borderRadius: "50%", background: T.ink, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon d={I.sparkle} size={13} color="white" />
+                </span>
+              </span>
+              <span style={{ fontSize: 12.5, fontWeight: 500, color: T.ink, letterSpacing: "-0.01em" }}>Setup takes under an hour</span>
+            </motion.div>
+            <WordReveal text={"Ready to see patients,\nnot paperwork?"} style={{ ...H2, fontSize: "clamp(34px,5.6vw,68px)", lineHeight: 1.05, marginBottom: 20 }} />
+            <motion.p variants={fadeUp} style={{ fontSize: "clamp(15px,2vw,17px)", color: T.body, maxWidth: 480, margin: "0 auto 38px", lineHeight: 1.7 }}>
+              Join the doctors already running their clinics on CuraLink. Your profile is verified within 24 hours.
+            </motion.p>
+            <motion.div variants={fadeUp} style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
+              <Magnetic><Link to="/doctor/register" className="btn-ink">Register now <Icon d={I.arrow} size={15} color="white" /></Link></Magnetic>
+              <Magnetic><Link to="/doctor/how-it-works" className="btn-outline">See how it works</Link></Magnetic>
+            </motion.div>
+          </div>
+        </motion.div>
+      </div>
+    </Section>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PAGE
+═══════════════════════════════════════════════════════════════════════════ */
+const DoctorLandingPage = () => (
+  <>
+    <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+      .lp-root{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:${T.white};color:${T.body};-webkit-font-smoothing:antialiased;overflow-x:clip}
+      .lp-body *{box-sizing:border-box;margin:0;padding:0}
+      .lp-root ::selection{background:${T.ink};color:#fff}
+      .lp-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+      .lp-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+
+      .lp-body .btn-ink{display:inline-flex;align-items:center;gap:8px;background:${T.ink};color:#fff;font-weight:500;font-size:14px;padding:14px 28px;border-radius:999px;text-decoration:none;transition:box-shadow .25s,transform .25s}
+      .lp-body .btn-ink:hover{box-shadow:0 16px 36px rgba(12,10,9,.25);transform:translateY(-1px)}
+      .lp-body .btn-ink svg{transition:transform .3s cubic-bezier(.22,1,.36,1)}
+      .lp-body .btn-ink:hover svg:last-child{transform:translateX(4px)}
+      .lp-body .btn-outline{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);color:${T.ink};font-weight:500;font-size:14px;padding:13px 28px;border-radius:999px;text-decoration:none;border:1px solid ${T.line};transition:background .25s,border-color .25s,transform .25s}
+      .lp-body .btn-outline:hover{background:#fff;border-color:#D6D3D1;transform:translateY(-1px)}
+      .lp-body a:focus-visible{outline:2px solid ${T.ink};outline-offset:3px}
+
+      .lp-card{position:relative;isolation:isolate;background:rgba(255,255,255,.78);backdrop-filter:blur(14px);border-radius:28px;border:1px solid ${T.line};box-shadow:0 18px 50px rgba(12,10,9,.04);transition:box-shadow .3s,border-color .3s,background .3s;will-change:transform}
+      .lp-card::before{content:"";position:absolute;inset:0;border-radius:inherit;z-index:-1;pointer-events:none;opacity:0;transition:opacity .3s;background:radial-gradient(420px circle at var(--mx,50%) var(--my,50%),rgba(201,184,255,.28),rgba(255,255,255,0) 60%)}
+      .lp-card:hover{border-color:#D6D3D1;background:rgba(255,255,255,.92);box-shadow:0 30px 80px rgba(12,10,9,.09)}
+      .lp-card:hover::before{opacity:1}
+
+      .marquee{overflow:hidden;border-top:1px solid ${T.line};border-bottom:1px solid ${T.line};padding:24px 0;background:linear-gradient(90deg,#F4F0FF,#FFFFFF 30%,#FFFFFF 70%,#FFF4EA);-webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
+      .marquee-track{display:flex;width:max-content;animation:lp-marquee 38s linear infinite}
+      .marquee:hover .marquee-track{animation-play-state:paused}
+      .marquee-item{display:inline-flex;align-items:center;gap:16px;padding-right:56px;font-size:clamp(22px,2.8vw,34px);font-weight:300;letter-spacing:-.04em;color:${T.ink};white-space:nowrap}
+      @keyframes lp-marquee{to{transform:translateX(-50%)}}
+
+      @keyframes lp-pulse{0%,100%{opacity:.35;transform:scale(1)}50%{opacity:1;transform:scale(1.9)}}
+      .lp-node{transform-box:fill-box;transform-origin:center;animation:lp-pulse 4.5s ease-in-out infinite}
+
+      @media (max-width:900px){
+        .lp-grid-3{grid-template-columns:1fr}
+        .lp-grid-4{grid-template-columns:repeat(2,1fr)}
+      }
+      @media (prefers-reduced-motion:reduce){.marquee-track{animation:none}.lp-card{transition:none}.lp-node{animation:none}}
+    `}</style>
+
+    <ScrollProgress />
+    <div className="lp-root">
+      <DoctorHero />
+      <div className="lp-body">
+        <MarqueeSection />
+        <StatsSection />
+        <FeaturesSection />
+        <HowItWorksSection />
+        <TestimonialsSection />
+        <CTASection />
+      </div>
+    </div>
+  </>
+);
 
 export default DoctorLandingPage;

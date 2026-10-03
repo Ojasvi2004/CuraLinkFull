@@ -1,224 +1,248 @@
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useLocation } from "react-router-dom";
+import {
+  motion, AnimatePresence, useMotionValue, useSpring, useReducedMotion,
+} from "framer-motion";
 
-const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
+/* ─── THEME TOKENS (same as hero, footer and landing page) ──────────────── */
+const T = {
+  ink: "#0C0A09", body: "#57534E", muted: "#A8A29E", line: "#ECEAE6",
+  surface: "#F5F4F2", surface2: "#FAFAF9", white: "#FFFFFF",
+};
+const EASE = [0.22, 1, 0.36, 1];
+
+const Icon = ({ d, size = 18, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
-    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={style}>
-    {Array.isArray(d) ? d.map((p, i) => <path key={i} d={p} />) : <path d={d} />}
+    strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    {(Array.isArray(d) ? d : [d]).map((p, i) => <path key={i} d={p} />)}
   </svg>
 );
-
 const ICONS = {
-  menu:    ["M4 6h16M4 12h16M4 18h16"],
-  close:   ["M6 18L18 6M6 6l12 12"],
-  sparkle: ["M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"],
-  arrow:   "M17 8l4 4m0 0l-4 4m4-4H3",
-  pulse:   "M22 12h-4l-3 9L9 3l-3 9H2",
-  steth:   ["M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3", "M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"],
-  chevron: "m6 9 6 6 6-6",
+  cross: ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M8 12h8M12 8v8"],
+  arrow: "M17 8l4 4m0 0l-4 4m4-4H3",
 };
 
 const NAV_LINKS = [
-  { label: "Features", to: "/doctor/features" },
+  { label: "Features",     to: "/doctor/features"     },
   { label: "How It Works", to: "/doctor/how-it-works" },
-  { label: "FAQ", to: "/doctor/faq" },
+  { label: "FAQ",          to: "/doctor/faq"          },
 ];
 
-const NavbarBeforeLogin = () => {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
+const Magnetic = ({ children, strength = 0.22 }) => {
+  const ref = useRef(null);
+  const x = useMotionValue(0), y = useMotionValue(0);
+  const sx = useSpring(x, { stiffness: 220, damping: 16, mass: 0.4 });
+  const sy = useSpring(y, { stiffness: 220, damping: 16, mass: 0.4 });
+  return (
+    <motion.div ref={ref} style={{ x: sx, y: sy, display: "inline-block" }}
+      onMouseMove={(e) => {
+        const r = ref.current.getBoundingClientRect();
+        x.set((e.clientX - (r.left + r.width / 2)) * strength);
+        y.set((e.clientY - (r.top + r.height / 2)) * strength);
+      }}
+      onMouseLeave={() => { x.set(0); y.set(0); }}>
+      {children}
+    </motion.div>
+  );
+};
 
+// ink mark with the same pulse as the hero badge
+const LogoMark = () => (
+  <span style={{ position: "relative", width: 34, height: 34, flexShrink: 0 }}>
+    <motion.span aria-hidden animate={{ scale: [1, 1.8], opacity: [0.3, 0] }}
+      transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut" }}
+      style={{ position: "absolute", inset: 0, borderRadius: "50%", background: T.ink }} />
+    <span style={{ position: "relative", width: 34, height: 34, borderRadius: "50%", background: T.ink, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <Icon d={ICONS.cross} size={17} color="white" />
+    </span>
+  </span>
+);
+
+const NavbarBeforeLogin = () => {
+  const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const [hover, setHover] = useState(null);
+  const location = useLocation();
+  const reduce = useReducedMotion();
+  const lastY = useRef(0);
+  const openRef = useRef(false);
+  openRef.current = open;
+
+  // scroll state: compact when scrolled, tucks away going down, returns going up
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const y = window.scrollY, d = y - lastY.current;
+        setScrolled(y > 24);
+        if (y < 160 || d < -6) setHidden(false);
+        else if (d > 6 && !openRef.current) setHidden(true);
+        if (Math.abs(d) > 6) lastY.current = y;
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => { window.removeEventListener("scroll", onScroll); if (raf) cancelAnimationFrame(raf); };
   }, []);
 
-  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+  // close the sheet on navigation, Escape, or when growing past the breakpoint
+  useEffect(() => { setOpen(false); }, [location.pathname]);
+  useEffect(() => {
+    const onKey = (e) => e.key === "Escape" && setOpen(false);
+    const onResize = () => window.innerWidth > 900 && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("resize", onResize);
+    return () => { window.removeEventListener("keydown", onKey); window.removeEventListener("resize", onResize); };
+  }, []);
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
+  const activeIdx = NAV_LINKS.findIndex((l) => l.to === location.pathname);
+  const lit = hover ?? (activeIdx >= 0 ? activeIdx : null);
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap');
-        * { box-sizing: border-box; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        .nv-root { position:sticky; top:0; z-index:100; height:84px; pointer-events:none; font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; -webkit-font-smoothing:antialiased; }
+        .nv-root *, .nv-root *::before, .nv-root *::after { box-sizing:border-box; }
+        .nv-pill {
+          pointer-events:auto; position:relative; margin:14px auto 0; width:calc(100% - 32px); max-width:1120px; height:58px;
+          display:grid; grid-template-columns:1fr auto 1fr; align-items:center; padding:0 10px 0 16px;
+          background:rgba(255,255,255,0.7); backdrop-filter:blur(18px) saturate(1.4); -webkit-backdrop-filter:blur(18px) saturate(1.4);
+          border:1px solid ${T.line}; border-radius:999px; box-shadow:0 8px 30px rgba(12,10,9,0.03);
+          transition:max-width .6s cubic-bezier(.22,1,.36,1), background .3s, box-shadow .3s, border-color .3s;
+        }
+        .nv-pill[data-scrolled="true"] { max-width:940px; background:rgba(255,255,255,0.88); border-color:#E7E5E4; box-shadow:0 18px 50px rgba(12,10,9,0.09); }
+        .nv-pill[data-open="true"] { background:rgba(255,255,255,0.96); }
+
+        .nv-brand { display:flex; align-items:center; gap:10px; text-decoration:none; justify-self:start; border-radius:999px; }
+        .nv-word { font-size:20px; font-weight:500; letter-spacing:-0.04em; color:${T.ink}; line-height:1; }
+        .nv-tag { font-size:11.5px; font-weight:500; color:${T.body}; background:${T.surface}; border:1px solid ${T.line}; padding:3px 10px; border-radius:999px; }
+
+        .nv-links { display:flex; align-items:center; gap:2px; position:relative; }
+        .nv-link { position:relative; display:inline-flex; align-items:center; padding:9px 18px; font-size:14px; font-weight:500; color:${T.body}; text-decoration:none; border-radius:999px; transition:color .2s; }
+        .nv-link[data-lit="true"] { color:${T.ink}; }
+        .nv-hi { position:absolute; inset:0; border-radius:999px; background:${T.surface}; border:1px solid ${T.line}; z-index:0; }
+        .nv-link span.nv-t { position:relative; z-index:1; }
+
+        .nv-actions { display:flex; align-items:center; gap:8px; justify-self:end; }
+        .nv-btn-ink { display:inline-flex; align-items:center; gap:8px; background:${T.ink}; color:#fff; font-weight:500; font-size:13.5px; padding:11px 22px; border-radius:999px; text-decoration:none; transition:box-shadow .25s, transform .25s; white-space:nowrap; }
+        .nv-btn-ink:hover { box-shadow:0 12px 30px rgba(12,10,9,0.25); transform:translateY(-1px); }
+        .nv-btn-ink svg { transition:transform .3s cubic-bezier(.22,1,.36,1); }
+        .nv-btn-ink:hover svg { transform:translateX(3px); }
+        .nv-btn-ghost { display:inline-flex; align-items:center; color:${T.ink}; font-weight:500; font-size:13.5px; padding:10px 18px; border-radius:999px; text-decoration:none; transition:background .2s; white-space:nowrap; }
+        .nv-btn-ghost:hover { background:${T.surface}; }
+
+        .nv-burger { display:none; justify-self:end; width:42px; height:42px; border-radius:50%; border:1px solid ${T.line}; background:rgba(255,255,255,0.85); cursor:pointer; align-items:center; justify-content:center; position:relative; }
+        .nv-burger i { position:absolute; left:13px; right:13px; height:1.6px; background:${T.ink}; border-radius:2px; transition:transform .35s cubic-bezier(.22,1,.36,1), opacity .2s; }
+        .nv-burger i:nth-child(1) { transform:translateY(-4px); }
+        .nv-burger i:nth-child(2) { transform:translateY(4px); }
+        .nv-burger[aria-expanded="true"] i:nth-child(1) { transform:rotate(45deg); }
+        .nv-burger[aria-expanded="true"] i:nth-child(2) { transform:rotate(-45deg); }
+
+        .nv-sheet {
+          pointer-events:auto; position:absolute; left:16px; right:16px; top:calc(100% - 20px); max-width:520px; margin:0 auto; max-height:calc(100vh - 110px); overflow:auto;
+          background:rgba(255,255,255,0.94); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+          border:1px solid ${T.line}; border-radius:32px; padding:10px; box-shadow:0 30px 80px rgba(12,10,9,0.14);
+          background-image:radial-gradient(ellipse 70% 50% at 100% 0%, rgba(201,184,255,0.35), transparent 70%), radial-gradient(ellipse 60% 40% at 0% 100%, rgba(255,217,184,0.4), transparent 70%);
+        }
+        .nv-m-link { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-radius:22px; text-decoration:none; font-size:26px; font-weight:300; letter-spacing:-0.04em; color:${T.ink}; transition:background .2s; }
+        .nv-m-link:hover, .nv-m-link[aria-current="page"] { background:${T.surface}; }
+
+        .nv-root a:focus-visible, .nv-burger:focus-visible { outline:2px solid ${T.ink}; outline-offset:3px; }
+
+        @media (max-width: 900px) {
+          .nv-pill { grid-template-columns:1fr auto; }
+          .nv-links, .nv-actions { display:none; }
+          .nv-burger { display:flex; }
+        }
+        @media (max-width: 520px) { .nv-tag { display:none; } }
+        @media (prefers-reduced-motion: reduce) { .nv-pill, .nv-burger i, .nv-btn-ink, .nv-btn-ink svg { transition:none; } }
       `}</style>
 
-      <motion.nav
-        initial={{ y: -80, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, type: "spring", stiffness: 200, damping: 24 }}
-        style={{
-          position: "sticky", top: 0, zIndex: 100,
-          background: scrolled ? "rgba(255,255,255,0.96)" : "rgba(255,255,255,0.85)",
-          backdropFilter: "blur(16px)",
-          borderBottom: scrolled ? "1px solid #EEF2FF" : "1px solid transparent",
-          boxShadow: scrolled ? "0 4px 24px rgba(30,58,95,0.1)" : "none",
-          transition: "all 0.3s ease",
-          fontFamily: "'DM Sans', sans-serif",
-        }}
-      >
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 68 }}>
-
-          {/* ── LOGO ─────────────────────────────────────────────────────────── */}
-          <Link to="/doctor" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{
-              width: 40, height: 40, borderRadius: 12,
-              background: "linear-gradient(135deg,#1E3A5F,#3B5CB8)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 4px 12px rgba(30,58,95,0.3)",
-              flexShrink: 0,
-            }}>
-              <Icon d={ICONS.steth} size={20} color="white" />
-            </div>
-            <div style={{ lineHeight: 1 }}>
-              <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 800, fontSize: 22, color: "#0F172A", letterSpacing: "-0.5px" }}>
-                CURA<span style={{ color: "#6366F1" }}>LINK</span>
-              </span>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "#059669", textTransform: "uppercase", letterSpacing: "0.12em", marginTop: 1 }}>
-                for Doctors
-              </div>
-            </div>
+      <header className="nv-root">
+        <motion.nav
+          className="nv-pill"
+          data-scrolled={scrolled}
+          data-open={open}
+          aria-label="Main"
+          initial={{ y: -90, opacity: 0 }}
+          animate={{ y: hidden && !open ? -100 : 0, opacity: 1 }}
+          transition={reduce ? { duration: 0 } : { duration: hidden ? 0.35 : 0.7, ease: EASE }}
+        >
+          {/* brand */}
+          <Link to="/doctor" className="nv-brand" aria-label="CuraLink for Doctors, home">
+            <LogoMark />
+            <span className="nv-word">CuraLink</span>
+            <span className="nv-tag">for Doctors</span>
           </Link>
 
-          {/* ── DESKTOP NAV LINKS ─────────────────────────────────────────────── */}
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }} className="desktop-nav">
-            {NAV_LINKS.map((link) => {
-              const active = location.pathname === link.to;
-              return (
-                <Link key={link.to} to={link.to} style={{ textDecoration: "none" }}>
-                  <motion.div
-                    whileHover={{ y: -1 }}
-                    style={{
-                      padding: "8px 16px", borderRadius: 12,
-                      fontSize: 14, fontWeight: 600,
-                      color: active ? "#6366F1" : "#475569",
-                      background: active ? "#EEF2FF" : "transparent",
-                      transition: "all 0.2s",
-                      cursor: "pointer",
-                    }}
-                    onMouseEnter={e => { if (!active) e.currentTarget.style.background = "#F8FAFF"; e.currentTarget.style.color = "#6366F1"; }}
-                    onMouseLeave={e => { if (!active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#475569"; } }}
-                  >
-                    {link.label}
-                  </motion.div>
-                </Link>
-              );
-            })}
+          {/* links with a pill that glides between items */}
+          <div className="nv-links" onMouseLeave={() => setHover(null)}>
+            {NAV_LINKS.map((l, i) => (
+              <Link key={l.to} to={l.to} className="nv-link" data-lit={lit === i}
+                aria-current={activeIdx === i ? "page" : undefined}
+                onMouseEnter={() => setHover(i)} onFocus={() => setHover(i)} onBlur={() => setHover(null)}>
+                {lit === i && (
+                  <motion.span layoutId="nv-hi" className="nv-hi"
+                    transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 34 }} />
+                )}
+                <span className="nv-t">{l.label}</span>
+              </Link>
+            ))}
           </div>
 
-          {/* ── CTA BUTTONS ───────────────────────────────────────────────────── */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }} className="desktop-nav">
-            <motion.button
-              whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-              onClick={() => navigate("/doctor/login")}
-              style={{
-                padding: "9px 20px", borderRadius: 12, fontSize: 13, fontWeight: 700,
-                color: "#6366F1", background: "#EEF2FF", border: "none",
-                cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-                transition: "all 0.2s",
-              }}
-            >
-              Doctor Login
-            </motion.button>
-            <motion.button
-              whileHover={{ y: -3, boxShadow: "0 12px 32px rgba(30,58,95,0.4)" }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => navigate("/doctor/register")}
-              style={{
-                padding: "9px 20px", borderRadius: 12, fontSize: 13, fontWeight: 700,
-                color: "white",
-                background: "linear-gradient(135deg,#1E3A5F,#3B5CB8)",
-                border: "none", cursor: "pointer",
-                fontFamily: "'DM Sans', sans-serif",
-                boxShadow: "0 4px 16px rgba(30,58,95,0.35)",
-                display: "flex", alignItems: "center", gap: 6,
-              }}
-            >
-              Register Clinic
-              <Icon d={ICONS.arrow} size={13} color="white" />
-            </motion.button>
+          {/* actions */}
+          <div className="nv-actions">
+            <Link to="/doctor/login" className="nv-btn-ghost">Doctor login</Link>
+            <Magnetic>
+              <Link to="/doctor/register" className="nv-btn-ink">
+                Register clinic <Icon d={ICONS.arrow} size={14} color="white" />
+              </Link>
+            </Magnetic>
           </div>
 
-          {/* ── MOBILE HAMBURGER ─────────────────────────────────────────────── */}
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="mobile-toggle"
-            style={{
-              width: 40, height: 40, borderRadius: 12, border: "1.5px solid #EEF2FF",
-              background: "white", display: "none", alignItems: "center", justifyContent: "center",
-              cursor: "pointer",
-            }}
-          >
-            <Icon d={mobileOpen ? ICONS.close : ICONS.menu} size={18} color="#0F172A" />
+          {/* mobile toggle */}
+          <button className="nv-burger" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open}
+            aria-controls="nv-sheet" onClick={() => setOpen((o) => !o)}>
+            <i /><i />
           </button>
-        </div>
 
-        {/* ── MOBILE MENU ───────────────────────────────────────────────────── */}
-        <AnimatePresence>
-          {mobileOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.25 }}
-              style={{ overflow: "hidden", borderTop: "1px solid #EEF2FF" }}
-            >
-              <div style={{ padding: "16px 24px 24px", display: "flex", flexDirection: "column", gap: 8 }}>
-                {NAV_LINKS.map((link, i) => (
-                  <motion.div
-                    key={link.to}
-                    initial={{ opacity: 0, x: -16 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.06 }}
-                  >
-                    <Link to={link.to} style={{ textDecoration: "none" }}>
-                      <div style={{
-                        padding: "12px 16px", borderRadius: 14, fontSize: 14, fontWeight: 600,
-                        color: location.pathname === link.to ? "#6366F1" : "#475569",
-                        background: location.pathname === link.to ? "#EEF2FF" : "#F8FAFF",
-                      }}>
-                        {link.label}
-                      </div>
+          {/* mobile sheet */}
+          <AnimatePresence>
+            {open && (
+              <motion.div id="nv-sheet" className="nv-sheet"
+                initial={{ opacity: 0, y: -14, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.98 }} transition={{ duration: 0.3, ease: EASE }}>
+                {NAV_LINKS.map((l, i) => (
+                  <motion.div key={l.to} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.05 + i * 0.06, duration: 0.5, ease: EASE }}>
+                    <Link to={l.to} className="nv-m-link" aria-current={activeIdx === i ? "page" : undefined}>
+                      {l.label} <Icon d={ICONS.arrow} size={18} color={T.muted} />
                     </Link>
                   </motion.div>
                 ))}
-                <div style={{ height: 1, background: "#F1F5F9", margin: "8px 0" }} />
-                <button
-                  onClick={() => navigate("/doctor/login")}
-                  style={{
-                    padding: "13px", borderRadius: 14, fontSize: 14, fontWeight: 700,
-                    color: "#6366F1", background: "#EEF2FF", border: "none",
-                    cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-                  }}
-                >
-                  Doctor Login
-                </button>
-                <button
-                  onClick={() => navigate("/doctor/register")}
-                  style={{
-                    padding: "13px", borderRadius: 14, fontSize: 14, fontWeight: 700,
-                    color: "white", background: "linear-gradient(135deg,#1E3A5F,#3B5CB8)",
-                    border: "none", cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-                    boxShadow: "0 4px 16px rgba(30,58,95,0.3)",
-                  }}
-                >
-                  Register Your Clinic
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.nav>
-
-      <style>{`
-        @media (max-width: 900px) {
-          .desktop-nav { display: none !important; }
-          .mobile-toggle { display: flex !important; }
-        }
-      `}</style>
+                <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.28, duration: 0.5, ease: EASE }}
+                  style={{ display: "flex", flexDirection: "column", gap: 10, padding: "14px 10px 10px" }}>
+                  <Link to="/doctor/register" className="nv-btn-ink" style={{ justifyContent: "center", padding: "15px 22px", fontSize: 14.5 }}>
+                    Register your clinic <Icon d={ICONS.arrow} size={15} color="white" />
+                  </Link>
+                  <Link to="/doctor/login" className="nv-btn-ghost"
+                    style={{ justifyContent: "center", padding: "14px 22px", border: `1px solid ${T.line}`, background: "rgba(255,255,255,0.85)", fontSize: 14.5 }}>
+                    Doctor login
+                  </Link>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.nav>
+      </header>
     </>
   );
 };

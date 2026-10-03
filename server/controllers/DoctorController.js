@@ -189,6 +189,31 @@ const RegisterDoctor = async (req, res) => {
   }
 };
 
+
+
+const getDoctorData=async(req,res)=>{
+    try {
+        const id=req._id;
+
+        const MyDoctor=await Doctor.findOne({_id:id});
+
+        if(!MyDoctor)
+        {
+            return res.status(400).json({success:false,message:"Doctoe data does not exist"});
+        }
+
+        const DoctorDataResponse={
+            name:MyDoctor.FullName,
+            email:MyDoctor.Email
+        };
+
+        return res.status(200).json({success:true,message:"Doctor Data For Auth Context",data:DoctorDataResponse});
+        
+    } catch (error) {
+        return res.status(500).json({success:false,message:"Get Docter Data Function Failed"});
+    }
+}
+
 const CreateSlots = async (req, res) => {
   const { date, startTime, endTime, slotDuration, type, clinicId } = req.body;
   console.log(req.body, req._id);
@@ -457,4 +482,5 @@ module.exports = {
   DeleteSingleSlot,
   addPatient,
   getPatients,
+  getDoctorData
 };
