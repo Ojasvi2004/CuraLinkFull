@@ -700,7 +700,7 @@ const RegisterPage = () => {
             {/* Divider */}
             <div style={{ display: "flex", alignItems: "center", gap: 14, margin: "22px 0 18px" }}>
               <div style={{ flex: 1, height: 1, background: T.line }} />
-              <span style={{ fontSize: 12, fontWeight: 400, color: T.muted }}>or continue with</span>
+              {/* <span style={{ fontSize: 12, fontWeight: 400, color: T.muted }}>or continue with</span> */}
               <div style={{ flex: 1, height: 1, background: T.line }} />
             </div>
 
