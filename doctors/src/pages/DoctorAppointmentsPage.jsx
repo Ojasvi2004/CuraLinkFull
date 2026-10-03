@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
+const server=import.meta.env.VITE_SERVER;
 
 // ─── ICONS ──────────────────────────────────────────────────────────────────────
 const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
@@ -176,7 +177,7 @@ const DoctorAppointmentsPage = () => {
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        const res = await axios.post("http://localhost:8000/api/doctors/gettodayAppointment",
+        const res = await axios.post(`${server}/api/doctors/gettodayAppointment`,
           { dateISO: selectedDate + "T00:00:00.000+00:00" },
           { headers: { Authorization: `Bearer ${token}` } }
         );

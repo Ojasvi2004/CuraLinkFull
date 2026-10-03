@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
+const server=import.meta.env.VITE_SERVER;
 
 // ─── ICONS ────────────────────────────────────────────────────────────────────
 const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
@@ -544,7 +545,7 @@ const DoctorPatientDataAccessPage = () => {
     const todayNameMap = {}; // keyed by patientName (matches how appointments store patients)
     try {
       const res = await axios.post(
-        "http://localhost:8000/api/doctors/gettodayAppointment",
+        `${server}/api/doctors/gettodayAppointment`,
         { dateISO: todayISO },
         { headers }
       );
@@ -566,7 +567,7 @@ const DoctorPatientDataAccessPage = () => {
     let patientList = [];
     try {
       const res = await axios.get(
-        "http://localhost:8000/api/doctors/get-patients",
+        `${server}/api/doctors/get-patients`,
         { headers }
       );
       if (res.data.success) {
@@ -580,7 +581,7 @@ const DoctorPatientDataAccessPage = () => {
     const permMap = {};
     try {
       const res = await axios.get(
-        "http://localhost:8000/api/doctors/permissions/status",
+        `${server}/api/doctors/permissions/status`,
         { headers }
       );
       if (res.data.success) {
@@ -591,7 +592,7 @@ const DoctorPatientDataAccessPage = () => {
     // 4. Activity log (optional) ──────────────────────────────────────────────
     try {
       const res = await axios.get(
-        "http://localhost:8000/api/doctors/permissions/activity",
+        `${server}/api/doctors/permissions/activity`,
         { headers }
       );
       if (res.data.success) setActivityLog(res.data.activity || []);
@@ -624,7 +625,7 @@ const DoctorPatientDataAccessPage = () => {
   const handleSubmitRequest = async ({ patientId, scope, reason, duration }) => {
     try {
       const res = await axios.post(
-        "http://localhost:8000/api/doctors/permissions/request",
+        `{server}/api/doctors/permissions/request`,
         { patientId, scope, reason, duration },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -645,7 +646,7 @@ const DoctorPatientDataAccessPage = () => {
     if (!window.confirm(`Revoke health record access for ${patient.name}?`)) return;
     try {
       const res = await axios.post(
-        "http://localhost:8000/api/doctors/permissions/revoke",
+        `${server}/api/doctors/permissions/revoke`,
         { patientId: patient._id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -669,7 +670,7 @@ const DoctorPatientDataAccessPage = () => {
     setConsentSending(consentTarget._id);
     try {
       const res = await axios.post(
-        "http://localhost:8000/api/doctors/permissions/request-consent",
+        `${server}/api/doctors/permissions/request-consent`,
         { patientId: consentTarget._id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -708,7 +709,7 @@ const DoctorPatientDataAccessPage = () => {
     for (const patient of todayNeedingConsent) {
       try {
         const res = await axios.post(
-          "http://localhost:8000/api/doctors/permissions/request-consent",
+          `${server}/api/doctors/permissions/request-consent`,
           { patientId: patient._id },
           { headers: { Authorization: `Bearer ${token}` } }
         );

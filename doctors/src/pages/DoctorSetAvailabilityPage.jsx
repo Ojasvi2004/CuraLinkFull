@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
+const server=import.meta.env.VITE_SERVER;
 
 // ─── ICONS ──────────────────────────────────────────────────────────────────────
 const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
@@ -105,7 +106,7 @@ const DoctorSetAvailabilityPage = () => {
   const fetchSlots = async () => {
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:8000/api/doctors/GetSlotsOfADate",
+      const res = await axios.post(`${server}/api/doctors/GetSlotsOfADate`,
         { date: selectedDate }, { headers: { authorization: `Bearer ${token}` } });
       if (res.data.success) {
         setSlots(res.data.AllSlotOfADay.map(slot => ({
@@ -124,7 +125,7 @@ const DoctorSetAvailabilityPage = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const res = await axios.post("http://localhost:8000/api/doctors/createSlots",
+      const res = await axios.post(`${server}/api/doctors/createSlots`,
         { date: selectedDate, ...newBlock }, { headers: { authorization: `Bearer ${token}` } });
       if (res.data.success) {
         setShowModal(false);
@@ -139,7 +140,7 @@ const DoctorSetAvailabilityPage = () => {
   const handleDeleteSlot = async (id) => {
     if (!window.confirm("Delete this slot?")) return;
     try {
-      const res = await axios.post("http://localhost:8000/api/doctors/deleteSingleSlot", { id });
+      const res = await axios.post(`${server}/api/doctors/deleteSingleSlot`, { id });
       if (res.data.success) await fetchSlots();
     } catch (e) { console.error(e); }
   };

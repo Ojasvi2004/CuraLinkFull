@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
+const server=import.meta.env.VITE_SERVER;
 
 // ─── ICONS ──────────────────────────────────────────────────────────────────────
 const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
@@ -199,7 +200,7 @@ const DoctorLiveQueuePage = () => {
     try {
       const todayISO = getISODate(new Date()) + "T00:00:00.000+00:00";
       const response = await axios.post(
-        "http://localhost:8000/api/doctors/gettodayAppointment",
+        "${server}/api/doctors/gettodayAppointment",
         { dateISO: todayISO },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -217,7 +218,7 @@ const DoctorLiveQueuePage = () => {
 
   const handleStatus = async (id, newstatus) => {
     try {
-      await axios.post("http://localhost:8000/api/doctors/handleAppointment", { id, newstatus }, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.post(`${server}/api/doctors/handleAppointment`, { id, newstatus }, { headers: { Authorization: `Bearer ${token}` } });
     } catch (e) { console.error(e); }
   };
 

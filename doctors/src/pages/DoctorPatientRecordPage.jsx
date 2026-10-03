@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import PageLayout from "../components/Layout/PageLayout"; // Assuming HOC
+import PageLayout from "../components/Layout/PageLayout";
+const server=import.meta.env.VITE_SERVER; // Assuming HOC
 
 
 const UserCircleIcon = () => (

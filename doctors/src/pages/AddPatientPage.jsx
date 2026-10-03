@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+const server=import.meta.env.VITE_SERVER;
 
 // ─── ICONS ────────────────────────────────────────────────────────────────────
 const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
@@ -98,7 +99,7 @@ const DoctorAddPatientPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:8000/api/doctors/add-patient",
+      const response = await axios.post(`${server}/api/doctors/add-patient`,
         { formData },
         { headers: { Authorization: `Bearer ${token}` } }
       );

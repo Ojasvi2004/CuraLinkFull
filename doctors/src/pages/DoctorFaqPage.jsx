@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom'; // If you have a contact page for more questions
+import { Link } from 'react-router-dom';
+const server=import.meta.env.VITE_SERVER; // If you have a contact page for more questions
 
 // --- Example Icons (Replace with actual icons) ---
 const QuestionMarkIcon = () => <svg className="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.755 4 3.92C16 12.805 14.25 14.158 12.25 15.255c-1.43.755-2.003 1.628-2.003 2.745V19M12 21v.01"></path></svg>;

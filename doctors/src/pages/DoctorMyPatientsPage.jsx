@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+const server=import.meta.env.VITE_SERVER;
 
 // ─── ICONS ────────────────────────────────────────────────────────────────────
 const Icon = ({ d, size = 20, color = "currentColor", style = {} }) => (
@@ -160,7 +161,7 @@ const DoctorMyPatientsPage = () => {
 
   const GetAllPatientsData = async () => {
     try {
-      const response = await axios.get("http://localhost:8000/api/doctors/get-patients", {
+      const response = await axios.get(`${server}/api/doctors/get-patients`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.success) setMockPatientsData(response.data.patient);
