@@ -1,13 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
-import {
-  motion,
-  AnimatePresence,
-  useScroll,
-  useSpring,
-  useTransform,
-  useMotionValue,
-  useReducedMotion,
-} from "framer-motion";
+import React from "react";
+import { motion, useReducedMotion } from "framer-motion";
 
 // ─── THEME TOKENS ─────────────────────────────────────────────────────────────
 const T = {
@@ -21,7 +13,6 @@ const T = {
 };
 
 const EASE = [0.22, 1, 0.36, 1];
-const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
 const ORBS = {
   violet: "radial-gradient(circle at 30% 28%, #FFFFFF 0%, #C9B8FF 22%, #7C8CFF 48%, #F6A5D8 78%, #FFD9B8 100%)",
@@ -30,18 +21,15 @@ const ORBS = {
   mint:   "radial-gradient(circle at 30% 28%, #FFFFFF 0%, #BDEFD8 26%, #5FD0A5 56%, #8EC5FF 100%)",
 };
 
+// Lighter glass: no backdrop-filter (the main source of paint lag)
 const glass = {
-  background: "rgba(255,255,255,0.86)",
-  backdropFilter: "blur(10px)",
-  WebkitBackdropFilter: "blur(10px)",
+  background: "rgba(255,255,255,0.92)",
   border: "1px solid rgba(255,255,255,0.95)",
   borderRadius: 16,
   boxShadow: "0 10px 30px rgba(12,10,9,0.07)",
 };
 const darkGlass = {
-  background: "rgba(255,255,255,0.14)",
-  backdropFilter: "blur(14px)",
-  WebkitBackdropFilter: "blur(14px)",
+  background: "rgba(255,255,255,0.18)",
   border: "1px solid rgba(255,255,255,0.26)",
 };
 
@@ -314,83 +302,23 @@ const Pill = ({ children }) => (
   </motion.span>
 );
 
-const Counter = ({ idx, total, light = false }) => (
-  <div style={{ display: "flex", alignItems: "baseline", gap: 8, fontVariantNumeric: "tabular-nums" }}>
-    <div style={{ height: 40, overflow: "hidden" }}>
-      <AnimatePresence mode="popLayout" initial={false}>
-        <motion.span
-          key={idx}
-          initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "-100%" }}
-          transition={{ duration: 0.5, ease: EASE }}
-          style={{ display: "block", fontSize: 34, fontWeight: 300, color: light ? "#fff" : T.ink, letterSpacing: "-0.04em", lineHeight: "40px" }}
-        >
-          0{idx + 1}
-        </motion.span>
-      </AnimatePresence>
-    </div>
-    <span style={{ fontSize: 13, color: T.muted }}>/ 0{total}</span>
-  </div>
-);
-
-// ─── 3D FLAP DECK ────────────────────────────────────────────────────────────
-// Cards are stacked in 3D space. Scrolling down flaps the top card back and away
-// (hinged at its top edge) to reveal the next; scrolling up reverses it.
-const FlapCard = ({ i, active, radius, children }) => {
-  const d = useTransform(active, (a) => i - a);
-  const rotateX = useTransform(d, (v) => (v < 0 ? -clamp(-v, 0, 1) * 78 : 0));
-  const y       = useTransform(d, (v) => (v < 0 ? -clamp(-v, 0, 1) * 70 : clamp(v, 0, 3.5) * 26));
-  const z       = useTransform(d, (v) => (v < 0 ? clamp(-v, 0, 1) * 50 : -clamp(v, 0, 3.5) * 80));
-  const scale   = useTransform(d, (v) => 1 - (v < 0 ? clamp(-v, 0, 1) * 0.05 : clamp(v, 0, 3.5) * 0.05));
-  const opacity = useTransform(d, (v) => (v < 0 ? 1 - clamp((-v - 0.45) / 0.55, 0, 1) : 1 - clamp((v - 1.6) / 1.9, 0, 1)));
-  const shade   = useTransform(d, (v) => (v < 0 ? clamp(-v, 0, 1) * 0.28 : clamp(v, 0, 3) * 0.07));
-
+// ─── SIMPLE 2D REVEAL CARD ───────────────────────────────────────────────────
+// Fades and slides up once as it enters the viewport, lifts slightly on hover.
+// Only transform + opacity are animated, so it stays smooth.
+const RevealCard = ({ className, children }) => {
+  const reduce = useReducedMotion();
   return (
     <motion.div
-      style={{ position: "absolute", inset: 0, rotateX, y, z, scale, opacity, transformOrigin: "50% 0%", willChange: "transform, opacity" }}
+      className={className}
+      initial={reduce ? false : { opacity: 0, y: 48, scale: 0.97 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, amount: 0.25 }}
+      transition={{ duration: 0.7, ease: EASE }}
+      whileHover={reduce ? undefined : { y: -6, transition: { duration: 0.3, ease: EASE } }}
+      style={{ willChange: "transform, opacity" }}
     >
       {children}
-      <motion.div style={{ position: "absolute", inset: 0, borderRadius: radius, background: T.ink, opacity: shade, pointerEvents: "none" }} />
     </motion.div>
-  );
-};
-
-const FlapDeck = ({ items, renderCard, side, columns, boxClass, radius = 28 }) => {
-  const ref = useRef(null);
-  const reduce = useReducedMotion();
-  const n = items.length;
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
-  const raw = useTransform(scrollYProgress, [0.02, 0.9], [0, n - 1]);
-  const active = useSpring(raw, { stiffness: 90, damping: 22, mass: 0.6 });
-  const [idx, setIdx] = useState(0);
-  useEffect(() => active.on("change", (v) => setIdx(clamp(Math.round(v), 0, n - 1))), [active, n]);
-
-  // Reduced motion: plain vertical list, no sticky or 3D
-  if (reduce) {
-    return (
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "40px 24px" }}>
-        {side(0)}
-        <div style={{ display: "grid", gap: 20, marginTop: 32 }}>
-          {items.map((it, i) => <div key={i} className={boxClass} style={{ position: "relative" }}>{renderCard(it, i)}</div>)}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div ref={ref} style={{ position: "relative", height: `calc(100vh + ${(n - 1) * 70}vh)` }}>
-      <div style={{ position: "sticky", top: 0, height: "100vh", display: "flex", alignItems: "center", padding: "84px 24px 28px" }}>
-        <div className="deck-grid" style={{ "--cols": columns }}>
-          {side(idx)}
-          <div style={{ perspective: 1800, perspectiveOrigin: "50% 25%", width: "100%" }}>
-            <div className={boxClass} style={{ position: "relative", transformStyle: "preserve-3d" }}>
-              {items.map((it, i) => (
-                <FlapCard key={i} i={i} active={active} radius={radius}>{renderCard(it, i)}</FlapCard>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
   );
 };
 
@@ -417,8 +345,8 @@ const FeatureCard = ({ f, i, total }) => (
   </div>
 );
 
-const FeatureSide = ({ idx }) => (
-  <motion.div initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.3 }} variants={stagger}>
+const FeatureSide = () => (
+  <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={stagger}>
     <Pill>Core Capabilities</Pill>
     <WordReveal
       text={"How CuraLink Empowers\nYour Health Journey"}
@@ -429,9 +357,9 @@ const FeatureSide = ({ idx }) => (
     </motion.p>
     <motion.ul className="hide-sm" variants={fadeUp} style={{ listStyle: "none", margin: "32px 0 0", padding: 0 }}>
       {FEATURES.map((f, i) => (
-        <li key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "8px 0", color: i === idx ? T.ink : T.muted, transition: "color 0.4s" }}>
+        <li key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "8px 0", color: T.muted }}>
           <span style={{ width: 22, fontSize: 12, fontVariantNumeric: "tabular-nums" }}>0{i + 1}</span>
-          <motion.span animate={{ width: i === idx ? 34 : 10, opacity: i === idx ? 1 : 0.5 }} transition={{ duration: 0.5, ease: EASE }} style={{ height: 1, background: "currentColor", display: "block" }} />
+          <span style={{ width: 10, height: 1, background: "currentColor", display: "block" }} />
           <span style={{ fontSize: 15, letterSpacing: "-0.01em" }}>{f.title}</span>
         </li>
       ))}
@@ -439,144 +367,112 @@ const FeatureSide = ({ idx }) => (
   </motion.div>
 );
 
-// ─── USE CASE CARD (cinematic, layered, mouse-depth) ─────────────────────────
-const CaseCard = ({ uc, i }) => {
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
-  const smx = useSpring(mx, { stiffness: 70, damping: 16 });
-  const smy = useSpring(my, { stiffness: 70, damping: 16 });
-  const imgX = useTransform(smx, [-0.5, 0.5], [14, -14]);
-  const imgY = useTransform(smy, [-0.5, 0.5], [10, -10]);
-  const fgX  = useTransform(smx, [-0.5, 0.5], [-12, 12]);
-  const fgY  = useTransform(smy, [-0.5, 0.5], [-8, 8]);
+// ─── USE CASE CARD (cinematic, layered, CSS hover zoom) ──────────────────────
+const CaseCard = ({ uc, i }) => (
+  <div className="case-card" style={{ position: "relative", height: "100%", borderRadius: 32, overflow: "hidden", background: T.ink, border: `1px solid ${T.line}`, boxShadow: "0 30px 80px rgba(12,10,9,0.18)" }}>
+    <img className="case-img" src={uc.image} alt={uc.title} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(12,10,9,0.28) 0%, rgba(12,10,9,0.10) 32%, rgba(12,10,9,0.88) 100%)" }} />
+    <div style={{ position: "absolute", top: -90, right: -60, width: 260, height: 260, borderRadius: "50%", background: uc.orb, opacity: 0.45, filter: "blur(36px)", mixBlendMode: "screen" }} />
 
-  return (
-    <div
-      onMouseMove={(e) => {
-        const r = e.currentTarget.getBoundingClientRect();
-        mx.set((e.clientX - r.left) / r.width - 0.5);
-        my.set((e.clientY - r.top) / r.height - 0.5);
-      }}
-      onMouseLeave={() => { mx.set(0); my.set(0); }}
-      style={{ position: "relative", height: "100%", borderRadius: 32, overflow: "hidden", background: T.ink, border: `1px solid ${T.line}`, boxShadow: "0 30px 80px rgba(12,10,9,0.18)" }}
-    >
-      <motion.img src={uc.image} alt={uc.title} style={{ position: "absolute", left: "-4%", top: "-4%", width: "108%", height: "108%", objectFit: "cover", x: imgX, y: imgY }} />
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(12,10,9,0.28) 0%, rgba(12,10,9,0.10) 32%, rgba(12,10,9,0.88) 100%)" }} />
-      <div style={{ position: "absolute", top: -90, right: -60, width: 260, height: 260, borderRadius: "50%", background: uc.orb, opacity: 0.45, filter: "blur(36px)", mixBlendMode: "screen" }} />
+    <div style={{ position: "relative", zIndex: 1, height: "100%", padding: "clamp(18px, 3vw, 30px)", display: "flex", flexDirection: "column" }}>
+      <span style={{ ...darkGlass, alignSelf: "flex-start", color: "#fff", fontSize: 12, fontWeight: 500, padding: "5px 13px", borderRadius: 999 }}>Scenario 0{i + 1}</span>
 
-      <div style={{ position: "relative", zIndex: 1, height: "100%", padding: "clamp(18px, 3vw, 30px)", display: "flex", flexDirection: "column" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ ...darkGlass, color: "#fff", fontSize: 12, fontWeight: 500, padding: "5px 13px", borderRadius: 999 }}>Scenario 0{i + 1}</span>
+      <div className="case-grid" style={{ marginTop: "auto" }}>
+        <div>
+          <h3 style={{ fontSize: "clamp(24px, 3.2vw, 38px)", fontWeight: 300, color: "#fff", lineHeight: 1.12, letterSpacing: "-0.035em", marginBottom: 12 }}>{uc.title}</h3>
+          <p className="hide-sm" style={{ fontSize: 14.5, color: "rgba(255,255,255,0.78)", lineHeight: 1.7, maxWidth: 440 }}>{uc.desc}</p>
         </div>
 
-        <div className="case-grid" style={{ marginTop: "auto" }}>
-          <div>
-            <h3 style={{ fontSize: "clamp(24px, 3.2vw, 38px)", fontWeight: 300, color: "#fff", lineHeight: 1.12, letterSpacing: "-0.035em", marginBottom: 12 }}>{uc.title}</h3>
-            <p className="hide-sm" style={{ fontSize: 14.5, color: "rgba(255,255,255,0.78)", lineHeight: 1.7, maxWidth: 440 }}>{uc.desc}</p>
+        {/* Story bubble + outcome, layered above the photo */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ ...darkGlass, borderRadius: "22px 22px 22px 6px", padding: "14px 16px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <OrbDot size={22} bg={uc.orb} />
+              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>Patient story</span>
+            </div>
+            <p style={{ fontSize: 14, color: "#fff", lineHeight: 1.55 }}>{uc.scenario}</p>
           </div>
-
-          {/* Story bubble + outcome, layered above the photo */}
-          <motion.div style={{ x: fgX, y: fgY, display: "flex", flexDirection: "column", gap: 10 }}>
-            <div style={{ ...darkGlass, borderRadius: "22px 22px 22px 6px", padding: "14px 16px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                <OrbDot size={22} bg={uc.orb} />
-                <span style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>Patient story</span>
-              </div>
-              <p style={{ fontSize: 14, color: "#fff", lineHeight: 1.55 }}>{uc.scenario}</p>
+          <div style={{ background: "rgba(255,255,255,0.94)", borderRadius: 999, padding: "10px 16px 10px 10px", display: "flex", alignItems: "center", gap: 10, marginLeft: 22, boxShadow: "0 12px 30px rgba(0,0,0,0.25)" }}>
+            <div style={{ width: 24, height: 24, borderRadius: "50%", background: T.ink, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Icon d={ICONS.check} size={12} color="#fff" />
             </div>
-            <div style={{ background: "rgba(255,255,255,0.94)", borderRadius: 999, padding: "10px 16px 10px 10px", display: "flex", alignItems: "center", gap: 10, marginLeft: 22, boxShadow: "0 12px 30px rgba(0,0,0,0.25)" }}>
-              <div style={{ width: 24, height: 24, borderRadius: "50%", background: T.ink, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <Icon d={ICONS.check} size={12} color="#fff" />
-              </div>
-              <span style={{ fontSize: 13, color: T.ink, lineHeight: 1.4, letterSpacing: "-0.005em" }}>{uc.benefit}</span>
-            </div>
-          </motion.div>
+            <span style={{ fontSize: 13, color: T.ink, lineHeight: 1.4, letterSpacing: "-0.005em" }}>{uc.benefit}</span>
+          </div>
         </div>
       </div>
     </div>
-  );
-};
+  </div>
+);
 
-const CaseSide = ({ idx }) => (
-  <motion.div
-    initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.3 }} variants={stagger}
-    style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 24, flexWrap: "wrap" }}
-  >
-    <div>
-      <Pill>Real-World Scenarios</Pill>
-      <WordReveal
-        text="See CuraLink in Action"
-        style={{ fontSize: "clamp(28px, 3.8vw, 44px)", fontWeight: 300, color: T.ink, lineHeight: 1.1, letterSpacing: "-0.035em" }}
-      />
-    </div>
-    <motion.div variants={fadeUp}><Counter idx={idx} total={USE_CASES.length} /></motion.div>
+const CaseSide = () => (
+  <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={stagger}>
+    <Pill>Real-World Scenarios</Pill>
+    <WordReveal
+      text="See CuraLink in Action"
+      style={{ fontSize: "clamp(28px, 3.8vw, 44px)", fontWeight: 300, color: T.ink, lineHeight: 1.1, letterSpacing: "-0.035em" }}
+    />
   </motion.div>
 );
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
-const FeaturesSection = () => {
-  const containerRef = useRef(null);
-  const reduce = useReducedMotion();
-  const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start end", "end start"] });
-  const orbY1 = useTransform(scrollYProgress, [0, 1], reduce ? [0, 0] : [-180, 180]);
-  const orbY2 = useTransform(scrollYProgress, [0, 1], reduce ? [0, 0] : [140, -140]);
-  const orbY3 = useTransform(scrollYProgress, [0, 1], reduce ? [0, 0] : [-100, 100]);
+const FeaturesSection = () => (
+  <>
+    <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+      .feat-root { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; background:${T.white}; color:${T.body}; -webkit-font-smoothing:antialiased; position:relative; z-index:0; isolation:isolate; overflow:clip; padding:clamp(90px,14vh,140px) 24px clamp(120px,18vh,200px); margin-bottom:clamp(24px,4vh,48px); }
+      .wrap        { max-width:1200px; margin:0 auto; position:relative; z-index:1; }
+      .deck-grid   { display:grid; grid-template-columns:var(--cols); gap:56px; align-items:start; }
+      .sticky-side { position:sticky; top:110px; }
+      .stack       { display:flex; flex-direction:column; gap:28px; }
+      .box-feature { height:clamp(430px, 62vh, 520px); }
+      .box-case    { height:clamp(440px, 60vh, 540px); }
+      .case-grid   { display:grid; grid-template-columns:1.1fr 0.9fr; gap:28px; align-items:end; }
+      .case-img    { transition:transform 1.2s cubic-bezier(.22,1,.36,1); }
+      .case-card:hover .case-img { transform:scale(1.05); }
 
-  return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-        .feat-root { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; background:${T.white}; color:${T.body}; -webkit-font-smoothing:antialiased; position:relative; z-index:0; isolation:isolate; overflow:clip; padding-bottom:clamp(120px, 18vh, 200px); margin-bottom:clamp(24px, 4vh, 48px); }
+      @media (max-width: 900px) {
+        .deck-grid { grid-template-columns:1fr !important; gap:28px; }
+        .sticky-side { position:static; }
+        .case-grid { grid-template-columns:1fr; gap:16px; }
+        .hide-sm { display:none !important; }
+        .box-case { height:min(540px, 72vh); }
+      }
+    `}</style>
 
-        .deck-grid { max-width:1200px; width:100%; margin:0 auto; display:grid; grid-template-columns:var(--cols); gap:56px; align-items:center; }
-        .box-feature { height:clamp(430px, 62vh, 520px); }
-        .box-case    { height:clamp(440px, 60vh, 540px); }
-        .case-grid   { display:grid; grid-template-columns:1.1fr 0.9fr; gap:28px; align-items:end; }
+    <div className="feat-root">
+      {/* Static ambient orbs (no scroll parallax = no lag) */}
+      <div style={{ position: "absolute", top: "8%", right: -120, width: 440, height: 440, borderRadius: "50%", background: ORBS.violet, opacity: 0.26, filter: "blur(60px)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", top: "50%", left: -100, width: 400, height: 400, borderRadius: "50%", background: ORBS.sky, opacity: 0.24, filter: "blur(55px)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", bottom: "8%", right: -80, width: 360, height: 360, borderRadius: "50%", background: ORBS.sun, opacity: 0.2, filter: "blur(50px)", pointerEvents: "none" }} />
 
-        @media (max-width: 900px) {
-          .deck-grid { grid-template-columns:1fr !important; gap:18px; }
-          .case-grid { grid-template-columns:1fr; gap:16px; }
-          .hide-sm { display:none !important; }
-          .box-case { height:min(540px, 72vh); }
-        }
-      `}</style>
-
-      <div ref={containerRef} className="feat-root">
-
-        {/* Ambient parallax orbs drifting on scroll */}
-        <motion.div style={{ position: "absolute", top: "8%", right: -120, width: 440, height: 440, borderRadius: "50%", background: ORBS.violet, opacity: 0.26, filter: "blur(60px)", pointerEvents: "none", y: orbY1 }} />
-        <motion.div style={{ position: "absolute", top: "45%", left: -100, width: 400, height: 400, borderRadius: "50%", background: ORBS.sky, opacity: 0.24, filter: "blur(55px)", pointerEvents: "none", y: orbY2 }} />
-        <motion.div style={{ position: "absolute", bottom: "10%", right: -80, width: 360, height: 360, borderRadius: "50%", background: ORBS.sun, opacity: 0.2, filter: "blur(50px)", pointerEvents: "none", y: orbY3 }} />
-
-        <div style={{ position: "relative", zIndex: 1 }}>
-          {/* 1. FEATURES: cards flap over one another in 3D */}
-          <FlapDeck
-            items={FEATURES}
-            columns="0.85fr 1.15fr"
-            boxClass="box-feature"
-            side={(idx) => <FeatureSide idx={idx} />}
-            renderCard={(f, i) => <FeatureCard f={f} i={i} total={FEATURES.length} />}
-          />
-
-          {/* Gap between the two sections */}
-          <div aria-hidden style={{ height: "clamp(100px, 18vh, 200px)" }} />
-
-          {/* 2. REAL-WORLD USE CASES: cinematic cards, same 3D flap */}
-          <FlapDeck
-            items={USE_CASES}
-            columns="1fr"
-            boxClass="box-case"
-            radius={32}
-            side={(idx) => (
-              <div style={{ marginBottom: 6 }}><CaseSide idx={idx} /></div>
-            )}
-            renderCard={(uc, i) => <CaseCard uc={uc} i={i} />}
-          />
+      <div className="wrap">
+        {/* 1. FEATURES: sticky heading on the left, cards reveal on the right */}
+        <div className="deck-grid" style={{ "--cols": "0.85fr 1.15fr" }}>
+          <div className="sticky-side"><FeatureSide /></div>
+          <div className="stack">
+            {FEATURES.map((f, i) => (
+              <RevealCard key={i} className="box-feature">
+                <FeatureCard f={f} i={i} total={FEATURES.length} />
+              </RevealCard>
+            ))}
+          </div>
         </div>
 
+        {/* Gap between the two sections */}
+        <div aria-hidden style={{ height: "clamp(100px, 18vh, 200px)" }} />
+
+        {/* 2. REAL-WORLD USE CASES */}
+        <div style={{ marginBottom: 40 }}><CaseSide /></div>
+        <div className="stack">
+          {USE_CASES.map((uc, i) => (
+            <RevealCard key={i} className="box-case">
+              <CaseCard uc={uc} i={i} />
+            </RevealCard>
+          ))}
+        </div>
       </div>
-    </>
-  );
-};
+    </div>
+  </>
+);
 
 export default FeaturesSection;

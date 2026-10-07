@@ -12,16 +12,7 @@ const app=express();
 const port=process.env.PORT || 5002
 connectDB();
 
-// app.use(cors({
-//   origin: [
-//     "http://localhost:5173",
-//     "http://192.168.1.2:5173",
-//         "http://localhost:5174",
-//     "http://192.168.1.2:5174"
-//   ],
-//   methods: ["GET","PUT","POST","DELETE"],
-//   credentials: true
-// }));
+
 
 
 app.use(cors({
